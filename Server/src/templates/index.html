@@ -6,7 +6,7 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const socket = io('ws://localhost:5000/test'); // Connect to the server
+            const socket = io('ws://127.0.0.1:5000/test'); // Connect to the server
 
             // Log connection status
             socket.on('connect', () => {
@@ -23,6 +23,10 @@
 
             socket.on('disconnect', () => {
                 console.log('Disconnected from server');
+            });
+
+            socket.on('mqqt-message', (data) => {
+                console.log('MQQT Message from server:', data);
             });
 
             // Handle the "Send Message" button click
