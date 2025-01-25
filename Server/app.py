@@ -2,8 +2,8 @@ import os
 from flask import Flask
 from src.util.extensions import socketio, mqtt
 import logging
-from flask_mqtt import Mqtt
-import src.api.test
+import src.api.socket_api
+import src.api.mqtt_api
 
 # Flask app initialization
 app = Flask(__name__)

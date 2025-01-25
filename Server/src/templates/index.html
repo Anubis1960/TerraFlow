@@ -39,6 +39,13 @@
                     }
                     socket.emit('message', json); // Emit message to server
                 }
+
+                json = {
+                    device_id: "device_1",
+                    user_id: "user_2",
+                }
+
+                socket.emit('add_device', json); // Emit message to server
             });
         });
     </script>
