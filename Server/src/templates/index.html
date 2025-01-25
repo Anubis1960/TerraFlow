@@ -25,8 +25,8 @@
                 console.log('Disconnected from server');
             });
 
-            socket.on('mqqt-message', (data) => {
-                console.log('MQQT Message from server:', data);
+            socket.on('mqtt_message', (data) => {
+                console.log('MQTT Message from server:', data);
             });
 
             // Handle the "Send Message" button click
@@ -34,7 +34,10 @@
                 const message = document.getElementById('messageInput').value;
                 if (message) {
                     console.log('Sending message:', message);
-                    socket.emit('message', message); // Emit message to server
+                    json = {
+                        message: message
+                    }
+                    socket.emit('message', json); // Emit message to server
                 }
             });
         });

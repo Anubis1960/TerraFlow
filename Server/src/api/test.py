@@ -1,5 +1,7 @@
+import json
 from flask_socketio import emit
 from src.util.extensions import socketio, mqtt
+import datetime
 
 @mqtt.on_connect()
 def handle_connect(client, userdata, flags, rc):
@@ -9,6 +11,7 @@ def handle_connect(client, userdata, flags, rc):
     print(flags)
     print(rc)
     mqtt.subscribe('home/device/commands')
+    mqtt.subscribe('register')
 
 @mqtt.on_message()
 def handle_mqtt_message(client, userdata, message):
@@ -30,8 +33,13 @@ def handle_disconnect():
 @socketio.on('message')
 def handle_message(data):
     print('Message received')
-    print(data)
-    emit('message', data)
+    json_data = {
+        'message': data['message'],
+        'timestamp': datetime.datetime.now().isoformat()
+    }
+    print(json_data)
+    json_str = json.dumps(json_data)
+    mqtt.publish('home/device/commands', json_str)
 
 @socketio.on('mqtt_publish')
 def handle_mqtt_publish(data):
