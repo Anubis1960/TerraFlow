@@ -1,6 +1,5 @@
 from flask_socketio import emit
-from src.util.extensions import socketio
-from app import mqtt
+from src.util.extensions import socketio, mqtt
 
 @mqtt.on_connect()
 def handle_connect(client, userdata, flags, rc):
@@ -27,6 +26,12 @@ def handle_connect():
 @socketio.on('disconnect')
 def handle_disconnect():
     print('Client disconnected')
+
+@socketio.on('message')
+def handle_message(data):
+    print('Message received')
+    print(data)
+    emit('message', data)
 
 @socketio.on('mqtt_publish')
 def handle_mqtt_publish(data):

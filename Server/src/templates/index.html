@@ -6,7 +6,7 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const socket = io('ws://127.0.0.1:5000/test'); // Connect to the server
+            const socket = io('ws://127.0.0.1:5000/'); // Connect to the server
 
             // Log connection status
             socket.on('connect', () => {

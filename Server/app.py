@@ -1,6 +1,6 @@
 import os
 from flask import Flask
-from src.util.extensions import socketio
+from src.util.extensions import socketio, mqtt
 import logging
 from flask_mqtt import Mqtt
 import src.api.test
@@ -17,8 +17,8 @@ app.config['MQTT_TLS_ENABLED'] = False  # set TLS to disabled
 
 
 # Bind socketio to the app
-mqtt = Mqtt(app)
 socketio.init_app(app)
+mqtt.init_app(app)
 
 # Configure logging
 logging.basicConfig(
