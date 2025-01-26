@@ -19,18 +19,24 @@ def disconnect_event(data):
 @socketio.on('irrigate')
 def irrigate_event(data):
     print('Irrigating')
+    if 'device_id' not in data:
+        print('Device ID not found, found:', data)
+        return
     device_id = data['device_id']
     handle_irrigate(device_id)
 
 
 @socketio.on('export')
 def export_event(data):
-    pass
+    socketio.emit('message', data, room=data['user_id'])
 
 
 @socketio.on('add_device')
 def add_device_event(data):
     print('Adding device')
+    if 'device_id' not in data or 'user_id' not in data:
+        print('Device ID or User ID not found, found:', data)
+        return
     device_id = data['device_id']
     user_id = data['user_id']
     handle_add_device(device_id, user_id)
@@ -39,6 +45,9 @@ def add_device_event(data):
 @socketio.on('remove_device')
 def remove_device_event(data):
     print('Removing device')
+    if 'device_id' not in data or 'user_id' not in data:
+        print('Device ID or User ID not found, found:', data)
+        return
     device_id = data['device_id']
     user_id = data['user_id']
     handle_remove_device(device_id, user_id)
@@ -47,6 +56,9 @@ def remove_device_event(data):
 @socketio.on('schedule_irrigation')
 def schedule_irrigation_event(data):
     print('Scheduling irrigation')
+    if 'device_id' not in data or 'schedule' not in data:
+        print('Device ID or Schedule not found, found:', data)
+        return
     device_id = data['device_id']
     schedule = data['schedule']
     handle_schedule_irrigation(device_id, schedule)
