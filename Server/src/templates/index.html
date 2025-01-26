@@ -6,7 +6,7 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const socket = io('ws://127.0.0.1:5000/'); // Connect to the server
+            const socket = io('ws://192.168.100.42:5000/'); // Connect to the server
 
             // Log connection status
             socket.on('connect', () => {
@@ -58,16 +58,21 @@
 
                 socket.emit('add_device', json);// Emit message to server
 
-                socket.emit('remove_device', json);// Emit message to server
-
                 json = {
-                    email: "a@a.com",
-                    password: "123"
+                    email: "a12@a.com",
+                    password: "122223"
                 }
 
-                socket.emit('register', json);// Emit message to server
+                // socket.emit('register', json);// Emit message to server
 
-                socket.emit('login', json);// Emit message to server
+                // socket.emit('login', json);// Emit message to server
+
+                json = {
+                    device_id: "device_3",
+                    schedule: "2021-07-01 12:00:00",
+                }
+
+                socket.emit('schedule_irrigation', json);// Emit message to server
             });
         });
     </script>

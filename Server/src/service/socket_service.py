@@ -20,22 +20,19 @@ def handle_disconnect(data) -> None:
 
 
 def handle_irrigate(device_id: str) -> None:
-    print('Device ID:', device_id)
-    mqtt.publish(f'{device_id}/irrigate', '')
+    json_data = {
+        'irrigate': True
+    }
+    mqtt.publish(f'{device_id}/irrigate', json.dumps(json_data))
 
 
 def handle_add_device(device_id: str, user_id: str, socket_id: str) -> None:
-    print('Device ID:', device_id)
-    print('User ID:', user_id)
-    print('Socket ID:', socket_id)
 
     res = mongo_db.controllers.find_one({'_id': device_id})
 
     if not res:
         print('Device not found')
         return
-
-    print()
 
     try:
         if r.exists(device_id):
@@ -46,6 +43,7 @@ def handle_add_device(device_id: str, user_id: str, socket_id: str) -> None:
         if not any(user['user_id'] == user_id for user in user_list):
             user_list.append({'user_id': user_id, 'socket_id': socket_id})
             json_data = json.dumps(user_list)
+            print("JSON data:", json_data)
             r.set(device_id, json_data)
         else:
             print('User already exists')
@@ -59,8 +57,6 @@ def handle_add_device(device_id: str, user_id: str, socket_id: str) -> None:
 
 
 def handle_remove_device(device_id: str, user_id: str) -> None:
-    print('Device ID:', device_id)
-    print('User ID:', user_id)
     try:
         if r.exists(device_id):
             user_list = json.loads(r.get(device_id))
@@ -79,14 +75,15 @@ def handle_remove_device(device_id: str, user_id: str) -> None:
 
 
 def handle_schedule_irrigation(device_id: str, schedule: str) -> None:
-    print('Device ID:', device_id)
-    print('Schedule:', schedule)
-    mqtt.publish(f'{device_id}/schedule', json.dumps(schedule))
+    print()
+    json_data = {
+        'schedule': schedule
+    }
+    print('JSON:', json)
+    mqtt.publish(f'{device_id}/schedule', json.dumps(json_data))
 
 
 def handle_register(email: str, password: str) -> dict[str, str]:
-    print('Email:', email)
-    print('Password:', password)
     res = mongo_db.users.find({'email': email})
     users = list(res)
 
@@ -106,8 +103,6 @@ def handle_register(email: str, password: str) -> dict[str, str]:
 
 
 def handle_login(email: str, password: str) -> dict[str, str]:
-    print('Email:', email)
-    print('Password:', password)
     res = mongo_db.users.find({'email': email})
     users = list(res)
 

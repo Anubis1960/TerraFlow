@@ -7,3 +7,31 @@ mongo_db = mongo_client[MONGO_DB]
 
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 r.ping()
+
+if __name__ == '__main__':
+    print("Connected to Redis and MongoDB")
+    
+    # Print collections in MongoDB
+    print("Collections in MongoDB:")
+    for collection in mongo_db.list_collection_names():
+        print(collection)
+
+    # Fetch and print the controllers collection
+    controllers = mongo_db.controller.find()  # Make sure it's 'controller' and not 'controllers'
+
+    print("Controllers in MongoDB:")
+    
+    # Convert cursor to list
+    controllers = list(controllers)
+
+    if not controllers:
+        print("No controllers found in the database.")
+    
+    for controller in controllers:
+        print("Controller:")
+        print(controller)
+        # mongo_db.controller.delete_one({'_id': controller['_id']})
+
+    
+
+

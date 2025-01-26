@@ -24,13 +24,13 @@ mqtt.init_app(app)
 mqtt.subscribe('register')
 
 # Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
+# logging.basicConfig(
+#     level=logging.DEBUG,
+#     format='%(levelname)s - %(message)s',
+#     handlers=[logging.StreamHandler()]
+# )
 
 
 # Run the app
 if __name__ == '__main__':
-    socketio.run(app, host=HOST, port=PORT, use_reloader=True, debug=True)
+    socketio.run(app, host=HOST, port=PORT, use_reloader=False, debug=True)
