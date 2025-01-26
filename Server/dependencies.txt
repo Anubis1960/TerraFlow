@@ -1,0 +1,6 @@
+pycryptodome
+pymongo
+flask
+flask_mqtt
+flask_socketio
+redis

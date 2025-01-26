@@ -9,7 +9,6 @@ from src.util.extensions import mqtt
 @mqtt.on_connect()
 def handle_connect(client: paho.mqtt.client.Client, userdata: typing.Any, flags: dict, rc: int):
     print(f"Connected with result code {rc}, client: {client}")
-    mqtt.subscribe('register')
 
 
 @mqtt.on_message()

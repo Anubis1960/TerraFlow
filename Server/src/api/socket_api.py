@@ -1,5 +1,7 @@
+from socket import socket
+
 from src.service.socket_service import handle_connect, handle_disconnect, handle_irrigate, handle_add_device, \
-    handle_remove_device, handle_schedule_irrigation
+    handle_remove_device, handle_schedule_irrigation, handle_register, handle_login
 from src.util.extensions import socketio
 
 
@@ -27,18 +29,19 @@ def irrigate_event(data):
 
 @socketio.on('export')
 def export_event(data):
-    socketio.emit('message', data, room=data['user_id'])
+    pass
 
 
 @socketio.on('add_device')
 def add_device_event(data):
     print('Adding device')
-    if 'device_id' not in data or 'user_id' not in data:
+    if 'device_id' not in data or 'user_id' not in data or 'socket_id' not in data:
         print('Device ID or User ID not found, found:', data)
         return
     device_id = data['device_id']
     user_id = data['user_id']
-    handle_add_device(device_id, user_id)
+    socket_id = data['socket_id']
+    handle_add_device(device_id, user_id, socket_id)
 
 
 @socketio.on('remove_device')
@@ -71,10 +74,16 @@ def message_event(data):
 @socketio.on('register')
 def register_event(data):
     print('Registering')
-    print('Data:', data)
+    email = data['email']
+    password = data['password']
+    user = handle_register(email, password)
+    socketio.emit('register', user)
 
 
 @socketio.on('login')
 def login_event(data):
     print('Logging in')
-    print('Data:', data)
+    email = data['email']
+    password = data['password']
+    user = handle_login(email, password)
+    socketio.emit('login', user)

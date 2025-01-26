@@ -29,6 +29,16 @@
                 console.log('MQTT Message from server:', data);
             });
 
+            socket.on('register', (data) => {
+                console.log('Register event:', data);
+                console.log('Register event:', data.message);
+            });
+
+            socket.on('record', (data) => {
+                console.log('Record event:', data);
+                console.log('Record event:', data.message);
+            });
+
             // Handle the "Send Message" button click
             document.getElementById('sendMessage').addEventListener('click', () => {
                 const message = document.getElementById('messageInput').value;
@@ -41,11 +51,23 @@
                 }
 
                 json = {
-                    device_id: "device_1",
-                    user_id: "user_2",
+                    device_id: "device_3",
+                    user_id: "user_3",
+                    socket_id: socket.id
                 }
 
-                socket.emit('add_device', json); // Emit message to server
+                socket.emit('add_device', json);// Emit message to server
+
+                socket.emit('remove_device', json);// Emit message to server
+
+                json = {
+                    email: "a@a.com",
+                    password: "123"
+                }
+
+                socket.emit('register', json);// Emit message to server
+
+                socket.emit('login', json);// Emit message to server
             });
         });
     </script>

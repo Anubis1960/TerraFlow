@@ -1,10 +1,7 @@
-from src.model.board import Board
-
-
 class User:
-    def __init__(self, email, password, boards: list[Board] = None):
-        if boards is None:
-            boards = []
+    def __init__(self, email, password, controllers: list[str] = None):
+        if controllers is None:
+            controllers = []
         self.email = email
         self.password = password
-        self.boards = boards
+        self.controllers = controllers

@@ -1,8 +1,9 @@
 import redis
 import pymongo
+from env import MONGO_URI, MONGO_DB, REDIS_HOST, REDIS_PORT
 
-mongo_client = pymongo.MongoClient('mongodb://localhost:27017/')
-mongo_db = mongo_client['iot_app']
+mongo_client = pymongo.MongoClient(MONGO_URI)
+mongo_db = mongo_client[MONGO_DB]
 
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 r.ping()

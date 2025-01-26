@@ -2,7 +2,7 @@ import json
 
 from redis import ResponseError
 
-from src.util.db import r
+from src.util.db import r, mongo_db
 from src.util.extensions import socketio, mqtt
 
 
@@ -14,6 +14,14 @@ def register_device(payload: str) -> None:
     json_data = json.loads(payload)
     print('JSON data:', json_data)
     device_id = json_data['device_id']
+
+    ctrl_json = {
+        '_id': device_id,
+        'record': []
+    }
+
+    controller = mongo_db.controller.insert_one(ctrl_json)
+    print('Controller:', controller)
     mqtt.subscribe(f'{device_id}/record')
     mqtt.subscribe(f'{device_id}/predict')
 
@@ -27,16 +35,39 @@ def predict(payload: str, topic: str) -> None:
 
 def record(payload: str, topic: str) -> None:
     json_data = json.loads(payload)
+
+    if 'sensor_data' not in json_data or 'timestamp' not in json_data:
+        print('Sensor data or timestamp not found, found:', json_data)
+        return
+
     device_id = extract_device_id(topic)
     print('JSON data:', json_data)
     print('Device ID:', device_id)
+    res = mongo_db.controller.find_one({'_id': device_id})
+
+    if not res:
+        print('Device not found')
+        return
+
+    controllers = list(res)
+
+    controller = controllers[0]
+
+    print('Controller:', controller)
+
+    sensor_data = controller['record']
+    sensor_data.append(json_data)
+    mongo_db.controllers.update_one({'_id': device_id}, {'$set': {'record': sensor_data}})
+
+    print('Sensor data:', sensor_data)
+
     try:
         if r.exists(device_id):
             user_list = json.loads(r.get(device_id))
         else:
             user_list = []
-        for user_id in user_list:
-            socketio.emit('record', json_data, room=user_id)
+        for user in user_list:
+            socketio.emit('record', json_data, room=user['socket_id'])
 
     except ResponseError as e:
         print(f"Redis ResponseError: {e}")
