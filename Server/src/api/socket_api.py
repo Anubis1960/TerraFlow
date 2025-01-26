@@ -1,7 +1,6 @@
-import json
-from flask_socketio import emit
-from src.util.extensions import socketio, mqtt
-from src.service.socket_service import handle_connect, handle_disconnect, handle_irrigate, handle_add_device, handle_remove_device, handle_schedule_irrigation
+from src.service.socket_service import handle_connect, handle_disconnect, handle_irrigate, handle_add_device, \
+    handle_remove_device, handle_schedule_irrigation
+from src.util.extensions import socketio
 
 
 @socketio.on('connect')
@@ -62,3 +61,20 @@ def schedule_irrigation_event(data):
     device_id = data['device_id']
     schedule = data['schedule']
     handle_schedule_irrigation(device_id, schedule)
+
+
+@socketio.on('message')
+def message_event(data):
+    print('Message:', data)
+
+
+@socketio.on('register')
+def register_event(data):
+    print('Registering')
+    print('Data:', data)
+
+
+@socketio.on('login')
+def login_event(data):
+    print('Logging in')
+    print('Data:', data)

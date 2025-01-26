@@ -1,12 +1,9 @@
 import json
-from flask_socketio import emit
+
 from redis import ResponseError
 
+from src.util.db import r
 from src.util.extensions import socketio, mqtt
-import typing
-import paho.mqtt.client
-import datetime
-from src.util.redis_db import r
 
 
 def extract_device_id(topic: str) -> str:
@@ -38,7 +35,6 @@ def record(payload: str, topic: str) -> None:
             user_list = json.loads(r.get(device_id))
         else:
             user_list = []
-
         for user_id in user_list:
             socketio.emit('record', json_data, room=user_id)
 

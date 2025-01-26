@@ -1,15 +1,16 @@
-import json
-from flask_socketio import emit
-from src.service.mqtt_service import register_device, predict, record
-from src.util.extensions import socketio, mqtt
 import typing
+
 import paho.mqtt.client
-import datetime
+
+from src.service.mqtt_service import register_device, predict, record
+from src.util.extensions import mqtt
+
 
 @mqtt.on_connect()
 def handle_connect(client: paho.mqtt.client.Client, userdata: typing.Any, flags: dict, rc: int):
     print(f"Connected with result code {rc}, client: {client}")
     mqtt.subscribe('register')
+
 
 @mqtt.on_message()
 def handle_mqtt_message(client: paho.mqtt.client.Client, userdata: typing.Any, message: paho.mqtt.client.MQTTMessage):
@@ -27,4 +28,3 @@ def handle_mqtt_message(client: paho.mqtt.client.Client, userdata: typing.Any, m
         register_device(payload)
     else:
         print('Unknown topic')
-

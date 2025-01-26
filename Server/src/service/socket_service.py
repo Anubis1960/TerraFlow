@@ -1,8 +1,9 @@
 import json
-from flask_socketio import emit
-from src.util.extensions import socketio, mqtt
-from src.util.redis_db import r
+
 from redis.exceptions import ResponseError
+
+from src.util.db import r
+from src.util.extensions import mqtt
 
 
 def handle_connect(data) -> None:
