@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'pages/home.dart'; // Adjust the import path
+import 'package:mobile_app/pages/login.dart';
+import 'pages/home.dart';
+import 'pages/login.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +17,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const Home(), // Set AuthScreen as the home
+      home: LoginPage(),
     );
   }
 }

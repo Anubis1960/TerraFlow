@@ -2,7 +2,7 @@ import base64
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 from Crypto import Random
-from env import ENCRYPT_KEY as key
+from src.util.config import ENCRYPT_KEY as key
 
 
 def encrypt(source, encode=True):
@@ -31,9 +31,9 @@ def decrypt(source, decode=True):
 
 
 if __name__ == '__main__':
-    data = 'Hello, World!'
-    encrypted = encrypt(data)
+    txt = 'Hello, World!'
+    encrypted = encrypt(txt)
     print(f'Encrypted: {encrypted}')
     decrypted = decrypt(encrypted)
     print(f'Decrypted: {decrypted}')
-    assert data == decrypted
+    assert txt == decrypted

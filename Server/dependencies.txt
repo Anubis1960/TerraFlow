@@ -4,3 +4,4 @@ flask
 flask_mqtt
 flask_socketio
 redis
+python-dotenv

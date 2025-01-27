@@ -1,5 +1,3 @@
-from socket import socket
-
 from src.service.socket_service import handle_connect, handle_disconnect, handle_irrigate, handle_add_device, \
     handle_remove_device, handle_schedule_irrigation, handle_register, handle_login
 from src.util.extensions import socketio
@@ -19,7 +17,6 @@ def disconnect_event(data):
 
 @socketio.on('irrigate')
 def irrigate_event(data):
-    print('Irrigating')
     if 'device_id' not in data:
         print('Device ID not found, found:', data)
         return
@@ -29,12 +26,13 @@ def irrigate_event(data):
 
 @socketio.on('export')
 def export_event(data):
-    pass
+    if 'device_id' not in data or 'type' not in data:
+        print('Device ID or type not found, found:', data)
+        return
 
 
 @socketio.on('add_device')
 def add_device_event(data):
-    print('Adding device')
     if 'device_id' not in data or 'user_id' not in data or 'socket_id' not in data:
         print('Device ID or User ID not found, found:', data)
         return
@@ -46,7 +44,6 @@ def add_device_event(data):
 
 @socketio.on('remove_device')
 def remove_device_event(data):
-    print('Removing device')
     if 'device_id' not in data or 'user_id' not in data:
         print('Device ID or User ID not found, found:', data)
         return
@@ -57,12 +54,17 @@ def remove_device_event(data):
 
 @socketio.on('schedule_irrigation')
 def schedule_irrigation_event(data):
-    print('Scheduling irrigation')
-    if 'device_id' not in data or 'schedule' not in data:
+    if 'device_id' not in data or 'schedule_type' not in data or 'schedule_time' not in data:
         print('Device ID or Schedule not found, found:', data)
         return
+    if data['schedule_type'] not in ['DAILY', 'WEEKLY']:
+        print('Invalid schedule type, found:', data)
+        return
     device_id = data['device_id']
-    schedule = data['schedule']
+    schedule = {
+        'type': data['schedule_type'],
+        'time': data['schedule_time']
+    }
     handle_schedule_irrigation(device_id, schedule)
 
 
@@ -73,7 +75,9 @@ def message_event(data):
 
 @socketio.on('register')
 def register_event(data):
-    print('Registering')
+    if 'email' not in data or 'password' not in data:
+        print('Email or Password not found, found:', data)
+        return
     email = data['email']
     password = data['password']
     user = handle_register(email, password)
@@ -82,7 +86,9 @@ def register_event(data):
 
 @socketio.on('login')
 def login_event(data):
-    print('Logging in')
+    if 'email' not in data or 'password' not in data:
+        print('Email or Password not found, found:', data)
+        return
     email = data['email']
     password = data['password']
     user = handle_login(email, password)

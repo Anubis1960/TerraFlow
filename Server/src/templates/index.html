@@ -6,7 +6,7 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const socket = io('ws://192.168.100.42:5000/'); // Connect to the server
+            const socket = io('ws://127.0.0.1:5000/'); // Connect to the server
 
             // Log connection status
             socket.on('connect', () => {
@@ -25,8 +25,8 @@
                 console.log('Disconnected from server');
             });
 
-            socket.on('mqtt_message', (data) => {
-                console.log('MQTT Message from server:', data);
+            socket.on('error', (data) => {
+                console.log('Error:', data);
             });
 
             socket.on('register', (data) => {
@@ -59,11 +59,11 @@
                 socket.emit('add_device', json);// Emit message to server
 
                 json = {
-                    email: "a12@a.com",
+                    email: "a12323232@a.com",
                     password: "122223"
                 }
 
-                // socket.emit('register', json);// Emit message to server
+                socket.emit('register', json);// Emit message to server
 
                 // socket.emit('login', json);// Emit message to server
 

@@ -1,9 +1,12 @@
 import redis
 import pymongo
-from env import MONGO_URI, MONGO_DB, REDIS_HOST, REDIS_PORT
+from src.util.config import MONGO_URI, MONGO_DB, REDIS_HOST, REDIS_PORT
 
 mongo_client = pymongo.MongoClient(MONGO_URI)
 mongo_db = mongo_client[MONGO_DB]
+
+USER_COLLECTION = 'users'
+CONTROLLER_COLLECTION = 'controllers'
 
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 r.ping()
@@ -17,7 +20,7 @@ if __name__ == '__main__':
         print(collection)
 
     # Fetch and print the controllers collection
-    controllers = mongo_db.controller.find()  # Make sure it's 'controller' and not 'controllers'
+    controllers = mongo_db.controllers.find()  # Make sure it's 'controller' and not 'controllers'
 
     print("Controllers in MongoDB:")
     

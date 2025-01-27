@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../util/SocketService.dart';
+import '../util/SharedPreferencesStorage.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -11,6 +12,8 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
 
+  late Future<String> userId;
+
 
   @override
   void initState() {
@@ -18,6 +21,8 @@ class _HomeState extends State<Home> {
       print('initState');
     }
     super.initState();
+    userId = SharedPreferencesStorage.getUserId();
+
   }
 
   void onPressed() {
@@ -29,7 +34,9 @@ class _HomeState extends State<Home> {
       SocketService.socket.emit('add_device', json);
       SocketService.socket.emit('export', json);
     } else {
-      print('Socket not connected yet.');
+      if (kDebugMode) {
+        print('Socket not connected yet.');
+      }
       SocketService.socket.connect();
     }
   }

@@ -1,9 +1,6 @@
 import json
-from socket import socket
-
 from redis.exceptions import ResponseError
-
-from src.util.db import r, mongo_db
+from src.util.db import r, mongo_db, USER_COLLECTION, CONTROLLER_COLLECTION
 from src.util.extensions import mqtt, socketio
 from src.util.crypt import encrypt, decrypt
 import regex as re
@@ -28,10 +25,11 @@ def handle_irrigate(device_id: str) -> None:
 
 def handle_add_device(device_id: str, user_id: str, socket_id: str) -> None:
 
-    res = mongo_db.controllers.find_one({'_id': device_id})
+    res = mongo_db[CONTROLLER_COLLECTION].find_one({'_id': device_id})
 
     if not res:
-        print('Device not found')
+        print(f"Please connect the device with ID {device_id} to the network first.")
+        socketio.emit('error', {'message': f"Device with ID {device_id} not found."}, room=socket_id)
         return
 
     try:
@@ -43,10 +41,10 @@ def handle_add_device(device_id: str, user_id: str, socket_id: str) -> None:
         if not any(user['user_id'] == user_id for user in user_list):
             user_list.append({'user_id': user_id, 'socket_id': socket_id})
             json_data = json.dumps(user_list)
-            print("JSON data:", json_data)
+            print(f"Json data: {json_data}")
             r.set(device_id, json_data)
         else:
-            print('User already exists')
+            socketio.emit('error', {'message': f"This device is already registered to user {user_id}."}, room=socket_id)
     except ResponseError as e:
         print(f"Redis ResponseError: {e}")
     except Exception as e:
@@ -62,7 +60,10 @@ def handle_remove_device(device_id: str, user_id: str) -> None:
             user_list = json.loads(r.get(device_id))
             user_list = [user for user in user_list if user['user_id'] != user_id]
             json_data = json.dumps(user_list)
-            r.set(device_id, json_data)
+            if json_data != '[]':
+                r.set(device_id, json_data)
+            else:
+                r.delete(device_id)
         else:
             print('Device not found')
     except ResponseError as e:
@@ -70,53 +71,56 @@ def handle_remove_device(device_id: str, user_id: str) -> None:
     except Exception as e:
         print(f"Unexpected error: {e}")
     finally:
-        # Print the current value of the key for debugging
         print(f"Final value for {device_id}: {r.get(device_id)}")
 
 
-def handle_schedule_irrigation(device_id: str, schedule: str) -> None:
-    print()
-    json_data = {
-        'schedule': schedule
-    }
-    print('JSON:', json)
-    mqtt.publish(f'{device_id}/schedule', json.dumps(json_data))
+def handle_schedule_irrigation(device_id: str, schedule: dict) -> None:
+    mqtt.publish(f'{device_id}/schedule', json.dumps(schedule))
 
 
 def handle_register(email: str, password: str) -> dict[str, str]:
-    res = mongo_db.users.find({'email': email})
-    users = list(res)
+    try:
+        res = mongo_db[USER_COLLECTION].find({'email': email})
+        users = list(res)
 
-    if len(users) > 0:
-        print('User already exists')
-        return {}
+        if len(users) > 0:
+            print('User already exists')
+            return {'error': 'An account with this email already exists'}
 
-    if not email_regex.match(email):
-        print('Invalid email')
-        return {}
+        if not email_regex.match(email):
+            print('Invalid email')
+            return {'error': 'Invalid email'}
 
-    encrypted_password = encrypt(password)
+        encrypted_password = encrypt(password)
 
-    user = mongo_db.users.insert_one({'email': email, 'password': encrypted_password})
-    print('User created:', user.inserted_id)
-    return {'user_id': str(user.inserted_id)}
+        user = mongo_db[USER_COLLECTION].insert_one({'email': email, 'password': encrypted_password})
+        print('User created:', user.inserted_id)
+        return {'user_id': str(user.inserted_id)}
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return {'error': 'An error occurred'}
 
 
 def handle_login(email: str, password: str) -> dict[str, str]:
-    res = mongo_db.users.find({'email': email})
-    users = list(res)
+    try:
+        res = mongo_db[USER_COLLECTION].find({'email': email})
+        users = list(res)
 
-    if len(users) == 0:
-        print('User not found')
-        return {}
+        if len(users) == 0:
+            print('User not found')
+            return {'error': 'Invalid email or password'}
 
-    user = users[0]
-    encrypted_password = user['password']
-    decrypted_password = decrypt(encrypted_password)
+        user = users[0]
+        encrypted_password = user['password']
+        decrypted_password = decrypt(encrypted_password)
 
-    if decrypted_password == password:
-        print('Login successful')
-        return {'user_id': str(user['_id'])}
-    else:
-        print('Login failed')
-        return {}
+        if decrypted_password == password:
+            print('Login successful')
+            return {'user_id': str(user['_id'])}
+        else:
+            print('Login failed')
+            return {'error': 'Invalid email or password'}
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return {'error': 'An error occurred'}
