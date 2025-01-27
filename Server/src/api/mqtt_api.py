@@ -1,6 +1,6 @@
 import typing
 import paho.mqtt.client
-from src.service.mqtt_service import register_device, predict, record_sensor_data, record_water_used
+from src.service.mqtt_service import register_controller, predict, record_sensor_data, record_water_used
 from src.util.extensions import mqtt
 
 
@@ -30,6 +30,6 @@ def handle_mqtt_message(client: paho.mqtt.client.Client, userdata: typing.Any, m
         record_water_used(payload, topic)
     elif topic == 'register':
         print('Registering')
-        register_device(payload)
+        register_controller(payload)
     else:
         print('Unknown topic')

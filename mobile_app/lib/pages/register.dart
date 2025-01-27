@@ -23,12 +23,14 @@ class _RegisterPageState extends State<RegisterPage> {
     }
     super.initState();
 
-    SocketService.socket.on('register', (data) {
+    SocketService.socket.on('register_response', (data) {
       if (kDebugMode) {
         print('Received register response: $data');
       }
       if (data['user_id'] != null && data['user_id'].isNotEmpty) {
         SharedPreferencesStorage.saveUserId(data['user_id']);
+        Navigator.pop(context);
+        Navigator.pop(context);
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => Home()),
@@ -56,7 +58,7 @@ class _RegisterPageState extends State<RegisterPage> {
   void dispose() {
     email.dispose();
     password.dispose();
-    SocketService.socket.off('register');
+    SocketService.socket.off('register_response');
     super.dispose();
   }
 
@@ -102,6 +104,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 Map<String, String> registerJson = {
                   'email': email.text,
                   'password': password.text,
+                  'socket_id': SocketService.socket.id!,
                 };
                 SocketService.socket.emit('register', registerJson);
               },

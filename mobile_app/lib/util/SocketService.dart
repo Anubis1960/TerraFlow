@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'SharedPreferencesStorage.dart';
 
 class SocketService {
   static IO.Socket? _socket;
@@ -11,25 +13,44 @@ class SocketService {
       });
 
       _socket!.onConnect((_) {
-        print('connected');
+        if (kDebugMode) {
+          print('connected');
+        }
       });
 
       _socket!.onDisconnect((_) {
-        print('disconnected');
+        if (kDebugMode) {
+          print('disconnected');
+        }
       });
 
       _socket!.on('ping', (data) {
-        print(data);
+        if (kDebugMode) {
+          print(data);
+        }
         _socket!.emit('pong', 'pong');
       });
 
       _socket!.on('pong', (data) {
-        print(data);
+        if (kDebugMode) {
+          print(data);
+        }
         _socket!.emit('ping', 'ping');
       });
 
       _socket!.on('message', (data) {
-        print('Received message: $data');
+        if (kDebugMode) {
+          print('Received message: $data');
+        }
+      });
+
+      _socket!.on('controllers', (data) {
+        if (kDebugMode) {
+          print('Received controller_ids: $data');
+        }
+        for (var controllerId in data['controllers']) {
+          SharedPreferencesStorage.saveControllerId(controllerId);
+        }
       });
 
       _socket!.connect();

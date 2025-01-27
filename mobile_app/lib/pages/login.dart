@@ -23,12 +23,14 @@ class _LoginPageState extends State<LoginPage> {
     }
     super.initState();
 
-    SocketService.socket.on('login', (data) {
+    SocketService.socket.on('login_response', (data) {
       if (kDebugMode) {
         print('Received login response: $data');
       }
       if (data['user_id'] != null && data['user_id'].isNotEmpty) {
         SharedPreferencesStorage.saveUserId(data['user_id']);
+        SharedPreferencesStorage.saveControllerList(data['controllers']);
+        Navigator.pop(context);
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => Home()),
@@ -47,7 +49,7 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     email.dispose();
     password.dispose();
-    SocketService.socket.off('login');
+    SocketService.socket.off('login_response');
     super.dispose();
   }
 
@@ -92,6 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                 Map<String, String> loginJson = {
                   'email': email.text,
                   'password': password.text,
+                  'socket_id': SocketService.socket.id!,
                 };
 
                 SocketService.socket.emit('login', loginJson);

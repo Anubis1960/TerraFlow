@@ -7,11 +7,11 @@ class SharedPreferencesStorage {
     await prefs.setString('user_id', userId);
   }
 
-  static Future<void> saveDeviceId(String deviceId) async {
+  static Future<void> saveControllerId(String controllerId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> deviceIds = await getDeviceList();
-    deviceIds.add(deviceId);
-    await prefs.setStringList('device_ids', deviceIds);
+    List<String> controllerIds = await getControllerList();
+    controllerIds.add(controllerId);
+    await prefs.setStringList('controller_ids', controllerIds);
   }
 
   // Get user details
@@ -20,8 +20,15 @@ class SharedPreferencesStorage {
     return prefs.getString('user_id') ?? '';
   }
 
-  static Future<List<String>> getDeviceList() async {
+  static Future<List<String>> getControllerList() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList('device_ids') ?? [];
+    return prefs.getStringList('controller_ids') ?? [];
+  }
+
+  static Future<void> saveControllerList(List<dynamic> controllers) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> controllerIds = List<String>.from(controllers);
+    print('Saving controller list: $controllers');
+    await prefs.setStringList('controller_ids', controllerIds);
   }
 }

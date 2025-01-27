@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../util/SocketService.dart';
+import 'package:mobile_app/util/SocketService.dart';
 import '../util/SharedPreferencesStorage.dart';
+import 'controller-dashboard.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -11,9 +12,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-
   late Future<String> userId;
-
+  late Future<List<String>> controllerIds;
 
   @override
   void initState() {
@@ -22,32 +22,158 @@ class _HomeState extends State<Home> {
     }
     super.initState();
     userId = SharedPreferencesStorage.getUserId();
+    controllerIds = SharedPreferencesStorage.getControllerList();
 
-  }
-
-  void onPressed() {
-    if (SocketService.socket.connected) {
-      var json = {
-        'device_id': '123456',
-        'user_id': SocketService.socket.id, // Guaranteed to have an ID
-      };
-      SocketService.socket.emit('add_device', json);
-      SocketService.socket.emit('export', json);
-    } else {
+    SocketService.socket.on('error', (data) {
       if (kDebugMode) {
-        print('Socket not connected yet.');
+        print('Received error response: $data');
       }
-      SocketService.socket.connect();
-    }
+      if (data['error'] != null && data['error'].isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['error']),
+          ),
+        );
+      }
+    });
+
+    SocketService.socket.on('controllers', (data) {
+      if (kDebugMode) {
+        print('Received controllers response: $data');
+      }
+      SharedPreferencesStorage.saveControllerList(data);
+      setState(() {
+        controllerIds = SharedPreferencesStorage.getControllerList();
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Center(
-          child: TextButton(onPressed: onPressed, child: const Text('Hello World!')),
-        )
+      appBar: AppBar(
+        title: const Text('controllers'),
+      ),
+      body: FutureBuilder<List<String>>(
+        future: controllerIds,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('No controllers found.'),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      // Open the add controller pop-up
+                      _showAddcontrollerDialog(context);
+                    },
+                    child: const Icon(Icons.add),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            final controllerIds = snapshot.data!;
+            return Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: controllerIds.length,
+                    itemBuilder: (context, index) {
+                      final controllerId = controllerIds[index];
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Card(
+                          elevation: 4,
+                          child: ListTile(
+                            title: Text('Controller ID: $controllerId'),
+                            onTap: () {
+                              // Navigate to the dynamic page for this controllerId
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ControllerDashBoard(controllerId: controllerId),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      // Open the add controller pop-up
+                      _showAddcontrollerDialog(context);
+                    },
+                    child: const Icon(Icons.add),
+                  ),
+                ),
+              ],
+            );
+          }
+        },
+      ),
     );
   }
 
+  void _showAddcontrollerDialog(BuildContext context) {
+    final TextEditingController controllerIdController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add controller'),
+          content: TextField(
+            controller: controllerIdController,
+            decoration: const InputDecoration(
+              hintText: 'Enter controller ID',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final newControllerId = controllerIdController.text.trim();
+                if (newControllerId.isNotEmpty) {
+                  // Save the new controller ID and update the UI
+                  userId.then((onValue) {
+                    Map<String, dynamic> data = {
+                      'controller_id': newControllerId,
+                      'user_id': onValue,
+                      'socket_id': SocketService.socket.id,
+                    };
+                    SocketService.socket.emit('add_controller', data);
+                  });
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please enter a valid controller ID.'),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
