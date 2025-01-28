@@ -32,10 +32,12 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       if (kDebugMode) {
         print('Received controller data response: $data');
       }
+      setState(() {
+        controllerData = data;
+      });
     });
 
     SocketService.socket.emit('fetch_controller_data', {
-      'socket_id': SocketService.socket.id,
       'controller_id': controllerId,
     });
   }

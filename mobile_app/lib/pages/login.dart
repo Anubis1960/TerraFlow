@@ -94,7 +94,6 @@ class _LoginPageState extends State<LoginPage> {
                 Map<String, String> loginJson = {
                   'email': email.text,
                   'password': password.text,
-                  'socket_id': SocketService.socket.id!,
                 };
 
                 SocketService.socket.emit('login', loginJson);

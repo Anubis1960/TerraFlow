@@ -5,6 +5,7 @@ from src.util.extensions import mqtt, socketio
 from src.util.crypt import encrypt, decrypt
 import regex as re
 from bson.objectid import ObjectId
+from bson.errors import InvalidId
 
 email_regex = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
@@ -40,12 +41,12 @@ def handle_add_controller(controller_id: str, user_id: str, socket_id: str) -> N
 
         if not c_res:
             print(f"Please connect the controller with ID {controller_id} to the network first.")
-            socketio.emit('error', {'message': f"controller with ID {controller_id} not found."}, room=socket_id)
+            socketio.emit('error', {'error_msg': f"controller with ID {controller_id} not found."}, room=socket_id)
             return
 
         if controller_id in controllers:
             print(f"User {user_id} already has controller {controller_id} registered.")
-            socketio.emit('error', {'message': f"User {user_id} already has controller {controller_id} registered."}, room=socket_id)
+            socketio.emit('error', {'error_msg': f"User {user_id} already has controller {controller_id} registered."}, room=socket_id)
             return
 
         controllers.append(controller_id)
@@ -65,7 +66,7 @@ def handle_add_controller(controller_id: str, user_id: str, socket_id: str) -> N
                 r.set(controller_id, json_data)
 
             else:
-                socketio.emit('error', {'message': f"This controller is already registered to user {user_id}."}, room=socket_id)
+                socketio.emit('error', {'error_msg': f"This controller is already registered to user {user_id}."}, room=socket_id)
         except ResponseError as e:
             print(f"Redis ResponseError: {e}")
         except Exception as e:
@@ -75,6 +76,8 @@ def handle_add_controller(controller_id: str, user_id: str, socket_id: str) -> N
             print(f"Final value for {controller_id}: {r.get(controller_id)}")
     except ValueError as e:
         print(f"ValueError: {e}")
+    except InvalidId as e:
+        print(f"InvalidId: {e}")
     except Exception as e:
         print(f"Unexpected error: {e}")
 
@@ -116,6 +119,8 @@ def handle_remove_controller(controller_id: str, user_id: str, socket_id: str) -
             print(f"Final value for {controller_id}: {r.get(controller_id)}")
     except ValueError as e:
         print(f"ValueError: {e}")
+    except InvalidId as e:
+        print(f"InvalidId: {e}")
     except Exception as e:
         print(f"Unexpected error: {e}")
 
@@ -131,11 +136,11 @@ def handle_register(email: str, password: str) -> dict[str, str]:
 
         if len(users) > 0:
             print('User already exists')
-            return {'error': 'An account with this email already exists'}
+            return {'error_msg': 'An account with this email already exists'}
 
         if not email_regex.match(email):
             print('Invalid email')
-            return {'error': 'Invalid email'}
+            return {'error_msg': 'Invalid email'}
 
         encrypted_password = encrypt(password)
 
@@ -144,7 +149,7 @@ def handle_register(email: str, password: str) -> dict[str, str]:
         return {'user_id': str(user.inserted_id)}
     except Exception as e:
         print(f"Unexpected error: {e}")
-        return {'error': 'An error occurred'}
+        return {'error_msg': 'An error occurred'}
 
 
 def handle_login(email: str, password: str) -> dict[str, str]:
@@ -154,7 +159,7 @@ def handle_login(email: str, password: str) -> dict[str, str]:
 
         if len(users) == 0:
             print('User not found')
-            return {'error': 'Invalid email or password'}
+            return {'error_msg': 'Invalid email or password'}
 
         user = users[0]
         encrypted_password = user['password']
@@ -165,29 +170,31 @@ def handle_login(email: str, password: str) -> dict[str, str]:
             return {'user_id': str(user['_id']), 'controllers': user['controllers']}
         else:
             print('Login failed')
-            return {'error': 'Invalid email or password'}
+            return {'error_msg': 'Invalid email or password'}
 
     except Exception as e:
         print(f"Unexpected error: {e}")
-        return {'error': 'An error occurred'}
+        return {'error_msg': 'An error occurred'}
 
 
-def handle_retrieve_controller_data(controller_id: str) -> None:
+def handle_retrieve_controller_data(controller_id: str, socket_id: str) -> None:
     try:
         res = mongo_db[CONTROLLER_COLLECTION].find_one({'_id': ObjectId(controller_id)})
         if not res:
             print(f"controller with ID {controller_id} not found in database.")
             return
-        print(f"Controller data for controller {controller_id}:")
         print(res)
-        if r.exists(controller_id):
-            for user in json.loads(r.get(controller_id)):
-                socketio.emit('controller_data_response', res, room=user['socket_id'])
-        else:
-            print(f"No active Redis key for controller {controller_id}.")
+        json_data = {
+            'record': res.get('record', []),
+            'water_used_month': res.get('water_used_month', [])
+        }
+        print(f"Controller data for controller {controller_id}: {json_data}")
+        socketio.emit('controller_data_response', json_data, room=socket_id)
     except ResponseError as e:
         print(f"Redis ResponseError: {e}")
     except ValueError as e:
         print(f"ValueError: {e}")
+    except InvalidId as e:
+        print(f"InvalidId: {e}")
     except Exception as e:
         print(f"Unexpected error: {e}")

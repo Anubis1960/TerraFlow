@@ -28,10 +28,10 @@ class _HomeState extends State<Home> {
       if (kDebugMode) {
         print('Received error response: $data');
       }
-      if (data['error'] != null && data['error'].isNotEmpty) {
+      if (data['error_msg'] != null && data['error_msg'].isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(data['error']),
+            content: Text(data['error_msg']),
           ),
         );
       }
@@ -46,6 +46,13 @@ class _HomeState extends State<Home> {
         controllerIds = SharedPreferencesStorage.getControllerList();
       });
     });
+  }
+
+  @override
+  void dispose() {
+    SocketService.socket.off('error');
+    SocketService.socket.off('controllers');
+    super.dispose();
   }
 
   @override
@@ -157,7 +164,6 @@ class _HomeState extends State<Home> {
                     Map<String, dynamic> data = {
                       'controller_id': newControllerId,
                       'user_id': onValue,
-                      'socket_id': SocketService.socket.id,
                     };
                     SocketService.socket.emit('add_controller', data);
                   });
@@ -168,6 +174,7 @@ class _HomeState extends State<Home> {
                     ),
                   );
                 }
+                Navigator.pop(context); // Close the dialog
               },
               child: const Text('Add'),
             ),

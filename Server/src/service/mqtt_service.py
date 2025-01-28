@@ -1,4 +1,5 @@
 import json
+from bson.errors import InvalidId
 from redis import ResponseError
 from src.util.db import r, mongo_db, CONTROLLER_COLLECTION
 from src.util.extensions import socketio, mqtt
@@ -17,8 +18,6 @@ def register_controller(payload: str) -> None:
 
         controller_id = json_data['controller_id']
 
-
-
         ctrl_json = {
             '_id': ObjectId(controller_id),
             'record': [],
@@ -34,7 +33,10 @@ def register_controller(payload: str) -> None:
 
         # Subscribe to controller topics
 
-        mqtt.subscribe(f'{controller_id}/record')
+        print(f"Subscribing to topics for controller {controller_id}, topics: {controller_id}/record, {controller_id}/predict")
+
+        mqtt.subscribe(f'{controller_id}/record/sensor_data')
+        mqtt.subscribe(f'{controller_id}/record/water_used')
         mqtt.subscribe(f'{controller_id}/predict')
 
     except KeyError as e:
@@ -105,6 +107,8 @@ def record_sensor_data(payload: str, topic: str) -> None:
 
     except json.JSONDecodeError as decode_error:
         print(f"JSON decoding error: {decode_error}")
+    except InvalidId as e:
+        print(f"InvalidId: {e}")
     except Exception as general_error:
         print(f"Unexpected error in record function: {general_error}")
 

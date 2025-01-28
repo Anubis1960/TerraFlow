@@ -36,10 +36,10 @@ class _RegisterPageState extends State<RegisterPage> {
           MaterialPageRoute(builder: (context) => Home()),
         );
       } else {
-        if (data['error'] != null && data['error'].isNotEmpty) {
+        if (data['error_msg'] != null && data['error_msg'].isNotEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(data['error']),
+              content: Text(data['error_msg']),
             ),
           );
         }
@@ -104,7 +104,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 Map<String, String> registerJson = {
                   'email': email.text,
                   'password': password.text,
-                  'socket_id': SocketService.socket.id!,
                 };
                 SocketService.socket.emit('register', registerJson);
               },
