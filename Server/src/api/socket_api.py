@@ -1,14 +1,56 @@
-from flask import request
+"""
+Socket.IO Event Handlers for IoT Application
 
-from src.service.socket_service import (handle_connect, handle_disconnect, handle_irrigate, handle_add_controller,
-                                        handle_remove_controller, handle_schedule_irrigation, handle_register,
-                                        handle_login,
-                                        handle_retrieve_controller_data, remap_redis)
+This module defines event handlers for various Socket.IO events, enabling real-time communication between the server
+and connected clients. The handlers process user requests, manage controllers, and handle irrigation scheduling.
+
+### Key Features:
+1. **Real-Time Connection Management**:
+   - Handles client connections, disconnections, and initialization.
+
+2. **Controller Management**:
+   - Add, remove, and manage controllers associated with users.
+   - Fetch controller data for real-time updates.
+
+3. **Irrigation Control**:
+   - Trigger manual irrigation or schedule automated irrigation tasks.
+
+4. **User Authentication**:
+   - Register and log in users using Socket.IO events.
+
+5. **General Communication**:
+   - Handles miscellaneous messages for debugging or additional communication.
+
+### Dependencies:
+- `Flask`: Used to manage HTTP requests (e.g., `request.sid` for socket session IDs).
+- `socketio`: For handling WebSocket communication.
+- Custom Services (`socket_service`):
+  - Contains core logic for handling controllers, irrigation, user authentication, etc.
+
+"""
+
+from flask import request
+from src.service.socket_service import (
+    handle_connect, handle_disconnect, handle_irrigate, handle_add_controller,
+    handle_remove_controller, handle_schedule_irrigation, handle_register,
+    handle_login, handle_retrieve_controller_data, remap_redis
+)
 from src.util.extensions import socketio
 
 
 @socketio.on('connect')
 def connet_event():
+    """
+    Handles client connection.
+
+    Actions:
+        - Prints a connection message and logs the socket ID.
+        - Calls `handle_connect` to process the new connection.
+
+    Logs:
+        - "Client connected"
+        - "Socket ID: <socket_id>"
+    """
     print('Client connected')
     socket_id = request.sid
     print('Socket ID:', socket_id)
@@ -17,6 +59,21 @@ def connet_event():
 
 @socketio.on('init')
 def init_event(data):
+    """
+    Initializes the client session by remapping Redis with controllers.
+
+    Args:
+        data (dict): JSON containing user information and associated controllers.
+            Required keys: 'user_id', 'controllers'.
+
+    Actions:
+        - Remaps Redis with the user ID, controllers, and the socket ID.
+        - Validates presence of required keys and controllers.
+
+    Logs:
+        - "Init: <data>"
+        - Errors if 'user_id' or 'controllers' are missing or empty.
+    """
     print('Init:', data)
     socket_id = request.sid
     if 'user_id' not in data or 'controllers' not in data:
@@ -32,12 +89,38 @@ def init_event(data):
 
 @socketio.on('disconnect')
 def disconnect_event(data):
+    """
+    Handles client disconnection.
+
+    Args:
+        data (dict): JSON payload (optional) sent during disconnection.
+
+    Actions:
+        - Calls `handle_disconnect` to process the disconnection.
+
+    Logs:
+        - "Client disconnected"
+    """
     print('Client disconnected')
     handle_disconnect(data)
 
 
 @socketio.on('trigger_irrigation')
 def irrigate_event(data):
+    """
+    Triggers manual irrigation for a controller.
+
+    Args:
+        data (dict): JSON payload with the required key 'controller_id'.
+
+    Actions:
+        - Validates presence of 'controller_id' in the payload.
+        - Calls `handle_irrigate` to initiate irrigation.
+
+    Logs:
+        - "Irrigating: <controller_id>"
+        - Errors if 'controller_id' is missing.
+    """
     if 'controller_id' not in data:
         print('controller ID not found, found:', data)
         return
@@ -48,6 +131,15 @@ def irrigate_event(data):
 
 @socketio.on('export')
 def export_event(data):
+    """
+    Handles export requests for controller data.
+
+    Args:
+        data (dict): JSON payload with keys 'controller_id' and 'type'.
+
+    Logs:
+        - Errors if required keys are missing.
+    """
     if 'controller_id' not in data or 'type' not in data:
         print('controller ID or type not found, found:', data)
         return
@@ -55,6 +147,18 @@ def export_event(data):
 
 @socketio.on('add_controller')
 def add_controller_event(data):
+    """
+    Adds a controller for a user.
+
+    Args:
+        data (dict): JSON payload with keys 'controller_id' and 'user_id'.
+
+    Actions:
+        - Calls `handle_add_controller` with the controller ID, user ID, and socket ID.
+
+    Logs:
+        - Errors if required keys are missing.
+    """
     if 'controller_id' not in data or 'user_id' not in data:
         print('controller ID or User ID not found, found:', data)
         return
@@ -66,6 +170,18 @@ def add_controller_event(data):
 
 @socketio.on('remove_controller')
 def remove_controller_event(data):
+    """
+    Removes a controller for a user.
+
+    Args:
+        data (dict): JSON payload with keys 'controller_id' and 'user_id'.
+
+    Actions:
+        - Calls `handle_remove_controller` to remove the controller for the given user.
+
+    Logs:
+        - Errors if required keys are missing.
+    """
     if 'controller_id' not in data or 'user_id' not in data:
         print('controller ID or User ID not found, found:', data)
         return
@@ -77,6 +193,22 @@ def remove_controller_event(data):
 
 @socketio.on('schedule_irrigation')
 def schedule_irrigation_event(data):
+    """
+    Schedules irrigation for a controller.
+
+    Args:
+        data (dict): JSON payload with keys:
+            - 'controller_id': ID of the controller.
+            - 'schedule_type': Type of schedule ('DAILY', 'WEEKLY', 'MONTHLY').
+            - 'schedule_time': Time for the schedule.
+
+    Actions:
+        - Validates required keys and schedule type.
+        - Calls `handle_schedule_irrigation` with the controller ID and schedule.
+
+    Logs:
+        - Errors if required keys are missing or schedule type is invalid.
+    """
     if 'controller_id' not in data or 'schedule_type' not in data or 'schedule_time' not in data:
         print('controller ID or Schedule not found, found:', data)
         return
@@ -94,11 +226,33 @@ def schedule_irrigation_event(data):
 
 @socketio.on('message')
 def message_event(data):
+    """
+    Handles general messages.
+
+    Args:
+        data (dict): JSON payload of the message.
+
+    Logs:
+        - "Message: <data>"
+    """
     print('Message:', data)
 
 
 @socketio.on('register')
 def register_event(data):
+    """
+    Registers a new user.
+
+    Args:
+        data (dict): JSON payload with keys 'email' and 'password'.
+
+    Actions:
+        - Calls `handle_register` to create a new user.
+        - Emits a response to the client with the registration result.
+
+    Logs:
+        - Errors if required keys are missing.
+    """
     if 'email' not in data or 'password' not in data:
         print('Email or Password not found, found:', data)
         return
@@ -111,6 +265,20 @@ def register_event(data):
 
 @socketio.on('login')
 def login_event(data):
+    """
+    Logs in a user.
+
+    Args:
+        data (dict): JSON payload with keys 'email' and 'password'.
+
+    Actions:
+        - Calls `handle_login` to authenticate the user.
+        - Emits a response to the client with the login result.
+
+    Logs:
+        - "User: <user>"
+        - Errors if required keys are missing.
+    """
     if 'email' not in data or 'password' not in data:
         print('Email or Password not found, found:', data)
         return
@@ -124,6 +292,18 @@ def login_event(data):
 
 @socketio.on('fetch_controller_data')
 def retrieve_controller_data_event(data):
+    """
+    Fetches data for a specific controller.
+
+    Args:
+        data (dict): JSON payload with the key 'controller_id'.
+
+    Actions:
+        - Calls `handle_retrieve_controller_data` to fetch controller data.
+
+    Logs:
+        - Errors if 'controller_id' is missing.
+    """
     print('Retrieving controller data:', data)
     if 'controller_id' not in data:
         print('controller ID not found, found:', data)
