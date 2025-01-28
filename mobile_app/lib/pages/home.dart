@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/util/SocketService.dart';
 import '../util/SharedPreferencesStorage.dart';
-import 'controller-dashboard.dart';
+import 'controller_dashboard.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -41,9 +41,23 @@ class _HomeState extends State<Home> {
       if (kDebugMode) {
         print('Received controllers response: $data');
       }
-      SharedPreferencesStorage.saveControllerList(data);
+      SharedPreferencesStorage.saveControllerList(data['controllers']);
       setState(() {
         controllerIds = SharedPreferencesStorage.getControllerList();
+      });
+    });
+
+    userId.then((onUser) {
+      controllerIds.then((onController) {
+        if (kDebugMode) {
+          print('User ID: $onUser');
+          print('Controller IDs: $onController');
+        }
+        Map<String, dynamic> data = {
+          'user_id': onUser,
+          'controllers': onController,
+        };
+        SocketService.socket.emit('init', data);
       });
     });
   }
@@ -78,7 +92,7 @@ class _HomeState extends State<Home> {
                   child: FloatingActionButton(
                     onPressed: () {
                       // Open the add controller pop-up
-                      _showAddcontrollerDialog(context);
+                      _showAddControllerDialog(context);
                     },
                     child: const Icon(Icons.add),
                   ),
@@ -86,7 +100,7 @@ class _HomeState extends State<Home> {
               ],
             );
           } else {
-            final controllerIds = snapshot.data!;
+            var controllerIds = snapshot.data!;
             return Column(
               children: [
                 Expanded(
@@ -109,6 +123,46 @@ class _HomeState extends State<Home> {
                                 ),
                               );
                             },
+                            onLongPress: () {
+                              // Show a confirmation dialog before deleting the controller ID
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Delete Controller'),
+                                    content: Text('Are you sure you want to delete controller ID: $controllerId?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context); // Close the dialog
+                                        },
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          // Remove the controller ID
+                                          userId.then((onValue) {
+                                            Map<String, dynamic> data = {
+                                              'controller_id': controllerId,
+                                              'user_id': onValue,
+                                            };
+                                            SocketService.socket.emit('remove_controller', data);
+                                          });
+
+                                          // Update the controllerIds list after deletion
+                                          setState(() {
+                                            controllerIds.remove(controllerId);
+                                          });
+
+                                          Navigator.pop(context); // Close the dialog
+                                        },
+                                        child: const Text('Delete'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
                           ),
                         ),
                       );
@@ -120,7 +174,7 @@ class _HomeState extends State<Home> {
                   child: FloatingActionButton(
                     onPressed: () {
                       // Open the add controller pop-up
-                      _showAddcontrollerDialog(context);
+                      _showAddControllerDialog(context);
                     },
                     child: const Icon(Icons.add),
                   ),
@@ -133,7 +187,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  void _showAddcontrollerDialog(BuildContext context) {
+  void _showAddControllerDialog(BuildContext context) {
     final TextEditingController controllerIdController = TextEditingController();
 
     showDialog(

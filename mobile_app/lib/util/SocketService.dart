@@ -57,6 +57,7 @@ class SocketService {
 
       return _socket!;
     } else {
+
       return _socket!;
     }
   }

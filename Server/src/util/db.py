@@ -2,14 +2,23 @@ import redis
 import pymongo
 from src.util.config import MONGO_URI, MONGO_DB, REDIS_HOST, REDIS_PORT
 
-mongo_client = pymongo.MongoClient(MONGO_URI)
-mongo_db = mongo_client[MONGO_DB]
+try:
+    mongo_client = pymongo.MongoClient(MONGO_URI)
+    mongo_db = mongo_client[MONGO_DB]
+
+except Exception as e:
+    print(f"Error connecting to MongoDB: {e}")
+    exit(1)
 
 USER_COLLECTION = 'users'
 CONTROLLER_COLLECTION = 'controllers'
 
-r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
-r.ping()
+try:
+    r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+    r.ping()
+except redis.ConnectionError as e:
+    print(f"Error connecting to Redis: {e}")
+    exit(1)
 
 if __name__ == '__main__':
     print("Connected to Redis and MongoDB")

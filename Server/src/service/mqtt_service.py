@@ -82,8 +82,6 @@ def record_sensor_data(payload: str, topic: str) -> None:
         # Append new sensor data
         sensor_data.append(json_data)
         mongo_db[CONTROLLER_COLLECTION].update_one({'_id': ObjectId(controller_id)}, {'$set': {'record': sensor_data}})
-
-        print(f"Updated record for controller {controller_id}")
         # Redis and socket emission
         try:
             user_list = []

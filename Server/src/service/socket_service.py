@@ -54,7 +54,27 @@ def handle_add_controller(controller_id: str, user_id: str, socket_id: str) -> N
         socketio.emit('controllers', {'controllers': controllers}, room=socket_id)
         mongo_db[USER_COLLECTION].update_one({'_id': ObjectId(user_id)}, {'$set': {'controllers': controllers}})
 
-        initialise_redis(controller_id, socket_id, user_id)
+        try:
+            if r.exists(controller_id):
+                user_list = json.loads(r.get(controller_id))
+            else:
+                user_list = []
+
+            if not any(user['user_id'] == user_id for user in user_list):
+                user_list.append({'user_id': user_id, 'socket_id': socket_id})
+                json_data = json.dumps(user_list)
+                print(f"Json data: {json_data}")
+                r.set(controller_id, json_data)
+            else:
+                socketio.emit('error', {'error_msg': f"This controller is already registered to user {user_id}."},
+                              room=socket_id)
+        except ResponseError as e:
+            print(f"Redis ResponseError: {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+        finally:
+            # Print the current value of the key for debugging
+            print(f"Final value for {controller_id}: {r.get(controller_id)}")
     except ValueError as e:
         print(f"ValueError: {e}")
     except InvalidId as e:
@@ -169,7 +189,7 @@ def handle_retrieve_controller_data(controller_id: str, socket_id: str) -> None:
             'record': res.get('record', []),
             'water_used_month': res.get('water_used_month', [])
         }
-        print(f"Controller data for controller {controller_id}: {json_data}")
+        print(f"Controller data for controller {controller_id}: {json_data} on socket {socket_id}")
         socketio.emit('controller_data_response', json_data, room=socket_id)
     except ResponseError as e:
         print(f"Redis ResponseError: {e}")
@@ -181,26 +201,22 @@ def handle_retrieve_controller_data(controller_id: str, socket_id: str) -> None:
         print(f"Unexpected error: {e}")
 
 
-def initialise_redis(controller_id, socket_id, user_id):
+def remap_redis(controller_id: str, user_id: str, socket_id: str) -> None:
     try:
         if r.exists(controller_id):
             user_list = json.loads(r.get(controller_id))
-        else:
-            user_list = []
-
-        if not any(user['user_id'] == user_id for user in user_list):
+            user_list = [user for user in user_list if user['user_id'] != user_id]
             user_list.append({'user_id': user_id, 'socket_id': socket_id})
             json_data = json.dumps(user_list)
-            print(f"Json data: {json_data}")
-            r.set(controller_id, json_data)
-
+            if json_data != '[]':
+                r.set(controller_id, json_data)
+            else:
+                r.delete(controller_id)
         else:
-            socketio.emit('error', {'error_msg': f"This controller is already registered to user {user_id}."},
-                          room=socket_id)
+            print('controller not found')
     except ResponseError as e:
         print(f"Redis ResponseError: {e}")
     except Exception as e:
         print(f"Unexpected error: {e}")
     finally:
-        # Print the current value of the key for debugging
         print(f"Final value for {controller_id}: {r.get(controller_id)}")

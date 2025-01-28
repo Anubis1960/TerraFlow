@@ -3,21 +3,31 @@ from flask import request
 from src.service.socket_service import (handle_connect, handle_disconnect, handle_irrigate, handle_add_controller,
                                         handle_remove_controller, handle_schedule_irrigation, handle_register,
                                         handle_login,
-                                        handle_retrieve_controller_data, initialise_redis)
+                                        handle_retrieve_controller_data, remap_redis)
 from src.util.extensions import socketio
 
 
 @socketio.on('connect')
-def connet_event(data):
+def connet_event():
     print('Client connected')
     socket_id = request.sid
     print('Socket ID:', socket_id)
-    if data is not None:
-        print('Data:', data)
-        user_id = data['user_id']
-        controllers = data['controllers']
-        initialise_redis(controllers, socket_id, user_id)
     handle_connect(socket_id)
+
+
+@socketio.on('init')
+def init_event(data):
+    print('Init:', data)
+    socket_id = request.sid
+    if 'user_id' not in data or 'controllers' not in data:
+        print('User ID not found, found:', data)
+        return
+    if not data['controllers']:
+        print('No controllers found, found:', data)
+        return
+    user_id = data['user_id']
+    for controller in data['controllers']:
+        remap_redis(controller, user_id, socket_id)
 
 
 @socketio.on('disconnect')
@@ -26,12 +36,13 @@ def disconnect_event(data):
     handle_disconnect(data)
 
 
-@socketio.on('irrigate')
+@socketio.on('trigger_irrigation')
 def irrigate_event(data):
     if 'controller_id' not in data:
         print('controller ID not found, found:', data)
         return
     controller_id = data['controller_id']
+    print('Irrigating:', controller_id)
     handle_irrigate(controller_id)
 
 
@@ -69,7 +80,7 @@ def schedule_irrigation_event(data):
     if 'controller_id' not in data or 'schedule_type' not in data or 'schedule_time' not in data:
         print('controller ID or Schedule not found, found:', data)
         return
-    if data['schedule_type'] not in ['DAILY', 'WEEKLY']:
+    if data['schedule_type'] not in ['DAILY', 'WEEKLY', 'MONTHLY']:
         print('Invalid schedule type, found:', data)
         return
     controller_id = data['controller_id']
@@ -77,6 +88,7 @@ def schedule_irrigation_event(data):
         'type': data['schedule_type'],
         'time': data['schedule_time']
     }
+    print('Schedule:', schedule)
     handle_schedule_irrigation(controller_id, schedule)
 
 
