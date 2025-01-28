@@ -1,18 +1,23 @@
-from socket import socket
-
 from flask import request
 
-from src.service.socket_service import handle_connect, handle_disconnect, handle_irrigate, handle_add_controller, \
-    handle_remove_controller, handle_schedule_irrigation, handle_register, handle_login, handle_retrieve_controller_data
+from src.service.socket_service import (handle_connect, handle_disconnect, handle_irrigate, handle_add_controller,
+                                        handle_remove_controller, handle_schedule_irrigation, handle_register,
+                                        handle_login,
+                                        handle_retrieve_controller_data, initialise_redis)
 from src.util.extensions import socketio
 
 
 @socketio.on('connect')
-def connet_event():
+def connet_event(data):
     print('Client connected')
-    currentSocketId = request.sid
-    print('Socket ID:', currentSocketId)
-    handle_connect(currentSocketId)
+    socket_id = request.sid
+    print('Socket ID:', socket_id)
+    if data is not None:
+        print('Data:', data)
+        user_id = data['user_id']
+        controllers = data['controllers']
+        initialise_redis(controllers, socket_id, user_id)
+    handle_connect(socket_id)
 
 
 @socketio.on('disconnect')
@@ -114,4 +119,3 @@ def retrieve_controller_data_event(data):
     controller_id = data['controller_id']
     socket_id = request.sid
     handle_retrieve_controller_data(controller_id, socket_id)
-

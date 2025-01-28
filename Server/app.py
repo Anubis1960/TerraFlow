@@ -1,7 +1,6 @@
 import os
 from flask import Flask
 from src.util.extensions import socketio, mqtt
-import logging
 import src.api.socket_api
 import src.api.mqtt_api
 from src.util.config import MQTT_BROKER, MQTT_PORT, HOST, PORT
@@ -20,14 +19,6 @@ socketio.init_app(app)
 mqtt.init_app(app)
 
 mqtt.subscribe('register')
-
-# Configure logging
-# logging.basicConfig(
-#     level=logging.DEBUG,
-#     format='%(levelname)s - %(message)s',
-#     handlers=[logging.StreamHandler()]
-# )
-
 
 # Run the app
 if __name__ == '__main__':

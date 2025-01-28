@@ -34,7 +34,3 @@ if __name__ == '__main__':
         print("Controller:")
         print(controller)
         # mongo_db.controller.delete_one({'_id': controller['_id']})
-
-    
-
-

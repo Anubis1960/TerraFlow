@@ -33,7 +33,8 @@ def register_controller(payload: str) -> None:
 
         # Subscribe to controller topics
 
-        print(f"Subscribing to topics for controller {controller_id}, topics: {controller_id}/record, {controller_id}/predict")
+        print(f"Subscribing to topics for controller {controller_id}, topics: {controller_id}/record,"
+              f" {controller_id}/predict")
 
         mqtt.subscribe(f'{controller_id}/record/sensor_data')
         mqtt.subscribe(f'{controller_id}/record/water_used')
@@ -137,7 +138,8 @@ def record_water_used(payload: str, topic: str) -> None:
 
         # Append new water used data
         water_used.append(json_data)
-        mongo_db[CONTROLLER_COLLECTION].update_one({'_id': ObjectId(controller_id)}, {'$set': {'water_used_month': water_used}})
+        mongo_db[CONTROLLER_COLLECTION].update_one({'_id': ObjectId(controller_id)},
+                                                   {'$set': {'water_used_month': water_used}})
 
         print(f"Updated water used data for controller {controller_id}")
 
@@ -147,4 +149,3 @@ def record_water_used(payload: str, topic: str) -> None:
         print(f"ValueError: {e}")
     except Exception as general_error:
         print(f"Unexpected error in record function: {general_error}")
-
