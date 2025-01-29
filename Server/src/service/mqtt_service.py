@@ -235,7 +235,14 @@ def record_water_used(payload: str, topic: str) -> None:
             print(f"Invalid data type for 'water_used_month'. Expected list, found {type(water_used)}.")
             return
 
-        water_used.append(json_data)
+        last_entry = water_used[-1] if water_used else None
+
+        if last_entry and last_entry['timestamp'] == json_data['timestamp']:
+            last_entry['water_used'] += json_data['water_used']
+            water_used[-1] = last_entry
+        else:
+            water_used.append(json_data)
+
         mongo_db[CONTROLLER_COLLECTION].update_one({'_id': ObjectId(controller_id)},
                                                    {'$set': {'water_used_month': water_used}})
         print(f"Updated water used data for controller {controller_id}")

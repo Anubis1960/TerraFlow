@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../util/SocketService.dart';
 import '../util/Charts.dart';
-import 'dart:async';
 
 class ControllerDashBoard extends StatefulWidget {
   final dynamic controllerId;
@@ -25,14 +24,10 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   };
   String filterType = 'day';
   String selectedFilterValue = '';
-  Timer? updateThrottle;
 
   @override
   void initState() {
     super.initState();
-    if (kDebugMode) {
-      print('initState');
-    }
 
     SocketService.socket.on('controller_data_response', (data) {
       if (kDebugMode) {
@@ -47,14 +42,9 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     });
 
     SocketService.socket.on('record', (data) {
-      if (updateThrottle?.isActive ?? false) return; // Skip if already throttled
-
-      updateThrottle = Timer(const Duration(milliseconds: 200), () {
-        if (mounted) {
-          setState(() {
-            controllerData['record'].add(data);
-          });
-        }
+      controllerData['record'].add(data);
+      setState(() {
+        controllerData['record'] = controllerData['record'];
       });
     });
 
@@ -72,7 +62,6 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
 
   List<FlSpot> _getSensorDataSpots(List<dynamic> records, String sensorKey) {
     if (filterType == 'year' || filterType == 'month') {
-      // Aggregate data into monthly or daily averages
       Map<String, List<double>> aggregatedData = {};
       for (var record in records) {
         String timestamp = record['timestamp'];
@@ -86,7 +75,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       }
 
       // Sort keys (months or days) and calculate averages
-      List<String> sortedKeys = aggregatedData.keys.toList()..sort();
+      List<String> sortedKeys = aggregatedData.keys.toList();
       List<FlSpot> spots = [];
       for (var key in sortedKeys) {
         double avg = aggregatedData[key]!.reduce((a, b) => a + b) / aggregatedData[key]!.length;
@@ -104,22 +93,6 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     }
   }
 
-  List<BarChartGroupData> _getWaterUsageData(List<dynamic> waterUsageData) {
-    return waterUsageData.asMap().entries.map((entry) {
-      int index = entry.key;
-      var data = entry.value;
-      return BarChartGroupData(
-        x: index,
-        barRods: [
-          BarChartRodData(
-            toY: data['water_used'].toDouble(),
-            color: Colors.blue,
-          ),
-        ],
-      );
-    }).toList();
-  }
-
   List<dynamic> _filterRecords(List<dynamic> records) {
     if (filterType == 'day') {
       return records.where((record) => record['timestamp'].startsWith(selectedFilterValue)).toList();
@@ -133,6 +106,9 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
 
   List<String> _getFilterValues(List<dynamic> records) {
     Set<String> values = {};
+    if (records.isEmpty) {
+      return [];
+    }
     for (var record in records) {
       String timestamp = record['timestamp'];
       if (filterType == 'day') {
@@ -143,39 +119,14 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
         values.add(timestamp.substring(0, 4));
       }
     }
-    return values.toList()..sort();
+    return values.toList();
   }
 
-  List<String> _getXAxisLabels(List<dynamic> records) {
-    if (filterType == 'day') {
-      // Ensure hours are unique and sorted
-      Set<String> hours = {};
-      for (var record in records) {
-        String hour = record['timestamp'].substring(11, 13);
-        hours.add('$hour:00');
-      }
-      return hours.toList()..sort();
-    } else if (filterType == 'month') {
-      // Ensure days are unique and sorted
-      Set<String> days = {};
-      for (var record in records) {
-        String day = record['timestamp'].substring(8, 10);
-        days.add(day);
-      }
-      return days.toList()..sort((a, b) => int.parse(a).compareTo(int.parse(b)));
-    } else {
-      // Ensure months are unique and sorted
-      Set<String> months = {};
-      for (var record in records) {
-        String month = record['timestamp'].substring(5, 7);
-        month = month.replaceAll('/', '');
-        months.add(month);
-      }
-      if (kDebugMode) {
-        print('Months: $months');
-      }
-      return months.toList()..sort((a, b) => int.parse(a).compareTo(int.parse(b)));
+  double _calculateAverage(List<dynamic> records, String key) {
+    if (records.isEmpty) {
+      return 0;
     }
+    return records.map((record) => record['sensor_data'][key].toDouble()).reduce((a, b) => a + b) / records.length;
   }
 
   void _showScheduleDialog(BuildContext context) {
@@ -257,7 +208,9 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   @override
   Widget build(BuildContext context) {
     List<dynamic> filteredRecords = _filterRecords(controllerData['record']);
-    List<String> xAxisLabels = _getXAxisLabels(filteredRecords);
+    double avgHumidity = _calculateAverage(filteredRecords, 'air_humidity');
+    double avgTemperature = _calculateAverage(filteredRecords, 'air_temperature');
+    double avgWaterUsage = controllerData['water_used_month'].isNotEmpty ? 0.0 : 0.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -301,38 +254,20 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                 lineColor: Colors.green,
                 minY: 0,
                 maxY: 110,
-                xAxisLabels: xAxisLabels,
+                xAxisLabels: [],
                 isScrollable: filterType == 'day', // Only scrollable for daily
                 maxX: filteredRecords.length.toDouble(), // Dynamically set maxX
               ),
               const SizedBox(height: 20),
-              Charts.buildLineChart(
-                title: 'Air Humidity',
-                spots: _getSensorDataSpots(filteredRecords, 'air_humidity'),
-                lineColor: Colors.blue,
-                minY: 0,
-                maxY: 110,
-                xAxisLabels: xAxisLabels,
-                isScrollable: filterType == 'day', // Only scrollable for daily
-                maxX: filteredRecords.length.toDouble(), // Dynamically set maxX
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildSummaryCard('Humidity', avgHumidity, Colors.blue),
+                  _buildSummaryCard('Temperature', avgTemperature, Colors.red),
+                  _buildSummaryCard('Water Usage', avgWaterUsage, Colors.green),
+                ],
               ),
               const SizedBox(height: 20),
-              Charts.buildLineChart(
-                title: 'Air Temperature',
-                spots: _getSensorDataSpots(filteredRecords, 'air_temperature'),
-                lineColor: Colors.red,
-                minY: -30,
-                maxY: 110,
-                xAxisLabels: xAxisLabels,
-                isScrollable: filterType == 'day', // Only scrollable for daily
-                maxX: filteredRecords.length.toDouble(), // Dynamically set maxX
-              ),
-              const SizedBox(height: 20),
-              Charts.buildBarChart(
-                title: 'Monthly Water Usage',
-                barGroups: _getWaterUsageData(controllerData['water_used_month']),
-                xAxisLabels: xAxisLabels,
-              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -351,6 +286,34 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(String title, double value, Color color) {
+    return Card(
+      elevation: 5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        width: 100,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+        ),
+        child: Column(
+          children: [
+            Text(
+              title,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              value.toStringAsFixed(1),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+            ),
+          ],
         ),
       ),
     );
