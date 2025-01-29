@@ -1,7 +1,4 @@
 import unittest
-from Crypto.Cipher import AES
-from Crypto.Hash import SHA256
-from Crypto import Random
 from src.util.config import ENCRYPT_KEY as key
 from src.util.crypt import encrypt, decrypt
 

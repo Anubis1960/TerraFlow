@@ -10,7 +10,8 @@ Handlers:
 
 Dependencies:
 - `paho.mqtt.client`: For MQTT functionality.
-- `src.service.mqtt_service`: Includes service methods for registering controllers, making predictions, recording sensor data, and water usage.
+- `src.service.mqtt_service`: Includes service methods for registering controllers, making predictions,
+recording sensor data, and water usage.
 - `src.util.extensions.mqtt`: MQTT utility extension.
 
 Functionality:

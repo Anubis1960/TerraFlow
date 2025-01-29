@@ -1,10 +1,8 @@
+import json
 import unittest
 from unittest.mock import patch, MagicMock
+
 from bson.objectid import ObjectId
-import json
-from pymongo.errors import DuplicateKeyError
-from redis import ResponseError
-from bson.errors import InvalidId
 
 # Import the functions to be tested
 from src.service.mqtt_service import (
@@ -13,11 +11,7 @@ from src.service.mqtt_service import (
     record_sensor_data,
     record_water_used,
     extract_controller_id,
-    mongo_db,
-    r,
-    mqtt,
     CONTROLLER_COLLECTION,
-    socketio,
 )
 
 
@@ -90,7 +84,8 @@ class TestMqtt(unittest.TestCase):
 
     def test_record_sensor_data_success(self):
         # Test successful recording of sensor data
-        payload = json.dumps({"sensor_data": {"air_temperature": 10, "air_humidity": 10, "soil_humidity": 10}, "timestamp": "2023-10-01T00:00:00Z"})
+        payload = json.dumps({"sensor_data": {"air_temperature": 10, "air_humidity": 10, "soil_humidity": 10},
+                              "timestamp": "2023-10-01T00:00:00Z"})
         topic = "507f1f77bcf86cd799439011/record/sensor_data"
 
         # Mock MongoDB find and update

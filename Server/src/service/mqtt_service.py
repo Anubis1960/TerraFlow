@@ -35,12 +35,13 @@ MongoDB Collection:
 """
 
 import json
-from bson.errors import InvalidId
+
+from bson.objectid import ObjectId
+from pymongo.errors import DuplicateKeyError
 from redis import ResponseError
+
 from src.util.db import r, mongo_db, CONTROLLER_COLLECTION
 from src.util.extensions import socketio, mqtt
-from pymongo.errors import DuplicateKeyError
-from bson.objectid import ObjectId
 
 
 def extract_controller_id(topic: str) -> str:

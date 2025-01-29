@@ -1,5 +1,6 @@
 """
-Service handlers for IoT irrigation controllers, including user management, controller interaction, and irrigation scheduling.
+Service handlers for IoT irrigation controllers, including user management, controller interaction,
+and irrigation scheduling.
 
 ### Functions:
 1. **handle_connect** - Handles the event when a client connects.
@@ -15,13 +16,14 @@ Service handlers for IoT irrigation controllers, including user management, cont
 """
 
 import json
-from redis.exceptions import ResponseError
-from src.util.db import r, mongo_db, USER_COLLECTION, CONTROLLER_COLLECTION
-from src.util.extensions import mqtt, socketio
-from src.util.crypt import encrypt, decrypt
+
 import regex as re
 from bson.objectid import ObjectId
-from bson.errors import InvalidId
+from redis.exceptions import ResponseError
+
+from src.util.crypt import encrypt, decrypt
+from src.util.db import r, mongo_db, USER_COLLECTION, CONTROLLER_COLLECTION
+from src.util.extensions import mqtt, socketio
 
 email_regex = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 

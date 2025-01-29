@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import patch, MagicMock
+
 from bson.objectid import ObjectId
-from redis.exceptions import ResponseError
-from src.util.db import USER_COLLECTION, CONTROLLER_COLLECTION
-from  src.service.socket_service import (
+
+from src.service.socket_service import (
     handle_add_controller,
     handle_remove_controller,
     handle_register,
@@ -11,8 +11,7 @@ from  src.service.socket_service import (
     handle_retrieve_controller_data,
     remap_redis
 )
-from src.util.extensions import socketio
-from src.util.crypt import encrypt, decrypt
+from src.util.db import USER_COLLECTION, CONTROLLER_COLLECTION
 
 
 class TestControllerManagement(unittest.TestCase):
@@ -76,7 +75,8 @@ class TestControllerManagement(unittest.TestCase):
         )
 
         # Assert that the controller was added to the Redis cache
-        self.redis_mock.set.assert_called_with(controller_id, '[{"user_id": "507f1f77bcf86cd799439011", "socket_id": "socket_id"}]')
+        self.redis_mock.set.assert_called_with(controller_id,
+                                               '[{"user_id": "507f1f77bcf86cd799439011", "socket_id": "socket_id"}]')
 
     def test_handle_remove_controller(self):
         # Test removing a controller from a user
