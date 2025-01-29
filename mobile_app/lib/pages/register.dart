@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../util/SocketService.dart';
 import '../util/SharedPreferencesStorage.dart';
 import 'home.dart';
+import 'login.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -12,52 +13,37 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-
-  final email = TextEditingController();
-  final password = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
 
   @override
   void initState() {
-    if (kDebugMode) {
-      print('initState');
-    }
     super.initState();
-
     SocketService.socket.on('register_response', (data) {
       if (kDebugMode) {
         print('Received register response: $data');
       }
       if (data['user_id'] != null && data['user_id'].isNotEmpty) {
         SharedPreferencesStorage.saveUserId(data['user_id']);
-        Navigator.pop(context);
-        Navigator.pop(context);
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => Home()),
         );
       } else {
-        if (data['error_msg'] != null && data['error_msg'].isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(data['error_msg']),
-            ),
-          );
-        }
-        else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Invalid email or password.'),
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['error_msg'] ?? 'Invalid email or password.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
       }
     });
   }
 
   @override
   void dispose() {
-    email.dispose();
-    password.dispose();
+    emailController.dispose();
+    passwordController.dispose();
     SocketService.socket.off('register_response');
     super.dispose();
   }
@@ -65,51 +51,78 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Register'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            SizedBox(height: 16.0),
-            TextField(
-              controller: email,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.person_add, size: 100, color: Colors.blue),
+              const SizedBox(height: 16),
+              const Text(
+                'Create Account',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-            ),
-            SizedBox(height: 16.0),
-            TextField(
-              controller: password,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 8),
+              const Text(
+                'Register to get started',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
-            ),
-            SizedBox(height: 24.0),
-            ElevatedButton(
-              onPressed: () {
-                if (email.text.isEmpty || password.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please fill in all fields.'),
-                    ),
-                  );
-                  return;
-                }
-                Map<String, String> registerJson = {
-                  'email': email.text,
-                  'password': password.text,
-                };
-                SocketService.socket.emit('register', registerJson);
-              },
-              child: Text('Register'),
-            ),
-          ],
+              const SizedBox(height: 32),
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                obscureText: true,
+                controller: passwordController,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: Icon(Icons.lock),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please fill in all fields.'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                      return;
+                    }
+                    Map<String, String> registerJson = {
+                      'email': emailController.text,
+                      'password': passwordController.text,
+                    };
+                    SocketService.socket.emit('register', registerJson);
+                  },
+                  child: const Text('Register', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Back to Login', style: TextStyle(fontSize: 16, color: Colors.blue)),
+              ),
+            ],
+          ),
         ),
       ),
     );

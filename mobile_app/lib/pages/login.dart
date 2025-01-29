@@ -13,16 +13,12 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final email = TextEditingController();
-  final password = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
 
   @override
   void initState() {
-    if (kDebugMode) {
-      print('initState');
-    }
     super.initState();
-
     SocketService.socket.on('login_response', (data) {
       if (kDebugMode) {
         print('Received login response: $data');
@@ -30,8 +26,7 @@ class _LoginPageState extends State<LoginPage> {
       if (data['user_id'] != null && data['user_id'].isNotEmpty) {
         SharedPreferencesStorage.saveUserId(data['user_id']);
         SharedPreferencesStorage.saveControllerList(data['controllers']);
-        Navigator.pop(context);
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => Home()),
         );
@@ -39,6 +34,7 @@ class _LoginPageState extends State<LoginPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Invalid email or password.'),
+            backgroundColor: Colors.redAccent,
           ),
         );
       }
@@ -47,8 +43,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
-    email.dispose();
-    password.dispose();
+    emailController.dispose();
+    passwordController.dispose();
     SocketService.socket.off('login_response');
     super.dispose();
   }
@@ -56,65 +52,81 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Login'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            TextField(
-              controller: email,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.lock_outline, size: 100, color: Colors.blue),
+              const SizedBox(height: 16),
+              const Text(
+                'Welcome Back',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-            ),
-            SizedBox(height: 16.0),
-            TextField(
-              obscureText: true,
-              controller: password,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 8),
+              const Text(
+                'Login to continue',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
-            ),
-            SizedBox(height: 24.0),
-            ElevatedButton(
-              onPressed: () {
-                if (email.text.isEmpty || password.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please fill in all fields.'),
-                    ),
+              const SizedBox(height: 32),
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                obscureText: true,
+                controller: passwordController,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: Icon(Icons.lock),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please fill in all fields.'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                      return;
+                    }
+                    Map<String, String> loginJson = {
+                      'email': emailController.text,
+                      'password': passwordController.text,
+                    };
+                    SocketService.socket.emit('login', loginJson);
+                  },
+                  child: const Text('Login', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => RegisterPage()),
                   );
-                  return;
-                }
-                Map<String, String> loginJson = {
-                  'email': email.text,
-                  'password': password.text,
-                };
-
-                SocketService.socket.emit('login', loginJson);
-                if (kDebugMode) {
-                  print('Login button pressed');
-                }
-              },
-              child: Text('Login'),
-            ),
-            SizedBox(height: 16.0),
-            TextButton(
-              onPressed: () {
-                // Navigate to the registration page
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => RegisterPage()),
-                );
-              },
-              child: Text('Register'),
-            ),
-          ],
+                },
+                child: const Text('Don’t have an account? Register'),
+              ),
+            ],
+          ),
         ),
       ),
     );

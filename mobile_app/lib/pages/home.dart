@@ -73,7 +73,22 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('controllers'),
+        elevation: 8,
+        backgroundColor: Colors.deepPurpleAccent,
+        title: const Text(
+          'Controllers',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                controllerIds = SharedPreferencesStorage.getControllerList();
+              });
+            },
+          )
+        ],
       ),
       body: FutureBuilder<List<String>>(
         future: controllerIds,
@@ -83,21 +98,26 @@ class _HomeState extends State<Home> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('No controllers found.'),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: FloatingActionButton(
-                    onPressed: () {
-                      // Open the add controller pop-up
-                      _showAddControllerDialog(context);
-                    },
-                    child: const Icon(Icons.add),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'No controllers found.',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                   ),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: FloatingActionButton(
+                      onPressed: () {
+                        _showAddControllerDialog(context);
+                      },
+                      backgroundColor: Colors.deepPurpleAccent,
+                      child: const Icon(Icons.add),
+                    ),
+                  ),
+                ],
+              ),
             );
           } else {
             var controllerIds = snapshot.data!;
@@ -111,11 +131,24 @@ class _HomeState extends State<Home> {
                       return Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           elevation: 4,
                           child: ListTile(
-                            title: Text('Controller ID: $controllerId'),
+                            contentPadding: const EdgeInsets.all(16),
+                            title: Text(
+                              'Controller ID: $controllerId',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            trailing: Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.deepPurpleAccent,
+                            ),
                             onTap: () {
-                              // Navigate to the dynamic page for this controllerId
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -124,7 +157,6 @@ class _HomeState extends State<Home> {
                               );
                             },
                             onLongPress: () {
-                              // Show a confirmation dialog before deleting the controller ID
                               showDialog(
                                 context: context,
                                 builder: (context) {
@@ -134,13 +166,12 @@ class _HomeState extends State<Home> {
                                     actions: [
                                       TextButton(
                                         onPressed: () {
-                                          Navigator.pop(context); // Close the dialog
+                                          Navigator.pop(context);
                                         },
                                         child: const Text('Cancel'),
                                       ),
                                       TextButton(
                                         onPressed: () {
-                                          // Remove the controller ID
                                           userId.then((onValue) {
                                             Map<String, dynamic> data = {
                                               'controller_id': controllerId,
@@ -149,12 +180,11 @@ class _HomeState extends State<Home> {
                                             SocketService.socket.emit('remove_controller', data);
                                           });
 
-                                          // Update the controllerIds list after deletion
                                           setState(() {
                                             controllerIds.remove(controllerId);
                                           });
 
-                                          Navigator.pop(context); // Close the dialog
+                                          Navigator.pop(context);
                                         },
                                         child: const Text('Delete'),
                                       ),
@@ -173,9 +203,9 @@ class _HomeState extends State<Home> {
                   padding: const EdgeInsets.all(16.0),
                   child: FloatingActionButton(
                     onPressed: () {
-                      // Open the add controller pop-up
                       _showAddControllerDialog(context);
                     },
+                    backgroundColor: Colors.deepPurpleAccent,
                     child: const Icon(Icons.add),
                   ),
                 ),
@@ -194,7 +224,10 @@ class _HomeState extends State<Home> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Add controller'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text('Add Controller', style: TextStyle(fontSize: 18)),
           content: TextField(
             controller: controllerIdController,
             decoration: const InputDecoration(
@@ -205,15 +238,14 @@ class _HomeState extends State<Home> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close the dialog
+                Navigator.pop(context);
               },
               child: const Text('Cancel'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 final newControllerId = controllerIdController.text.trim();
                 if (newControllerId.isNotEmpty) {
-                  // Save the new controller ID and update the UI
                   userId.then((onValue) {
                     Map<String, dynamic> data = {
                       'controller_id': newControllerId,
@@ -228,7 +260,7 @@ class _HomeState extends State<Home> {
                     ),
                   );
                 }
-                Navigator.pop(context); // Close the dialog
+                Navigator.pop(context);
               },
               child: const Text('Add'),
             ),

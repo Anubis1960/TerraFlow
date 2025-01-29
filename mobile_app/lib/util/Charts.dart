@@ -2,102 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class Charts {
-  static Widget buildBarChart({
-    required String title,
-    required List<BarChartGroupData> barGroups,
-    required List<String> xAxisLabels,
-    Color barColor = Colors.blue,
-    Color backgroundColor = Colors.white,
-    bool showGrid = true,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black,
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 300,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                gridData: FlGridData(show: showGrid),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            index < xAxisLabels.length ? xAxisLabels[index] : '',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          value.toStringAsFixed(1),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.black54,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                borderData: FlBorderData(
-                  show: true,
-                  border: Border.all(
-                    color: Colors.grey,
-                    width: 1,
-                  ),
-                ),
-                barGroups: barGroups,
-                barTouchData: BarTouchData(enabled: true),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   static Widget buildLineChart({
     required String title,
     required List<FlSpot> spots,
@@ -107,9 +11,9 @@ class Charts {
     required List<String> xAxisLabels,
     bool isScrollable = false,
     Color backgroundColor = Colors.white,
-    bool showGrid = true,
-    double? maxX, // Add maxX parameter
-    ScrollController? scrollController, // Add scrollController parameter
+    bool showGrid = false,
+    double? maxX,
+    ScrollController? scrollController,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -118,7 +22,7 @@ class Charts {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black,
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -137,35 +41,51 @@ class Charts {
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 300,
-            child: isScrollable
-                ? SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              controller: scrollController, // Pass the scrollController
-              child: SizedBox(
-                width: maxX != null ? maxX * 10.0 : xAxisLabels.length * 10.0 + 40.0, // Adjust width based on maxX
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 40.0), // Add padding to the right
-                  child: _buildLineChartContent(
+            height: 400,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 50,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(5, (index) {
+                      double value = maxY - (maxY - minY) * (index / 4);
+                      return Text(
+                        value.toStringAsFixed(1),
+                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                      );
+                    }),
+                  ),
+                ),
+                Expanded(
+                  child: isScrollable
+                      ? SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    controller: scrollController,
+                    child: SizedBox(
+                      width: maxX != null ? maxX * 40.0 : xAxisLabels.length * 40.0,
+                      child: _buildLineChartContent(
+                        spots,
+                        lineColor,
+                        minY,
+                        maxY,
+                        xAxisLabels,
+                        showGrid,
+                        maxX: maxX,
+                      ),
+                    ),
+                  )
+                      : _buildLineChartContent(
                     spots,
                     lineColor,
                     minY,
                     maxY,
                     xAxisLabels,
                     showGrid,
-                    maxX: maxX, // Pass maxX to the chart content
+                    maxX: maxX,
                   ),
                 ),
-              ),
-            )
-                : _buildLineChartContent(
-              spots,
-              lineColor,
-              minY,
-              maxY,
-              xAxisLabels,
-              showGrid,
-              maxX: maxX, // Pass maxX to the chart content
+              ],
             ),
           ),
         ],
@@ -179,62 +99,54 @@ class Charts {
       double minY,
       double maxY,
       List<String> xAxisLabels,
-      bool showGrid,
-      {double? maxX} // Add maxX parameter
-      ) {
+      bool showGrid, {
+        double? maxX,
+      }) {
     return LineChart(
       LineChartData(
         minX: 0,
-        maxX: maxX, // Use maxX or default to the number of labels
+        maxX: maxX ?? (xAxisLabels.length - 1).toDouble(),
         minY: minY,
         maxY: maxY,
-        gridData: FlGridData(show: showGrid),
+        gridData: FlGridData(
+          show: showGrid,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) {
+            return FlLine(color: Colors.grey.withOpacity(0.3), strokeWidth: 1);
+          },
+        ),
         titlesData: FlTitlesData(
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                final index = value.toInt();
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    index < xAxisLabels.length ? xAxisLabels[index] : '',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: Colors.black54,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
           leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                return Text(
-                  value.toStringAsFixed(1),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.black54,
-                  ),
-                );
-              },
-            ),
-          ),
-          topTitles: AxisTitles(
             sideTitles: SideTitles(showTitles: false),
           ),
           rightTitles: AxisTitles(
             sideTitles: SideTitles(showTitles: false),
           ),
+          topTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                int index = value.toInt();
+                if (index >= 0 && index < xAxisLabels.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 5),
+                    child: Text(
+                      xAxisLabels[index],
+                      style: const TextStyle(fontSize: 10, color: Colors.black54),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
         ),
         borderData: FlBorderData(
           show: true,
-          border: Border.all(
-            color: Colors.grey,
-            width: 1,
-          ),
+          border: Border.all(color: Colors.grey.withOpacity(0.5), width: 1),
         ),
         lineBarsData: [
           LineChartBarData(
@@ -242,6 +154,11 @@ class Charts {
             isCurved: true,
             color: lineColor,
             barWidth: 3,
+            belowBarData: BarAreaData(
+              show: true,
+              color: lineColor.withOpacity(0.2),
+            ),
+            dotData: FlDotData(show: true),
           ),
         ],
       ),

@@ -89,7 +89,7 @@ def register_controller(payload: str) -> None:
         ctrl_json = {
             '_id': ObjectId(controller_id),
             'record': [],
-            'water_used_month': []
+            'water_usage': []
         }
 
         try:
@@ -206,7 +206,7 @@ def record_water_used(payload: str, topic: str) -> None:
 
     Workflow:
         1. Parses the JSON payload to extract water usage and timestamp.
-        2. Updates the controller's `water_used_month` field in MongoDB.
+        2. Updates the controller's `water_usage` field in MongoDB.
 
     Exceptions:
         - Handles invalid JSON payloads, invalid controller IDs, and database errors.
@@ -214,13 +214,13 @@ def record_water_used(payload: str, topic: str) -> None:
     Example JSON Payload:
     {
         "water_used": 50,
-        "timestamp": "2025-01"
+        "date": "2025-01"
     }
     """
     try:
         json_data = json.loads(payload)
-        if 'water_used' not in json_data or 'timestamp' not in json_data:
-            print('Invalid payload: Missing water_used or timestamp:', json_data)
+        if 'water_used' not in json_data or 'date' not in json_data:
+            print('Invalid payload: Missing water_used or date:', json_data)
             return
 
         controller_id = extract_controller_id(topic)
@@ -230,21 +230,21 @@ def record_water_used(payload: str, topic: str) -> None:
             print(f"Controller with ID {controller_id} not found in database.")
             return
 
-        water_used = res.get('water_used_month', [])
+        water_used = res.get('water_usage', [])
         if not isinstance(water_used, list):
-            print(f"Invalid data type for 'water_used_month'. Expected list, found {type(water_used)}.")
+            print(f"Invalid data type for 'water_usage'. Expected list, found {type(water_used)}.")
             return
 
         last_entry = water_used[-1] if water_used else None
 
-        if last_entry and last_entry['timestamp'] == json_data['timestamp']:
+        if last_entry and last_entry['date'] == json_data['date']:
             last_entry['water_used'] += json_data['water_used']
             water_used[-1] = last_entry
         else:
             water_used.append(json_data)
 
         mongo_db[CONTROLLER_COLLECTION].update_one({'_id': ObjectId(controller_id)},
-                                                   {'$set': {'water_used_month': water_used}})
+                                                   {'$set': {'water_usage': water_used}})
         print(f"Updated water used data for controller {controller_id}")
 
     except Exception as e:

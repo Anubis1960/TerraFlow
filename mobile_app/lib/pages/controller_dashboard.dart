@@ -20,7 +20,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
 
   Map<String, dynamic> controllerData = {
     'record': [],
-    'water_used_month': [],
+    'water_usage': [],
   };
   String filterType = 'day';
   String selectedFilterValue = '';
@@ -35,8 +35,30 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       }
       setState(() {
         controllerData = data;
+        print(data);
         if (controllerData['record'] != null && controllerData['record'].isNotEmpty) {
           selectedFilterValue = controllerData['record'][0]['timestamp'].substring(0, 10);
+        }
+        if (controllerData['water_usage'] == null) {
+          controllerData['water_usage'] = [
+            {
+              'date': '',
+              'water_used': 0,
+            },
+          ];
+        }
+
+        if (controllerData['record'].isEmpty) {
+          controllerData['record'] = [
+            {
+              'timestamp': '',
+              'sensor_data': {
+                'soil_moisture': 0,
+                'air_humidity': 0,
+                'air_temperature': 0,
+              },
+            },
+          ];
         }
       });
     });
@@ -51,6 +73,15 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     SocketService.socket.emit('fetch_controller_data', {
       'controller_id': controllerId,
     });
+
+    if (controllerData['water_usage'].isEmpty) {
+      controllerData['water_usage'] = [
+        {
+          'date': '',
+          'water_used': 0,
+        },
+      ];
+    }
   }
 
   @override
@@ -61,37 +92,55 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   }
 
   List<FlSpot> _getSensorDataSpots(List<dynamic> records, String sensorKey) {
-    if (filterType == 'year' || filterType == 'month') {
-      Map<String, List<double>> aggregatedData = {};
-      for (var record in records) {
-        String timestamp = record['timestamp'];
-        String key = filterType == 'year' ? timestamp.substring(5, 7) : timestamp.substring(8, 10); // Extract month or day
-        double value = record['sensor_data'][sensorKey].toDouble();
-
-        if (!aggregatedData.containsKey(key)) {
-          aggregatedData[key] = [];
-        }
-        aggregatedData[key]!.add(value);
-      }
-
-      // Sort keys (months or days) and calculate averages
-      List<String> sortedKeys = aggregatedData.keys.toList();
-      List<FlSpot> spots = [];
-      for (var key in sortedKeys) {
-        double avg = aggregatedData[key]!.reduce((a, b) => a + b) / aggregatedData[key]!.length;
-        spots.add(FlSpot(spots.length.toDouble(), avg));
-      }
-
-      return spots;
-    } else {
-      // For daily, use all data points
+    Map<String, double> xAxisMap = {};
+    List<String> xAxisLabels = [];
+    if (filterType == 'day') {
       return records.asMap().entries.map((entry) {
         int index = entry.key;
         var record = entry.value;
         return FlSpot(index.toDouble(), record['sensor_data'][sensorKey].toDouble());
       }).toList();
     }
+
+    if (filterType == 'year') {
+      // Group by months (01 - 12)
+      for (var i = 1; i <= 12; i++) {
+        xAxisMap[i.toString().padLeft(2, '0')] = (i - 1).toDouble(); // Map Jan-Dec to 0-11
+        xAxisLabels.add(i.toString().padLeft(2, '0')); // ["01", "02", ..., "12"]
+      }
+    } else if (filterType == 'month') {
+      // Group by days (1-31)
+      for (var i = 1; i <= 31; i++) {
+        xAxisMap[i.toString().padLeft(2, '0')] = (i - 1).toDouble();
+        xAxisLabels.add(i.toString()); // ["1", "2", ..., "31"]
+      }
+    }
+
+    Map<String, List<double>> aggregatedData = {};
+    for (var record in records) {
+      String timestamp = record['timestamp'];
+      String key = filterType == 'year'
+          ? timestamp.substring(5, 7) // Extract month (MM)
+          : timestamp.substring(8, 10); // Extract day (DD)
+
+      double value = record['sensor_data'][sensorKey].toDouble();
+      if (!aggregatedData.containsKey(key)) {
+        aggregatedData[key] = [];
+      }
+      aggregatedData[key]!.add(value);
+    }
+
+    List<FlSpot> spots = [];
+    aggregatedData.forEach((key, values) {
+      if (xAxisMap.containsKey(key)) {
+        double avg = values.reduce((a, b) => a + b) / values.length;
+        spots.add(FlSpot(xAxisMap[key]!, avg));
+      }
+    });
+
+    return spots;
   }
+
 
   List<dynamic> _filterRecords(List<dynamic> records) {
     if (filterType == 'day') {
@@ -128,6 +177,245 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     }
     return records.map((record) => record['sensor_data'][key].toDouble()).reduce((a, b) => a + b) / records.length;
   }
+
+  double _calculateWaterUsage(List<dynamic> records) {
+    if (records.isEmpty) {
+      return 0;
+    }
+    if (records[0]['date'] == '') {
+      print('No water usage records found');
+      return 0;
+    }
+
+    if (records[records.length - 1]['date'] == selectedFilterValue) {
+      return records[records.length - 1]['water_used'].toDouble();
+    }
+
+    if (selectedFilterValue.length < 7) {
+      return records.map((record) => record['water_used'].toDouble()).reduce((a, b) => a + b);
+    }
+    String timestamp = selectedFilterValue.substring(0, 7);
+    print('Month: $timestamp');
+    return _binarySearchTimestamp(records, timestamp);
+  }
+
+  double _binarySearchTimestamp(List<dynamic> records, String timestamp) {
+    int low = 0;
+    int high = records.length - 1;
+    while (low <= high) {
+      int mid = (low + high) ~/ 2;
+      String midTimestamp = records[mid]['date'];
+      if (midTimestamp == timestamp) {
+        return records[mid]['water_used'].toDouble();
+      } else if (midTimestamp.compareTo(timestamp) < 0) {
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+    return 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<dynamic> filteredRecords = _filterRecords(controllerData['record']);
+    double avgHumidity = _calculateAverage(filteredRecords, 'air_humidity');
+    double avgTemperature = _calculateAverage(filteredRecords, 'air_temperature');
+    double avgWaterUsage = _calculateWaterUsage(controllerData['water_usage']);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Controller Dashboard',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.deepPurpleAccent,
+        elevation: 8,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(11.0),
+          child: Column(
+            children: [
+              Card(
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(11.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButton<String>(
+                          value: filterType,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              filterType = newValue!;
+                              selectedFilterValue = _getFilterValues(controllerData['record']).last;
+                            });
+                          },
+                          items: ['day', 'month', 'year'].map((value) => DropdownMenuItem(value: value, child: Text(value))).toList(),
+                          isExpanded: true,
+                          style: TextStyle(
+                            color: Colors.deepPurpleAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          dropdownColor: Colors.white,
+                          icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: DropdownButton<String>(
+                          value: selectedFilterValue == '' ? null : selectedFilterValue,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedFilterValue = newValue!;
+                            });
+                          },
+                          items: controllerData['record'].isNotEmpty
+                              ? _getFilterValues(controllerData['record']).map((value) => DropdownMenuItem(value: value, child: Text(value))).toList()
+                              : [],
+                          isExpanded: true,
+                          style: TextStyle(
+                            color: Colors.deepPurpleAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          dropdownColor: Colors.white,
+                          icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurpleAccent),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Card(
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(11.0),
+                  child: Charts.buildLineChart(
+                    title: 'Soil Moisture',
+                    spots: _getSensorDataSpots(filteredRecords, 'soil_moisture'),
+                    lineColor: Colors.green,
+                    minY: 0,
+                    maxY: 110,
+                    xAxisLabels: filterType == 'year'
+                        ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                        : filterType == 'month' ? List.generate(31, (index) => (index + 1).toString()) : [],
+                    isScrollable: filterType == 'day',
+                    maxX: filterType == 'year' ? 12.0 : filterType == 'month' ? 31.0 : filteredRecords.length.toDouble(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildSummaryCard('Humidity', avgHumidity, Colors.blue),
+                  _buildSummaryCard('Temperature', avgTemperature, Colors.red),
+                  _buildSummaryCard('Water Usage', avgWaterUsage, Colors.deepPurple),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+
+                  ElevatedButton(
+                    onPressed: () {
+                      SocketService.socket.emit('trigger_irrigation', {
+                        'controller_id': controllerId,
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurpleAccent,
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Trigger Irrigation',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      _showScheduleDialog(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurpleAccent,
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Schedule Irrigation',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(String title, double value, Color color) {
+    return Card(
+      elevation: 5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              value.toStringAsFixed(2),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   void _showScheduleDialog(BuildContext context) {
     List<String> type = ['DAILY', 'WEEKLY', 'MONTHLY'];
@@ -202,120 +490,6 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
           },
         );
       },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    List<dynamic> filteredRecords = _filterRecords(controllerData['record']);
-    double avgHumidity = _calculateAverage(filteredRecords, 'air_humidity');
-    double avgTemperature = _calculateAverage(filteredRecords, 'air_temperature');
-    double avgWaterUsage = controllerData['water_used_month'].isNotEmpty ? 0.0 : 0.0;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Controller Details: ${widget.controllerId}'),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  DropdownButton<String>(
-                    value: filterType,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        filterType = newValue!;
-                        selectedFilterValue = _getFilterValues(controllerData['record']).last;
-                      });
-                    },
-                    items: ['day', 'month', 'year'].map((value) => DropdownMenuItem(value: value, child: Text(value))).toList(),
-                  ),
-                  const SizedBox(width: 10),
-                  DropdownButton<String>(
-                    value: selectedFilterValue,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedFilterValue = newValue!;
-                      });
-                    },
-                    items: controllerData['record'].isNotEmpty
-                        ? _getFilterValues(controllerData['record']).map((value) => DropdownMenuItem(value: value, child: Text(value))).toList()
-                        : [],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Charts.buildLineChart(
-                title: 'Soil Moisture',
-                spots: _getSensorDataSpots(filteredRecords, 'soil_moisture'),
-                lineColor: Colors.green,
-                minY: 0,
-                maxY: 110,
-                xAxisLabels: [],
-                isScrollable: filterType == 'day', // Only scrollable for daily
-                maxX: filteredRecords.length.toDouble(), // Dynamically set maxX
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildSummaryCard('Humidity', avgHumidity, Colors.blue),
-                  _buildSummaryCard('Temperature', avgTemperature, Colors.red),
-                  _buildSummaryCard('Water Usage', avgWaterUsage, Colors.green),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      SocketService.socket.emit('trigger_irrigation', {
-                        'controller_id': controllerId,
-                      });
-                    },
-                    child: const Text('Trigger Irrigation'),
-                  ),
-                  ElevatedButton(onPressed: (){
-                    _showScheduleDialog(context);
-                  }, child: const Text('Schedule Irrigation'))
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(String title, double value, Color color) {
-    return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        width: 100,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.white,
-        ),
-        child: Column(
-          children: [
-            Text(
-              title,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              value.toStringAsFixed(1),
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

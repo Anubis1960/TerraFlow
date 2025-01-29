@@ -165,6 +165,11 @@ def add_controller_event(data):
     controller_id = data['controller_id']
     user_id = data['user_id']
     socket_id = request.sid
+
+    if len(controller_id) != 24:
+        print(f"Invalid controller ID: {controller_id}")
+        socketio.emit('error', {'error_msg': f"Invalid controller ID: {controller_id}"}, room=socket_id)
+
     handle_add_controller(controller_id, user_id, socket_id)
 
 

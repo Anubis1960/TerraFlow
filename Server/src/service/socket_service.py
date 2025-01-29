@@ -17,6 +17,7 @@ and irrigation scheduling.
 
 import json
 
+import bson.errors
 import regex as re
 from bson.objectid import ObjectId
 from redis.exceptions import ResponseError
@@ -79,7 +80,7 @@ def handle_add_controller(controller_id: str, user_id: str, socket_id: str) -> N
         if not u_res:
             print(f"User with ID {user_id} not found.")
             return
-
+        
         controllers = u_res.get('controllers', [])
 
         c_res = mongo_db[CONTROLLER_COLLECTION].find_one({'_id': ObjectId(controller_id)})
@@ -264,7 +265,7 @@ def handle_retrieve_controller_data(controller_id: str, socket_id: str) -> None:
             return
         json_data = {
             'record': res.get('record', []),
-            'water_used_month': res.get('water_used_month', [])
+            'water_usage': res.get('water_usage', [])
         }
         socketio.emit('controller_data_response', json_data, room=socket_id)
     except Exception as e:
