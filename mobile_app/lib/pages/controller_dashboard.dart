@@ -2,10 +2,12 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:mobile_app/util/SharedPreferencesStorage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:mobile_app/pages/home.dart';
+import 'package:mobile_app/pages/login.dart';
 
 import '../util/SocketService.dart';
 import '../util/Charts.dart';
@@ -36,6 +38,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   @override
   void initState() {
     super.initState();
+    print('Controller Dashboard init');
 
     SocketService.socket.on('export_response', (data) async {
       if (data.containsKey('file')){
@@ -99,9 +102,12 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
 
   @override
   void dispose() {
+    print('Controller Dashboard Disposed');
     SocketService.socket.off('controller_data_response');
     SocketService.socket.off('record');
+    SocketService.socket.off('export_response');
     _scrollController.dispose();
+
     super.dispose();
   }
 
@@ -158,6 +164,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   }
 
   List<FlSpot> _getSensorDataSpots(List<dynamic> records, String sensorKey) {
+    print("getSensorDataSpots");
     Map<String, double> xAxisMap = {};
     List<String> xAxisLabels = [];
     if (filterType == 'day') {
@@ -209,6 +216,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
 
 
   List<dynamic> _filterRecords(List<dynamic> records) {
+    print("filterRecords");
     if (filterType == 'day') {
       return records.where((record) => record['timestamp'].startsWith(selectedFilterValue)).toList();
     } else if (filterType == 'month') {
@@ -220,6 +228,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   }
 
   List<String> _getFilterValues(List<dynamic> records) {
+    print("getFilterValues");
     Set<String> values = {};
     if (records.isEmpty) {
       return [];
@@ -238,6 +247,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   }
 
   double _calculateAverage(List<dynamic> records, String key) {
+    print("calculateAverage");
     if (records.isEmpty) {
       return 0;
     }
@@ -245,6 +255,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   }
 
   double _calculateWaterUsage(List<dynamic> records) {
+    print("calculateWaterUsage");
     if (records.isEmpty) {
       return 0;
     }
@@ -300,6 +311,37 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
         centerTitle: true,
         backgroundColor: Colors.deepPurpleAccent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout, color: Colors.white), // Logout icon
+            onPressed: () async {
+              try {
+                // Fetch user ID and controller IDs asynchronously
+                final String userId = await SharedPreferencesStorage.getUserId();
+                final List<String> controllerIds = await SharedPreferencesStorage.getControllerList();
+
+                // Emit logout event via SocketService
+                SocketService.socket.emit('logout', {
+                  'user_id': userId,
+                  'controllers': controllerIds,
+                });
+
+                // Clear user data from SharedPreferences
+                await SharedPreferencesStorage.saveUserId('');
+                await SharedPreferencesStorage.saveControllerList([]);
+
+                // Navigate to the login page
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
+              } catch (e) {
+                // Handle any errors that occur during the async operations
+                print('Error during logout: $e');
+              }
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -347,7 +389,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: DropdownButton<String>(
-                          value: selectedFilterValue == '' ? null : selectedFilterValue,
+                          value: selectedFilterValue == '' ? '' : selectedFilterValue,
                           onChanged: (String? newValue) {
                             setState(() {
                               selectedFilterValue = newValue!;
@@ -426,12 +468,9 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                   IconButton(
                     onPressed: () {
                       // Navigate to Home Screen
-                      Navigator.pop(context);
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => Home(),
-                        ),
+                        MaterialPageRoute(builder: (context) => Home()),
                       );
                     },
                     icon: Icon(Icons.home, color: Colors.deepPurpleAccent),

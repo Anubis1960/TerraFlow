@@ -18,7 +18,9 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
+    print('Login Page init');
     SocketService.socket.on('login_response', (data) {
+      print(data);
       if (data['user_id'] != null && data['user_id'].isNotEmpty) {
         SharedPreferencesStorage.saveUserId(data['user_id']);
         SharedPreferencesStorage.saveControllerList(data['controllers']);
@@ -39,6 +41,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
+    print('Login Page Disposed');
     emailController.dispose();
     passwordController.dispose();
     SocketService.socket.off('login_response');
@@ -114,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => RegisterPage()),
                   );

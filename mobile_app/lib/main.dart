@@ -12,32 +12,30 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SharedPreferencesStorage.getUserId().then((userId) {
-      print('User ID: $userId');
-      if (userId != '' && userId.isNotEmpty) {
-        runApp(MaterialApp(
-          title: 'Flutter Auth App',
-          theme: ThemeData(
-            primarySwatch: Colors.blue,
-          ),
-          home: const Home(),
-        ));
-      } else {
-        runApp(MaterialApp(
-          title: 'Flutter Auth App',
-          theme: ThemeData(
-            primarySwatch: Colors.blue,
-          ),
-          home: const LoginPage(),
-        ));
-      }
-    });
     return MaterialApp(
       title: 'Flutter Auth App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: LoginPage(),
+      home: FutureBuilder<String>(
+        future: SharedPreferencesStorage.getUserId(),
+        builder: (context, snapshot) {
+          // Check if the future is still loading
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          // Check if the user ID is valid
+          final userId = snapshot.data ?? '';
+          if (userId.isNotEmpty) {
+            return const Home();
+          } else {
+            return const LoginPage();
+          }
+        },
+      ),
     );
   }
 }

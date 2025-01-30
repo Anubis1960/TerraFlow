@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../util/SocketService.dart';
 import '../util/SharedPreferencesStorage.dart';
 import 'home.dart';
+import 'login.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -17,6 +18,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
+    print('Register Page init');
     SocketService.socket.on('register_response', (data) {
       if (data['user_id'] != null && data['user_id'].isNotEmpty) {
         SharedPreferencesStorage.saveUserId(data['user_id']);
@@ -37,6 +39,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   void dispose() {
+    print('Register Page Disposed');
     emailController.dispose();
     passwordController.dispose();
     SocketService.socket.off('register_response');
@@ -112,7 +115,10 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
                 },
                 child: const Text('Back to Login', style: TextStyle(fontSize: 16, color: Colors.blue)),
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/util/SocketService.dart';
 import '../util/SharedPreferencesStorage.dart';
 import 'controller_dashboard.dart';
+import 'login.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -17,6 +18,7 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
+    print('Home Page init');
     userId = SharedPreferencesStorage.getUserId();
     controllerIds = SharedPreferencesStorage.getControllerList();
 
@@ -51,6 +53,7 @@ class _HomeState extends State<Home> {
 
   @override
   void dispose() {
+    print('Home Disposed');
     SocketService.socket.off('error');
     SocketService.socket.off('controllers');
     super.dispose();
@@ -60,26 +63,47 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
-        elevation: 8,
-        backgroundColor: Colors.deepPurpleAccent,
-        title: const Text(
+        title: Text(
           'Controllers',
           style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-              color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
+        centerTitle: true,
+        backgroundColor: Colors.deepPurpleAccent,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                controllerIds = SharedPreferencesStorage.getControllerList();
-              });
+            icon: Icon(Icons.logout, color: Colors.white), // Logout icon
+            onPressed: () async {
+              try {
+                // Fetch user ID and controller IDs asynchronously
+                final String userId = await SharedPreferencesStorage.getUserId();
+                final List<String> controllerIds = await SharedPreferencesStorage.getControllerList();
+
+                // Emit logout event via SocketService
+                SocketService.socket.emit('logout', {
+                  'user_id': userId,
+                  'controllers': controllerIds,
+                });
+
+                // Clear user data from SharedPreferences
+                await SharedPreferencesStorage.saveUserId('');
+                await SharedPreferencesStorage.saveControllerList([]);
+
+                // Navigate to the login page
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
+              } catch (e) {
+                // Handle any errors that occur during the async operations
+                print('Error during logout: $e');
+              }
             },
-          )
+          ),
         ],
       ),
       body: FutureBuilder<List<String>>(
@@ -141,8 +165,7 @@ class _HomeState extends State<Home> {
                               color: Colors.deepPurpleAccent,
                             ),
                             onTap: () {
-                              Navigator.pop(context);
-                              Navigator.push(
+                              Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => ControllerDashBoard(controllerId: controllerId),
