@@ -95,7 +95,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please fill in all fields.'),
-                          backgroundColor: Colors.red,
+                          backgroundColor: Colors.redAccent,
                         ),
                       );
                       return;
