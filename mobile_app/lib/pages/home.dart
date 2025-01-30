@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/util/SocketService.dart';
 import '../util/SharedPreferencesStorage.dart';
@@ -26,6 +25,7 @@ class _HomeState extends State<Home> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(data['error_msg']),
+            backgroundColor: Colors.redAccent,
           ),
         );
       }
@@ -60,11 +60,16 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         elevation: 8,
         backgroundColor: Colors.deepPurpleAccent,
         title: const Text(
           'Controllers',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+              color: Colors.white,
+          ),
         ),
         actions: [
           IconButton(
@@ -136,6 +141,7 @@ class _HomeState extends State<Home> {
                               color: Colors.deepPurpleAccent,
                             ),
                             onTap: () {
+                              Navigator.pop(context);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -193,7 +199,10 @@ class _HomeState extends State<Home> {
                       _showAddControllerDialog(context);
                     },
                     backgroundColor: Colors.deepPurpleAccent,
-                    child: const Icon(Icons.add),
+                    child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                    ),
                   ),
                 ),
               ],
@@ -244,6 +253,7 @@ class _HomeState extends State<Home> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Please enter a valid controller ID.'),
+                      backgroundColor: Colors.redAccent,
                     ),
                   );
                 }

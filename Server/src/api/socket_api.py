@@ -144,7 +144,9 @@ def export_event(data):
         print('controller ID or type not found, found:', data)
         return
     controller_id = data['controller_id']
-    handle_export(controller_id)
+    socket_id = request.sid
+    print('Exporting:', controller_id)
+    handle_export(controller_id, socket_id)
 
 
 @socketio.on('add_controller')

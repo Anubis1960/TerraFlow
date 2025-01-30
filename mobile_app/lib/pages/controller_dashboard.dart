@@ -1,6 +1,12 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:mobile_app/pages/home.dart';
+
 import '../util/SocketService.dart';
 import '../util/Charts.dart';
 
@@ -30,6 +36,15 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   @override
   void initState() {
     super.initState();
+
+    SocketService.socket.on('export_response', (data) async {
+      if (data.containsKey('file')){
+        if (data['file'] is List<int>) {
+          final fileData = Uint8List.fromList(data['file']);
+          await saveToInternalStorage(fileData, Permission.storage);
+        }
+      }
+    });
 
     SocketService.socket.on('controller_data_response', (data) {
       setState(() {
@@ -88,6 +103,58 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     SocketService.socket.off('record');
     _scrollController.dispose();
     super.dispose();
+  }
+
+
+  Future<void> saveToInternalStorage(Uint8List fileData, Permission permission) async {
+    try {
+      if(Platform.isAndroid){
+        AndroidDeviceInfo build = await DeviceInfoPlugin().androidInfo;
+        if (build.version.sdkInt >= 30) {
+          var re = await Permission.manageExternalStorage.request();
+          if (re.isGranted) {
+            final directory = await getExternalStorageDirectory();
+            final path = directory!.path;
+            print(build.version.sdkInt);
+            final file = File('$path/exported_data.xlsx');
+            await file.writeAsBytes(fileData);
+          }
+          else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Permission denied'),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          }
+        }
+        else{
+          var re = await permission.request();
+          if (re.isGranted) {
+            final directory = await getExternalStorageDirectory();
+            final path = directory!.path;
+            print(build.version.sdkInt);
+            final file = File('$path/exported_data.csv');
+            await file.writeAsBytes(fileData);
+          }
+          else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Permission denied'),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving file: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   List<FlSpot> _getSensorDataSpots(List<dynamic> records, String sensorKey) {
@@ -182,7 +249,6 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       return 0;
     }
     if (records[0]['date'] == '') {
-      print('No water usage records found');
       return 0;
     }
 
@@ -194,7 +260,6 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       return records.map((record) => record['water_used'].toDouble()).reduce((a, b) => a + b);
     }
     String timestamp = selectedFilterValue.substring(0, 7);
-    print('Month: $timestamp');
     return _binarySearchTimestamp(records, timestamp);
   }
 
@@ -225,7 +290,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Controller Dashboard',
+          'Dashboard',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -234,20 +299,21 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
         ),
         centerTitle: true,
         backgroundColor: Colors.deepPurpleAccent,
-        elevation: 8,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(11.0),
+          padding: const EdgeInsets.all(1.0),
           child: Column(
             children: [
               Card(
-                elevation: 8,
+                color: Colors.white,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(11.0),
+                  padding: const EdgeInsets.all(0.0),
                   child: Row(
                     children: [
                       Expanded(
@@ -259,7 +325,16 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                               selectedFilterValue = _getFilterValues(controllerData['record']).last;
                             });
                           },
-                          items: ['day', 'month', 'year'].map((value) => DropdownMenuItem(value: value, child: Text(value))).toList(),
+                          items: ['day', 'month', 'year'].map((value) => DropdownMenuItem(
+                            value: value,
+                            child: Center(  // Center the text inside the DropdownMenuItem
+                              child: Text(
+                                value,
+                                textAlign: TextAlign.center,  // Ensures the text is centered inside the child widget
+                              ),
+                            ),
+                          )).toList(),
+
                           isExpanded: true,
                           style: TextStyle(
                             color: Colors.deepPurpleAccent,
@@ -296,12 +371,12 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
               ),
               const SizedBox(height: 10),
               Card(
-                elevation: 8,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(11.0),
+                  padding: const EdgeInsets.all(2.0),
                   child: Charts.buildLineChart(
                     title: 'Soil Moisture',
                     spots: _getSensorDataSpots(filteredRecords, 'soil_moisture'),
@@ -321,74 +396,157 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 1),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildSummaryCard('Humidity', avgHumidity, Colors.blue),
                   _buildSummaryCard('Temperature', avgTemperature, Colors.red),
-                  _buildSummaryCard('Water Usage', avgWaterUsage, Colors.deepPurple),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      SocketService.socket.emit('trigger_irrigation', {
-                        'controller_id': controllerId,
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurpleAccent,
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Trigger Irrigation',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      _showScheduleDialog(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurpleAccent,
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Schedule Irrigation',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                  _buildSummaryCard('Water Usage', avgWaterUsage, Colors.greenAccent),
                 ],
               ),
             ],
           ),
         ),
       ),
+      bottomNavigationBar: SizedBox(
+        height: 115,
+        child: BottomAppBar(
+        elevation: 0,
+        color: Colors.white,
+        shape: CircularNotchedRectangle(),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Home Button
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      // Navigate to Home Screen
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Home(),
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.home, color: Colors.deepPurpleAccent),
+                    tooltip: 'Home',
+                  ),
+                  Flexible(
+                    child: Text(
+                      'Home',
+                      style: TextStyle(
+                        color: Colors.deepPurpleAccent,
+                        fontSize: 14, // Adjusted font size
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center, // Center the text
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Trigger Irrigation Button
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      SocketService.socket.emit('trigger_irrigation', {
+                        'controller_id': controllerId,
+                      });
+                    },
+                    icon: Icon(Icons.water_drop, color: Colors.deepPurpleAccent),
+                    tooltip: 'Trigger Irrigation',
+                  ),
+                  Flexible(
+                    child: Text(
+                      'Irrigation',
+                      style: TextStyle(
+                        color: Colors.deepPurpleAccent,
+                        fontSize: 14, // Adjusted font size
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Schedule Irrigation Button
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      _showScheduleDialog(context);
+                    },
+                    icon: Icon(Icons.schedule, color: Colors.deepPurpleAccent),
+                    tooltip: 'Schedule Irrigation',
+                  ),
+                  Flexible(
+                    child: Text(
+                      'Schedule',
+                      style: TextStyle(
+                        color: Colors.deepPurpleAccent,
+                        fontSize: 14, // Adjusted font size
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Export Data Button
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      SocketService.socket.emit('export', {
+                        'controller_id': controllerId,
+                      });
+                    },
+                    icon: Icon(Icons.cloud_download, color: Colors.green),
+                    tooltip: 'Export Data',
+                  ),
+                  Flexible(
+                    child: Text(
+                      'Export',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontSize: 14, // Adjusted font size
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      )
     );
   }
 
+
+
+
   Widget _buildSummaryCard(String title, double value, Color color) {
     return Card(
-      elevation: 5,
+      color: Colors.white,
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),

@@ -7,10 +7,13 @@ environment:
   sdk: ^3.5.3
 
 dependencies:
+  device_info_plus: ^11.2.2
   fl_chart: ^0.70.2
   flutter:
     sdk: flutter
   intl: ^0.20.2
+  path_provider: ^2.1.5
+  permission_handler: ^11.3.1
   shared_preferences: ^2.3.0
   socket_io_client: ^3.0.2
 

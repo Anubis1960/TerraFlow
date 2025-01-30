@@ -301,12 +301,13 @@ def remap_redis(controller_id: str, user_id: str, socket_id: str) -> None:
         print(f"Unexpected error: {e}")
 
 
-def handle_export(controller_id: str):
+def handle_export(controller_id: str, socket_id: str) -> None:
     """
     Exports data from the controller to a file.
 
     Args:
         controller_id (str): The unique identifier of the controller.
+        socket_id (str): the sid of the socket connection.
     """
     try:
         res = mongo_db[CONTROLLER_COLLECTION].find_one({'_id': ObjectId(controller_id)})
@@ -314,7 +315,9 @@ def handle_export(controller_id: str):
             print(f"Controller with ID {controller_id} not found.")
             return
 
-        export_to_excel(res)
+        buf = export_to_excel(res)
+
+        socketio.emit('export_response', {'file': buf.getvalue()}, room=socket_id)
 
     except bson.errors.InvalidId as e:
         print(f"Invalid controller ID: {controller_id}")

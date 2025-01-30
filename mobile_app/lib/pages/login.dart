@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'register.dart';
 import '../util/SocketService.dart';
@@ -98,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please fill in all fields.'),
-                          backgroundColor: Colors.orange,
+                          backgroundColor: Colors.redAccent,
                         ),
                       );
                       return;

@@ -30,7 +30,7 @@ from Crypto import Random
 from src.util.config import ENCRYPT_KEY as key  # Key imported from configuration
 
 
-def encrypt(source, encode=True):
+def encrypt(source: str, encode=True) -> str:
     """
     Encrypts the given plaintext using AES in CBC mode.
 
@@ -69,7 +69,7 @@ def encrypt(source, encode=True):
     return base64.b64encode(data).decode("latin-1") if encode else data
 
 
-def decrypt(source, decode=True):
+def decrypt(source: str, decode=True) -> str:
     """
     Decrypts the given AES-CBC encrypted data.
 

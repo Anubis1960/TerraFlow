@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../util/SocketService.dart';
 import '../util/SharedPreferencesStorage.dart';
@@ -96,7 +95,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please fill in all fields.'),
-                          backgroundColor: Colors.orange,
+                          backgroundColor: Colors.red,
                         ),
                       );
                       return;
