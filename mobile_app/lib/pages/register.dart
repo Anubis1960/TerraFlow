@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../util/SocketService.dart';
 import '../util/SharedPreferencesStorage.dart';
 import 'home.dart';
-import 'login.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -20,9 +19,6 @@ class _RegisterPageState extends State<RegisterPage> {
   void initState() {
     super.initState();
     SocketService.socket.on('register_response', (data) {
-      if (kDebugMode) {
-        print('Received register response: $data');
-      }
       if (data['user_id'] != null && data['user_id'].isNotEmpty) {
         SharedPreferencesStorage.saveUserId(data['user_id']);
         Navigator.pushReplacement(

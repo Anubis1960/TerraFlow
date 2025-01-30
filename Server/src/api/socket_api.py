@@ -33,7 +33,7 @@ from flask import request
 from src.service.socket_service import (
     handle_connect, handle_disconnect, handle_irrigate, handle_add_controller,
     handle_remove_controller, handle_schedule_irrigation, handle_register,
-    handle_login, handle_retrieve_controller_data, remap_redis
+    handle_login, handle_retrieve_controller_data, remap_redis, handle_export
 )
 from src.util.extensions import socketio
 
@@ -140,9 +140,11 @@ def export_event(data):
     Logs:
         - Errors if required keys are missing.
     """
-    if 'controller_id' not in data or 'type' not in data:
+    if 'controller_id' not in data:
         print('controller ID or type not found, found:', data)
         return
+    controller_id = data['controller_id']
+    handle_export(controller_id)
 
 
 @socketio.on('add_controller')

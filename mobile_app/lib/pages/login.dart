@@ -20,9 +20,6 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     SocketService.socket.on('login_response', (data) {
-      if (kDebugMode) {
-        print('Received login response: $data');
-      }
       if (data['user_id'] != null && data['user_id'].isNotEmpty) {
         SharedPreferencesStorage.saveUserId(data['user_id']);
         SharedPreferencesStorage.saveControllerList(data['controllers']);

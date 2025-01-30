@@ -28,7 +28,6 @@ class SharedPreferencesStorage {
   static Future<void> saveControllerList(List<dynamic> controllers) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     List<String> controllerIds = List<String>.from(controllers);
-    print('Saving controller list: $controllers');
     await prefs.setStringList('controller_ids', controllerIds);
   }
 }

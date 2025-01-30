@@ -17,17 +17,11 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    if (kDebugMode) {
-      print('initState');
-    }
     super.initState();
     userId = SharedPreferencesStorage.getUserId();
     controllerIds = SharedPreferencesStorage.getControllerList();
 
     SocketService.socket.on('error', (data) {
-      if (kDebugMode) {
-        print('Received error response: $data');
-      }
       if (data['error_msg'] != null && data['error_msg'].isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -38,9 +32,6 @@ class _HomeState extends State<Home> {
     });
 
     SocketService.socket.on('controllers', (data) {
-      if (kDebugMode) {
-        print('Received controllers response: $data');
-      }
       SharedPreferencesStorage.saveControllerList(data['controllers']);
       setState(() {
         controllerIds = SharedPreferencesStorage.getControllerList();
@@ -49,10 +40,6 @@ class _HomeState extends State<Home> {
 
     userId.then((onUser) {
       controllerIds.then((onController) {
-        if (kDebugMode) {
-          print('User ID: $onUser');
-          print('Controller IDs: $onController');
-        }
         Map<String, dynamic> data = {
           'user_id': onUser,
           'controllers': onController,

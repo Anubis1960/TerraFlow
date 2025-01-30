@@ -25,6 +25,7 @@ from redis.exceptions import ResponseError
 from src.util.crypt import encrypt, decrypt
 from src.util.db import r, mongo_db, USER_COLLECTION, CONTROLLER_COLLECTION
 from src.util.extensions import mqtt, socketio
+from src.util.excel_manager import export_to_excel
 
 email_regex = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
@@ -296,5 +297,26 @@ def remap_redis(controller_id: str, user_id: str, socket_id: str) -> None:
                 r.delete(controller_id)
         else:
             print('controller not found')
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+
+
+def handle_export(controller_id: str):
+    """
+    Exports data from the controller to a file.
+
+    Args:
+        controller_id (str): The unique identifier of the controller.
+    """
+    try:
+        res = mongo_db[CONTROLLER_COLLECTION].find_one({'_id': ObjectId(controller_id)})
+        if not res:
+            print(f"Controller with ID {controller_id} not found.")
+            return
+
+        export_to_excel(res)
+
+    except bson.errors.InvalidId as e:
+        print(f"Invalid controller ID: {controller_id}")
     except Exception as e:
         print(f"Unexpected error: {e}")

@@ -5,3 +5,5 @@ flask_mqtt
 flask_socketio
 redis
 python-dotenv
+pandas
+openpyxl

@@ -16,6 +16,8 @@ class ControllerDashBoard extends StatefulWidget {
 class _ControllerDashBoard extends State<ControllerDashBoard> {
   final dynamic controllerId;
 
+  final ScrollController _scrollController = ScrollController();
+
   _ControllerDashBoard(this.controllerId);
 
   Map<String, dynamic> controllerData = {
@@ -30,12 +32,8 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     super.initState();
 
     SocketService.socket.on('controller_data_response', (data) {
-      if (kDebugMode) {
-        print('Received controller data response: $data');
-      }
       setState(() {
         controllerData = data;
-        print(data);
         if (controllerData['record'] != null && controllerData['record'].isNotEmpty) {
           selectedFilterValue = controllerData['record'][0]['timestamp'].substring(0, 10);
         }
@@ -88,6 +86,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   void dispose() {
     SocketService.socket.off('controller_data_response');
     SocketService.socket.off('record');
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -313,7 +312,12 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                         ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
                         : filterType == 'month' ? List.generate(31, (index) => (index + 1).toString()) : [],
                     isScrollable: filterType == 'day',
-                    maxX: filterType == 'year' ? 12.0 : filterType == 'month' ? 31.0 : filteredRecords.length.toDouble(),
+                    scrollController: _scrollController, // Pass the scroll controller here
+                    maxX: filterType == 'year'
+                        ? 12.0
+                        : filterType == 'month'
+                        ? 31.0
+                        : filteredRecords.length.toDouble(),
                   ),
                 ),
               ),
@@ -330,7 +334,6 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-
                   ElevatedButton(
                     onPressed: () {
                       SocketService.socket.emit('trigger_irrigation', {

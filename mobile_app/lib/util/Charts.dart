@@ -15,6 +15,25 @@ class Charts {
     double? maxX,
     ScrollController? scrollController,
   }) {
+    double targetPosition = 0;
+
+    // Check if a scroll controller is passed
+    if (scrollController != null) {
+      targetPosition = (maxX ?? (xAxisLabels.length - 1).toDouble()) * 40.0; // Adjust based on maxX
+    }
+
+    // Update the scroll position after the widget builds
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (scrollController != null && scrollController.hasClients) {
+        // Smooth scroll to the target position (right end)
+        scrollController.animateTo(
+          targetPosition,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -165,3 +184,5 @@ class Charts {
     );
   }
 }
+
+
