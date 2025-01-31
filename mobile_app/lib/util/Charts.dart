@@ -107,11 +107,11 @@ class Charts {
         majorGridLines: MajorGridLines(width: showGrid ? 1 : 0, color: Colors.black),
         labelStyle: const TextStyle(fontSize: 10, color: Colors.black54),
         maximum: maxX ?? (xAxisLabels.length - 1).toDouble(),
-        // Map x-axis labels to their respective values
         labelIntersectAction: AxisLabelIntersectAction.rotate45,
         arrangeByIndex: true, // Ensure labels are displayed in the correct order
       ),
       primaryYAxis: NumericAxis(
+        title: AxisTitle(text: 'Values'),
         minimum: minY,
         maximum: maxY,
         interval: (maxY - minY) / 4, // Set a fixed interval to avoid doubled values
@@ -135,7 +135,7 @@ class Charts {
 
 class ChartData {
   final String x;
-  final double y;
+  final double? y;
 
   ChartData(this.x, this.y);
 }

@@ -46,6 +46,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     super.initState();
     print('Controller Dashboard init');
 
+    // Socket response listeners
     SocketService.socket.on('export_response', (data) async {
       if (data.containsKey('file')){
         if (data['file'] is List<int>) {
@@ -58,11 +59,8 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     SocketService.socket.on('controller_data_response', (data) {
       setState(() {
         controllerData = data;
-
         if (controllerData['record'] != null && controllerData['record'].isNotEmpty) {
-          if (selectedFilterValue == '') {
-            selectedFilterValue = controllerData['record'].last['timestamp'];
-          }
+          selectedFilterValue = controllerData['record'].last['timestamp'].substring(0, 10);
 
           filteredRecords = _filterRecords(controllerData['record']);
           humidity = _calculateAverage(filteredRecords, 'air_humidity');
@@ -71,30 +69,8 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
           filteredValues = _getFilterValues(controllerData['record']);
 
           setState(() {
-            filteredRecords = filteredRecords;
-            filteredValues = filteredValues;
+            selectedFilterValue = selectedFilterValue; // This will update correctly now
           });
-        }
-        if (controllerData['water_usage'] == null) {
-          controllerData['water_usage'] = [
-            {
-              'date': '',
-              'water_used': 0,
-            },
-          ];
-        }
-
-        if (controllerData['record'].isEmpty) {
-          controllerData['record'] = [
-            {
-              'timestamp': '',
-              'sensor_data': {
-                'soil_moisture': 0,
-                'air_humidity': 0,
-                'air_temperature': 0,
-              },
-            },
-          ];
         }
       });
     });
@@ -119,6 +95,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
           filteredValues = filteredValues;
           humidity = _calculateAverage(filteredRecords, 'air_humidity');
           temperature = _calculateAverage(filteredRecords, 'air_temperature');
+          print("setState triggered, selectedFilterValue: $selectedFilterValue");
         });
       }
     });
@@ -127,14 +104,10 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       'controller_id': controllerId,
     });
 
-    if (controllerData['water_usage'].isEmpty) {
-      controllerData['water_usage'] = [
-        {
-          'date': '',
-          'water_used': 0,
-        },
-      ];
-    }
+    print('Selected Filter Value: $selectedFilterValue');
+    print('Filtered Records: $filteredRecords');
+    print('Filtered Values: $filteredValues');
+
   }
 
   @override
@@ -201,34 +174,27 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   List<ChartData> _getSensorDataSpots(List<dynamic> records, String sensorKey) {
     print("getSensorDataSpots");
 
-    Map<String, double> xAxisMap = {};
-    List<String> xAxisLabels = [];
-
-    // Ensure data is sorted by timestamp before processing
-    records.sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
-
     if (filterType == 'day') {
-      return records.asMap().entries.map((entry) {
+      print("Filtering records for day: $selectedFilterValue");
+      return records
+          .asMap()
+          .entries
+          .map((entry) {
         int index = entry.key;
         var record = entry.value;
-        return ChartData(index.toString(), record['sensor_data'][sensorKey].toDouble());
+        return ChartData(
+            index.toString(), record['sensor_data'][sensorKey].toDouble());
       }).toList();
-    } else if (filterType == 'year') {
-      for (var i = 1; i <= 12; i++) {
-        String monthKey = i.toString().padLeft(2, '0'); // "01" - "12"
-        xAxisMap[monthKey] = (i - 1).toDouble();
-      }
-    } else if (filterType == 'month') {
-      // Group by days (1-31)
-      for (var i = 1; i <= 31; i++) {
-        String dayKey = i.toString().padLeft(2, '0'); // "01" - "31"
-        xAxisMap[dayKey] = (i - 1).toDouble();
-      }
     }
+    List<String> xAxisLabels = filterType == 'year'
+        ? ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+        :  List.generate(31, (index) => (index + 1).toString().padLeft(2, '0'));
 
+    // Map to store aggregated data
     Map<String, List<double>> aggregatedData = {};
 
-    Map<String, String> month_map = {
+    // Map to convert month numbers to month names
+    Map<String, String> monthMap = {
       '01': 'Jan',
       '02': 'Feb',
       '03': 'Mar',
@@ -243,7 +209,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       '12': 'Dec',
     };
 
-    List<ChartData> chartData = [];
+    // Aggregate data
     for (var record in records) {
       String timestamp = record['timestamp'];
       String key = filterType == 'year'
@@ -257,14 +223,26 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       aggregatedData[key]!.add(value);
     }
 
-    aggregatedData.forEach((key, values) {
-      if (xAxisMap.containsKey(key)) {
-        double avg = values.reduce((a, b) => a + b) / values.length;
-        // print("Key: $key, Avg: $avg");
+    print("Aggregated Data: $aggregatedData");
 
-        chartData.add(ChartData(month_map[key] ?? key, avg));
+    List<ChartData> chartData = [];
+    for (var label in xAxisLabels) {
+      if (aggregatedData.containsKey(label)) {
+        double avg = aggregatedData[label]!.reduce((a, b) => a + b) / aggregatedData[label]!.length;
+        if (filterType == 'year') {
+          chartData.add(ChartData(monthMap[label] ?? label, avg));
+        } else {
+          chartData.add(ChartData(label, avg));
+        }
+      } else {
+        // Add null for missing data
+        if (filterType == 'year') {
+          chartData.add(ChartData(monthMap[label] ?? label, null));
+        } else {
+          chartData.add(ChartData(label, null));
+        }
       }
-    });
+    }
 
     return chartData;
   }
@@ -311,6 +289,9 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     int firstIndex = findBoundaryIndex(true);
     if (firstIndex == -1) return [];
     int lastIndex = findBoundaryIndex(false);
+
+    print("Binary search result: firstIndex=$firstIndex, lastIndex=$lastIndex");
+
 
     return records.sublist(firstIndex, lastIndex + 1);
   }
@@ -383,7 +364,13 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: _buildAppBar(),
-        body: SingleChildScrollView(
+        body: selectedFilterValue.isEmpty || filteredRecords.isEmpty || controllerData.isEmpty
+            ? Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurpleAccent),
+          ),
+        )
+            : SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(1.0),
             child: Column(
@@ -485,6 +472,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                   fontWeight: FontWeight.bold,
                 ),
                 dropdownColor: Colors.white,
+
                 icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
               ),
             ),
@@ -508,12 +496,16 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                   });
                 },
                 items: filteredValues.isNotEmpty
-                    ? filteredValues.map((value) => DropdownMenuItem<String>(value: value, child: Text(value))).toList()
+                    ? filteredValues.map((value) => DropdownMenuItem<String>(value: value, child: Text(
+                    value,
+                  textAlign: TextAlign.center,
+                ))).toList()
                     : [],
                 isExpanded: true,
                 style: TextStyle(
                   color: Colors.deepPurpleAccent,
                   fontWeight: FontWeight.bold,
+
                 ),
                 dropdownColor: Colors.white,
                 icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurpleAccent),
