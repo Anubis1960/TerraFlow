@@ -53,7 +53,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       setState(() {
         controllerData = data;
         if (controllerData['record'] != null && controllerData['record'].isNotEmpty) {
-          selectedFilterValue = controllerData['record'][0]['timestamp'].substring(0, 10);
+          selectedFilterValue = _getFilterValues(controllerData['record']).last;
         }
         if (controllerData['water_usage'] == null) {
           controllerData['water_usage'] = [
@@ -227,6 +227,19 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     return records;
   }
 
+
+  List<dynamic> _filterWaterUsage(List<dynamic> records) {
+    print("filterWaterUsage");
+    if (filterType == 'day' && selectedFilterValue.length >= 10) {
+      return records.where((record) => record['date'].startsWith(selectedFilterValue.substring(0,7))).toList();
+    } else if (filterType == 'month') {
+      return records.where((record) => record['date'].substring(0, 7) == selectedFilterValue).toList();
+    } else if (filterType == 'year') {
+      return records.where((record) => record['date'].substring(0, 4) == selectedFilterValue).toList();
+    }
+    return records;
+  }
+
   List<String> _getFilterValues(List<dynamic> records) {
     print("getFilterValues");
     Set<String> values = {};
@@ -296,7 +309,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     List<dynamic> filteredRecords = _filterRecords(controllerData['record']);
     double avgHumidity = _calculateAverage(filteredRecords, 'air_humidity');
     double avgTemperature = _calculateAverage(filteredRecords, 'air_temperature');
-    double avgWaterUsage = _calculateWaterUsage(controllerData['water_usage']);
+    double avgWaterUsage = _calculateWaterUsage(_filterWaterUsage(controllerData['water_usage']));
 
     return Scaffold(
       appBar: AppBar(
