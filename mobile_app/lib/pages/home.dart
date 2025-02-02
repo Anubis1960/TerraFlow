@@ -61,12 +61,16 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    // Get the screen size
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           'Controllers',
           style: TextStyle(
-            fontSize: 22,
+            fontSize: screenHeight * 0.03, // 3% of screen height
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -118,19 +122,20 @@ class _HomeState extends State<Home> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'No controllers found.',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: FloatingActionButton(
-                      onPressed: () {
-                        _showAddControllerDialog(context);
-                      },
-                      backgroundColor: Colors.deepPurpleAccent,
-                      child: const Icon(Icons.add),
+                    style: TextStyle(
+                      fontSize: screenHeight * 0.025, // 2.5% of screen height
+                      fontWeight: FontWeight.w600,
                     ),
+                  ),
+                  SizedBox(height: screenHeight * 0.02), // 2% of screen height
+                  FloatingActionButton(
+                    onPressed: () {
+                      _showAddControllerDialog(context);
+                    },
+                    backgroundColor: Colors.deepPurpleAccent,
+                    child: const Icon(Icons.add),
                   ),
                 ],
               ),
@@ -145,19 +150,19 @@ class _HomeState extends State<Home> {
                     itemBuilder: (context, index) {
                       final controllerId = controllerIds[index];
                       return Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: EdgeInsets.all(screenWidth * 0.02), // 2% of screen width
                         child: Card(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                           elevation: 4,
                           child: ListTile(
-                            contentPadding: const EdgeInsets.all(16),
+                            contentPadding: EdgeInsets.all(screenWidth * 0.04), // 4% of screen width
                             title: Text(
                               'Controller ID: $controllerId',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: screenHeight * 0.02, // 2% of screen height
                               ),
                             ),
                             trailing: Icon(
@@ -216,15 +221,15 @@ class _HomeState extends State<Home> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(screenWidth * 0.04), // 4% of screen width
                   child: FloatingActionButton(
                     onPressed: () {
                       _showAddControllerDialog(context);
                     },
                     backgroundColor: Colors.deepPurpleAccent,
                     child: const Icon(
-                        Icons.add,
-                        color: Colors.white,
+                      Icons.add,
+                      color: Colors.white,
                     ),
                   ),
                 ),

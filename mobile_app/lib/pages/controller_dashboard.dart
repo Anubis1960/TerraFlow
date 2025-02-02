@@ -362,39 +362,43 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
 
   @override
   Widget build(BuildContext context) {
+    // Get the screen size
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-        appBar: _buildAppBar(),
-        body: selectedFilterValue.isEmpty || filteredRecords.isEmpty || controllerData.isEmpty
-            ? Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurpleAccent),
-          ),
-        )
-            : SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(1.0),
-            child: Column(
-              children: [
-                _buildDatePicker(),
-                const SizedBox(height: 10),
-                _buildLineChart(),
-                const SizedBox(height: 1),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildSummaryCard('Humidity', humidity, Colors.blue),
-                    _buildSummaryCard('Temperature', temperature, Colors.red),
-                    _buildSummaryCard('Water Usage', waterUsage, Colors.greenAccent),
-                  ],
-                ),
-              ],
-            ),
+      appBar: _buildAppBar(),
+      body: selectedFilterValue.isEmpty || filteredRecords.isEmpty || controllerData.isEmpty
+          ? Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurpleAccent),
+        ),
+      )
+          : SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(screenWidth * 0.02), // 2% of screen width
+          child: Column(
+            children: [
+              _buildDatePicker(),
+              SizedBox(height: screenHeight * 0.02), // 2% of screen height
+              _buildLineChart(),
+              SizedBox(height: screenHeight * 0.01), // 1% of screen height
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildSummaryCard('Humidity', humidity, Colors.blue, screenWidth, screenHeight),
+                  _buildSummaryCard('Temperature', temperature, Colors.red, screenWidth, screenHeight),
+                  _buildSummaryCard('Water Usage', waterUsage, Colors.greenAccent, screenWidth, screenHeight),
+                ],
+              ),
+            ],
           ),
         ),
-        bottomNavigationBar: SizedBox(
-          height: 115,
-          child: _buildBottomNavBar(),
-        )
+      ),
+      bottomNavigationBar: SizedBox(
+        height: screenHeight * 0.15, // 15% of screen height
+        child: _buildBottomNavBar(),
+      ),
     );
   }
 
@@ -643,32 +647,33 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     );
   }
 
-  Widget _buildSummaryCard(String title, double value, Color color) {
+  Widget _buildSummaryCard(String title, double value, Color color, double screenWidth, double screenHeight) {
     return Card(
-      color: Colors.white,
-      elevation: 0,
+      elevation: 4,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+      child: Container(
+        width: screenWidth * 0.28, // 28% of screen width
+        height: screenHeight * 0.12, // 12% of screen height
+        padding: EdgeInsets.all(screenWidth * 0.02), // 2% of screen width
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               title,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: screenHeight * 0.018, // 1.8% of screen height
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: screenHeight * 0.01), // 1% of screen height
             Text(
               value.toStringAsFixed(2),
               style: TextStyle(
-                fontSize: 24,
+                fontSize: screenHeight * 0.022, // 2.2% of screen height
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
               ),
             ),
           ],

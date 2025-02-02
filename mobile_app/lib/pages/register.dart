@@ -48,81 +48,119 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Get the screen size
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.person_add, size: 100, color: Colors.blue),
-              const SizedBox(height: 16),
-              const Text(
-                'Create Account',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Register to get started',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 32),
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.08, // 8% of screen width
+              vertical: screenHeight * 0.02, // 2% of screen height
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.person_add,
+                  size: screenHeight * 0.12, // 12% of screen height
+                  color: Colors.blue,
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                obscureText: true,
-                controller: passwordController,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                SizedBox(height: screenHeight * 0.02), // 2% of screen height
+                Text(
+                  'Create Account',
+                  style: TextStyle(
+                    fontSize: screenHeight * 0.03, // 3% of screen height
+                    fontWeight: FontWeight.bold,
                   ),
-                  onPressed: () {
-                    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please fill in all fields.'),
-                          backgroundColor: Colors.redAccent,
-                        ),
-                      );
-                      return;
-                    }
-                    Map<String, String> registerJson = {
-                      'email': emailController.text,
-                      'password': passwordController.text,
-                    };
-                    SocketService.socket.emit('register', registerJson);
-                  },
-                  child: const Text('Register', style: TextStyle(fontSize: 16)),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
-                  );
-                },
-                child: const Text('Back to Login', style: TextStyle(fontSize: 16, color: Colors.blue)),
-              ),
-            ],
+                SizedBox(height: screenHeight * 0.01), // 1% of screen height
+                Text(
+                  'Register to get started',
+                  style: TextStyle(
+                    fontSize: screenHeight * 0.018, // 1.8% of screen height
+                    color: Colors.grey,
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.03), // 3% of screen height
+                TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: const Icon(Icons.email),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.02), // 2% of screen height
+                TextField(
+                  obscureText: true,
+                  controller: passwordController,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: const Icon(Icons.lock),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.03), // 3% of screen height
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                        vertical: screenHeight * 0.02, // 2% of screen height
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please fill in all fields.'),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                        return;
+                      }
+                      Map<String, String> registerJson = {
+                        'email': emailController.text,
+                        'password': passwordController.text,
+                      };
+                      SocketService.socket.emit('register', registerJson);
+                    },
+                    child: Text(
+                      'Register',
+                      style: TextStyle(
+                        fontSize: screenHeight * 0.02, // 2% of screen height
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.02), // 2% of screen height
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginPage()),
+                    );
+                  },
+                  child: Text(
+                    'Back to Login',
+                    style: TextStyle(
+                      fontSize: screenHeight * 0.018, // 1.8% of screen height
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
