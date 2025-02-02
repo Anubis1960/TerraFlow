@@ -25,11 +25,12 @@ class Charts {
     // Update the scroll position after the widget builds
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController != null && scrollController.hasClients) {
+        print('Scrolling to the right end');
         // Smooth scroll to the target position (right end)
         scrollController.animateTo(
           targetPosition,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.linear,
         );
       }
     });
