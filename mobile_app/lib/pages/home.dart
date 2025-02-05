@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/util/SocketService.dart';
-import '../util/SharedPreferencesStorage.dart';
+import '../util/storage/base_storage.dart';
 import 'controller_dashboard.dart';
 import 'login.dart';
 
@@ -19,8 +19,8 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     print('Home Page init');
-    userId = SharedPreferencesStorage.getUserId();
-    controllerIds = SharedPreferencesStorage.getControllerList();
+    userId = BaseStorage.getStorageFactory().getUserId();
+    controllerIds = BaseStorage.getStorageFactory().getControllerList();
 
     SocketService.socket.on('error', (data) {
       if (data['error_msg'] != null && data['error_msg'].isNotEmpty) {
@@ -34,9 +34,9 @@ class _HomeState extends State<Home> {
     });
 
     SocketService.socket.on('controllers', (data) {
-      SharedPreferencesStorage.saveControllerList(data['controllers']);
+      BaseStorage.getStorageFactory().saveData('controller_ids', data['controllers']);
       setState(() {
-        controllerIds = SharedPreferencesStorage.getControllerList();
+        controllerIds = BaseStorage.getStorageFactory().getControllerList();
       });
     });
 
@@ -84,8 +84,8 @@ class _HomeState extends State<Home> {
             onPressed: () async {
               try {
                 // Fetch user ID and controller IDs asynchronously
-                final String userId = await SharedPreferencesStorage.getUserId();
-                final List<String> controllerIds = await SharedPreferencesStorage.getControllerList();
+                final String userId = await BaseStorage.getStorageFactory().getUserId();
+                final List<String> controllerIds = await BaseStorage.getStorageFactory().getControllerList();
 
                 // Emit logout event via SocketService
                 SocketService.socket.emit('logout', {
@@ -94,8 +94,7 @@ class _HomeState extends State<Home> {
                 });
 
                 // Clear user data from SharedPreferences
-                await SharedPreferencesStorage.saveUserId('');
-                await SharedPreferencesStorage.saveControllerList([]);
+                await BaseStorage.getStorageFactory().clearAllData();
 
                 // Navigate to the login page
                 Navigator.pushReplacement(

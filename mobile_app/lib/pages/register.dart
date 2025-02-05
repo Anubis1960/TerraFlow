@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../util/SocketService.dart';
-import '../util/SharedPreferencesStorage.dart';
+import '../util/storage/base_storage.dart';
 import 'home.dart';
 import 'login.dart';
 
@@ -21,7 +21,7 @@ class _RegisterPageState extends State<RegisterPage> {
     print('Register Page init');
     SocketService.socket.on('register_response', (data) {
       if (data['user_id'] != null && data['user_id'].isNotEmpty) {
-        SharedPreferencesStorage.saveUserId(data['user_id']);
+        BaseStorage.getStorageFactory().saveData('user_id', data['user_id']);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => Home()),

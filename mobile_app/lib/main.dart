@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/pages/login.dart';
-import './util/SharedPreferencesStorage.dart';
+import 'util/storage/base_storage.dart';
 import 'pages/home.dart';
 
 void main() {
@@ -17,8 +17,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: FutureBuilder<String>(
-        future: SharedPreferencesStorage.getUserId(),
+      home: FutureBuilder(
+        future: BaseStorage.getStorageFactory().getUserId(),
         builder: (context, snapshot) {
           // Check if the future is still loading
           if (snapshot.connectionState == ConnectionState.waiting) {

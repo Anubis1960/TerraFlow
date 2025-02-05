@@ -1,12 +1,10 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:mobile_app/util/SharedPreferencesStorage.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:device_info_plus/device_info_plus.dart';
+import 'package:mobile_app/util/storage/base_storage.dart';
 import 'package:mobile_app/pages/home.dart';
 import 'package:mobile_app/pages/login.dart';
+import 'package:mobile_app/util/export/file_downloader.dart';
+
 
 import '../util/SocketService.dart';
 import '../util/Charts.dart';
@@ -48,10 +46,10 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
 
     // Socket response listeners
     SocketService.socket.on('export_response', (data) async {
-      if (data.containsKey('file')){
+      if (data.containsKey('file')) {
         if (data['file'] is List<int>) {
           final fileData = Uint8List.fromList(data['file']);
-          await saveToInternalStorage(fileData, Permission.storage);
+          await saveToStorage(context, fileData, "exported_data.xlsx");
         }
       }
     });
@@ -122,53 +120,10 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   }
 
 
-  Future<void> saveToInternalStorage(Uint8List fileData, Permission permission) async {
-    try {
-      if(Platform.isAndroid){
-        AndroidDeviceInfo build = await DeviceInfoPlugin().androidInfo;
-        if (build.version.sdkInt >= 30) {
-          var re = await Permission.manageExternalStorage.request();
-          if (re.isGranted) {
-            final directory = await getExternalStorageDirectory();
-            final path = directory!.path;
-            final file = File('$path/exported_data.xlsx');
-            await file.writeAsBytes(fileData);
-          }
-          else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Permission denied'),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
-          }
-        }
-        else{
-          var re = await permission.request();
-          if (re.isGranted) {
-            final directory = await getExternalStorageDirectory();
-            final path = directory!.path;
-            final file = File('$path/exported_data.csv');
-            await file.writeAsBytes(fileData);
-          }
-          else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Permission denied'),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
-          }
-        }
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving file: $e'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    }
+
+  Future<void> saveToStorage(BuildContext context, Uint8List fileData, String fileName) async {
+    FileDownloader fileDownloader = FileDownloader.getFileDownloaderFactory();
+    await fileDownloader.downloadFile(context, fileData, fileName);
   }
 
   List<ChartData> _getSensorDataSpots(List<dynamic> records, String sensorKey) {
@@ -653,11 +608,10 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Container(
-        width: screenWidth * 0.28, // 28% of screen width
-        height: screenHeight * 0.12, // 12% of screen height
+      child: Padding(
         padding: EdgeInsets.all(screenWidth * 0.02), // 2% of screen width
         child: Column(
+          mainAxisSize: MainAxisSize.min, // Adapts to content height
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
@@ -667,13 +621,16 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
+              textAlign: TextAlign.center,
             ),
-            SizedBox(height: screenHeight * 0.01), // 1% of screen height
-            Text(
-              value.toStringAsFixed(2),
-              style: TextStyle(
-                fontSize: screenHeight * 0.022, // 2.2% of screen height
-                fontWeight: FontWeight.bold,
+            SizedBox(height: screenHeight * 0.008), // 0.8% of screen height
+            FittedBox( // Ensures text scales properly
+              child: Text(
+                value.toStringAsFixed(2),
+                style: TextStyle(
+                  fontSize: screenHeight * 0.022, // 2.2% of screen height
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -778,8 +735,8 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
           onPressed: () async {
             try {
               // Fetch user ID and controller IDs asynchronously
-              final String userId = await SharedPreferencesStorage.getUserId();
-              final List<String> controllerIds = await SharedPreferencesStorage.getControllerList();
+              final String userId = await BaseStorage.getStorageFactory().getUserId();
+              final List<String> controllerIds = await BaseStorage.getStorageFactory().getControllerList();
 
               // Emit logout event via SocketService
               SocketService.socket.emit('logout', {
@@ -788,8 +745,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
               });
 
               // Clear user data from SharedPreferences
-              await SharedPreferencesStorage.saveUserId('');
-              await SharedPreferencesStorage.saveControllerList([]);
+              await BaseStorage.getStorageFactory().clearAllData();
 
               // Navigate to the login page
               Navigator.pushReplacement(
