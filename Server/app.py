@@ -3,15 +3,17 @@ from flask import Flask
 from src.util.extensions import socketio, mqtt
 import src.api.socket_api
 import src.api.mqtt_api
-from src.util.config import MQTT_BROKER, MQTT_PORT, HOST, PORT
+from src.util.config import MQTT_BROKER, MQTT_PORT, HOST, PORT, SECRET_KEY
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SECRET_KEY'] = SECRET_KEY
 app.config['MQTT_BROKER_URL'] = MQTT_BROKER
 app.config['MQTT_BROKER_PORT'] = MQTT_PORT
 app.config['MQTT_USERNAME'] = ''
 app.config['MQTT_PASSWORD'] = ''
 app.config['MQTT_REFRESH_TIME'] = 1.0
 app.config['MQTT_TLS_ENABLED'] = False
+
+app.register_blueprint(src.api.rest_api.auth_blueprint)
 
 
 # Bind socketio to the app

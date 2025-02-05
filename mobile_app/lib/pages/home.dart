@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app/util/SocketService.dart';
+import 'package:mobile_app/util/socket_service.dart';
 import '../util/storage/base_storage.dart';
 import 'controller_dashboard.dart';
 import 'login.dart';

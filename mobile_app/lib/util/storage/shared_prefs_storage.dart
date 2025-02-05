@@ -18,7 +18,7 @@ class SharedPrefs extends BaseStorage {
 
     if (key == 'controller_ids') {
       if (value is List<dynamic>) {
-        List<String> controllerIds = await getControllerList();
+        List<String> controllerIds = [];
         for (var controllerId in value) {
           controllerIds.add(controllerId);
         }

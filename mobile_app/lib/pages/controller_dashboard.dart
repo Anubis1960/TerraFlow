@@ -6,8 +6,8 @@ import 'package:mobile_app/pages/login.dart';
 import 'package:mobile_app/util/export/file_downloader.dart';
 
 
-import '../util/SocketService.dart';
-import '../util/Charts.dart';
+import '../util/socket_service.dart';
+import '../components/charts.dart';
 
 class ControllerDashBoard extends StatefulWidget {
   final dynamic controllerId;

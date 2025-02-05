@@ -28,7 +28,7 @@ class SessionStorage extends BaseStorage{
   Future<void> saveData(String key, value) async{
     if (key == 'controller_ids') {
       if (value is List) {
-        List<String> controllerIds = await getControllerList();
+        List<String> controllerIds = [];
         for (var controllerId in value) {
           controllerIds.add(controllerId);
         }

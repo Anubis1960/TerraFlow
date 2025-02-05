@@ -1,7 +1,7 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'shared_preferences_storage.dart';
+import 'storage/base_storage.dart';
 
 class SocketService {
   static IO.Socket? _socket;
@@ -39,9 +39,8 @@ class SocketService {
       });
 
       _socket!.on('controllers', (data) {
-        for (var controllerId in data['controllers']) {
-          SharedPreferencesStorage.saveControllerId(controllerId);
-        }
+        BaseStorage.getStorageFactory().deleteData('controller_ids');
+        BaseStorage.getStorageFactory().saveData('controller_ids', data['controllers']);
       });
 
       _socket!.connect();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register.dart';
-import '../util/SocketService.dart';
+import '../util/socket_service.dart';
 import 'home.dart';
 import '../util/storage/base_storage.dart';
 

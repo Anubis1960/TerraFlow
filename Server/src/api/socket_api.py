@@ -52,6 +52,7 @@ def connet_event():
         - "Socket ID: <socket_id>"
     """
     print('Client connected')
+    print('Request:', request)
     socket_id = request.sid
     print('Socket ID:', socket_id)
     handle_connect(socket_id)
