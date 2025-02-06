@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile_app/util/socket_service.dart';
-import '../util/storage/base_storage.dart';
-import 'controller_dashboard.dart';
-import 'login.dart';
+import 'package:mobile_app/util/storage/base_storage.dart';
+import 'package:mobile_app/components/top_navbar.dart';
+import 'package:mobile_app/util/routes.dart';
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  _HomeState createState() => _HomeState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _HomeState extends State<Home> {
+class _HomePageState extends State<HomePage> {
   late Future<String> userId;
   late Future<List<String>> controllerIds;
 
@@ -66,49 +67,7 @@ class _HomeState extends State<Home> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Controllers',
-          style: TextStyle(
-            fontSize: screenHeight * 0.03, // 3% of screen height
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.deepPurpleAccent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout, color: Colors.white), // Logout icon
-            onPressed: () async {
-              try {
-                // Fetch user ID and controller IDs asynchronously
-                final String userId = await BaseStorage.getStorageFactory().getUserId();
-                final List<String> controllerIds = await BaseStorage.getStorageFactory().getControllerList();
-
-                // Emit logout event via SocketService
-                SocketService.socket.emit('logout', {
-                  'user_id': userId,
-                  'controllers': controllerIds,
-                });
-
-                // Clear user data from SharedPreferences
-                await BaseStorage.getStorageFactory().clearAllData();
-
-                // Navigate to the login page
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
-                );
-              } catch (e) {
-                // Handle any errors that occur during the async operations
-                print('Error during logout: $e');
-              }
-            },
-          ),
-        ],
-      ),
+      appBar: TopBar.buildTopBar(title: 'Controllers', context: context),
       body: FutureBuilder<List<String>>(
         future: controllerIds,
         builder: (context, snapshot) {
@@ -169,12 +128,7 @@ class _HomeState extends State<Home> {
                               color: Colors.deepPurpleAccent,
                             ),
                             onTap: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ControllerDashBoard(controllerId: controllerId),
-                                ),
-                              );
+                              context.go('${RouteURLs.CONTROLLER}/$controllerId');
                             },
                             onLongPress: () {
                               showDialog(
@@ -186,7 +140,7 @@ class _HomeState extends State<Home> {
                                     actions: [
                                       TextButton(
                                         onPressed: () {
-                                          Navigator.pop(context);
+                                          context.pop();
                                         },
                                         child: const Text('Cancel'),
                                       ),
@@ -204,7 +158,7 @@ class _HomeState extends State<Home> {
                                             controllerIds.remove(controllerId);
                                           });
 
-                                          Navigator.pop(context);
+                                          context.pop();
                                         },
                                         child: const Text('Delete'),
                                       ),
@@ -261,7 +215,7 @@ class _HomeState extends State<Home> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                context.pop();
               },
               child: const Text('Cancel'),
             ),
@@ -269,6 +223,15 @@ class _HomeState extends State<Home> {
               onPressed: () {
                 final newControllerId = controllerIdController.text.trim();
                 if (newControllerId.isNotEmpty) {
+                  if (newControllerId.length != 24) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Controller ID must be 24 characters long.'),
+                        backgroundColor: Colors.redAccent,
+                      ),
+                    );
+                    return;
+                  }
                   userId.then((onValue) {
                     Map<String, dynamic> data = {
                       'controller_id': newControllerId,
@@ -284,7 +247,7 @@ class _HomeState extends State<Home> {
                     ),
                   );
                 }
-                Navigator.pop(context);
+                context.pop();
               },
               child: const Text('Add'),
             ),

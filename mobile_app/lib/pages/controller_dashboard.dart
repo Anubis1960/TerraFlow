@@ -1,13 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:mobile_app/util/storage/base_storage.dart';
-import 'package:mobile_app/pages/home.dart';
-import 'package:mobile_app/pages/login.dart';
 import 'package:mobile_app/util/export/file_downloader.dart';
-
-
-import '../util/socket_service.dart';
-import '../components/charts.dart';
+import 'package:mobile_app/util/socket_service.dart';
+import 'package:mobile_app/components/charts.dart';
+import 'package:mobile_app/components/summary_card.dart';
+import 'package:mobile_app/components/top_navbar.dart';
+import 'package:mobile_app/components/bottom_navbar.dart';
 
 class ControllerDashBoard extends StatefulWidget {
   final dynamic controllerId;
@@ -322,7 +320,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: _buildAppBar(),
+      appBar: TopBar.buildTopBar(context: context, title: 'Controller Dashboard'),
       body: selectedFilterValue.isEmpty || filteredRecords.isEmpty || controllerData.isEmpty
           ? Center(
         child: CircularProgressIndicator(
@@ -341,9 +339,27 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildSummaryCard('Humidity', humidity, Colors.blue, screenWidth, screenHeight),
-                  _buildSummaryCard('Temperature', temperature, Colors.red, screenWidth, screenHeight),
-                  _buildSummaryCard('Water Usage', waterUsage, Colors.greenAccent, screenWidth, screenHeight),
+                  SummaryCard.buildSummaryCard(
+                      title: 'Humidity',
+                      value: humidity,
+                      color: Colors.blue,
+                      screenWidth: screenWidth,
+                      screenHeight: screenHeight
+                  ),
+                  SummaryCard.buildSummaryCard(
+                      title: 'Temperature',
+                      value: temperature,
+                      color: Colors.red,
+                      screenWidth: screenWidth,
+                      screenHeight: screenHeight
+                  ),
+                  SummaryCard.buildSummaryCard(
+                      title: 'Water Usage',
+                      value: waterUsage,
+                      color: Colors.green,
+                      screenWidth: screenWidth,
+                      screenHeight: screenHeight
+                  ),
                 ],
               ),
             ],
@@ -352,7 +368,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       ),
       bottomNavigationBar: SizedBox(
         height: screenHeight * 0.15, // 15% of screen height
-        child: _buildBottomNavBar(),
+        child: BottomNavBar.buildBottomNavBar(context: context, controllerId: controllerId),
       ),
     );
   }
@@ -477,288 +493,5 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     );
   }
 
-  Widget _buildBottomNavBar(){
-    return BottomAppBar(
-      elevation: 0,
-      color: Colors.white,
-      shape: CircularNotchedRectangle(),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // Home Button
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    // Navigate to Home Screen
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => Home()),
-                    );
-                  },
-                  icon: Icon(Icons.home, color: Colors.deepPurpleAccent),
-                  tooltip: 'Home',
-                ),
-                Flexible(
-                  child: Text(
-                    'Home',
-                    style: TextStyle(
-                      color: Colors.deepPurpleAccent,
-                      fontSize: 14, // Adjusted font size
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center, // Center the text
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Trigger Irrigation Button
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    SocketService.socket.emit('trigger_irrigation', {
-                      'controller_id': controllerId,
-                    });
-                  },
-                  icon: Icon(Icons.water_drop, color: Colors.deepPurpleAccent),
-                  tooltip: 'Trigger Irrigation',
-                ),
-                Flexible(
-                  child: Text(
-                    'Irrigation',
-                    style: TextStyle(
-                      color: Colors.deepPurpleAccent,
-                      fontSize: 14, // Adjusted font size
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Schedule Irrigation Button
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    _showScheduleDialog(context);
-                  },
-                  icon: Icon(Icons.schedule, color: Colors.deepPurpleAccent),
-                  tooltip: 'Schedule Irrigation',
-                ),
-                Flexible(
-                  child: Text(
-                    'Schedule',
-                    style: TextStyle(
-                      color: Colors.deepPurpleAccent,
-                      fontSize: 14, // Adjusted font size
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Export Data Button
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    SocketService.socket.emit('export', {
-                      'controller_id': controllerId,
-                    });
-                  },
-                  icon: Icon(Icons.cloud_download, color: Colors.green),
-                  tooltip: 'Export Data',
-                ),
-                Flexible(
-                  child: Text(
-                    'Export',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontSize: 14, // Adjusted font size
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildSummaryCard(String title, double value, Color color, double screenWidth, double screenHeight) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(screenWidth * 0.02), // 2% of screen width
-        child: Column(
-          mainAxisSize: MainAxisSize.min, // Adapts to content height
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: screenHeight * 0.018, // 1.8% of screen height
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: screenHeight * 0.008), // 0.8% of screen height
-            FittedBox( // Ensures text scales properly
-              child: Text(
-                value.toStringAsFixed(2),
-                style: TextStyle(
-                  fontSize: screenHeight * 0.022, // 2.2% of screen height
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  void _showScheduleDialog(BuildContext context) {
-    List<String> type = ['DAILY', 'WEEKLY', 'MONTHLY'];
-    String selectedType = type[0];
-
-    TimeOfDay selectedTime = TimeOfDay(hour: 0, minute: 0);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Schedule Irrigation'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButton<String>(
-                    value: selectedType,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedType = newValue!;
-                      });
-                    },
-                    items: type.map((value) => DropdownMenuItem(
-                      value: value,
-                      child: Text(value),
-                    )).toList(),
-                  ),
-                  const SizedBox(height: 20),
-                  ListTile(
-                    title: const Text('Select Time'),
-                    trailing: Text(
-                      '${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    onTap: () async {
-                      final TimeOfDay? pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: selectedTime,
-                      );
-                      if (pickedTime != null) {
-                        setState(() {
-                          selectedTime = pickedTime;
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final formattedTime = '${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}';
-                    SocketService.socket.emit('schedule_irrigation', {
-                      'controller_id': controllerId,
-                      'schedule_type': selectedType,
-                      'schedule_time': formattedTime,
-                    });
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Schedule'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(){
-    return AppBar(
-      title: Text(
-        'Dashboard',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
-      centerTitle: true,
-      backgroundColor: Colors.deepPurpleAccent,
-      elevation: 0,
-      actions: [
-        IconButton(
-          icon: Icon(Icons.logout, color: Colors.white), // Logout icon
-          onPressed: () async {
-            try {
-              // Fetch user ID and controller IDs asynchronously
-              final String userId = await BaseStorage.getStorageFactory().getUserId();
-              final List<String> controllerIds = await BaseStorage.getStorageFactory().getControllerList();
-
-              // Emit logout event via SocketService
-              SocketService.socket.emit('logout', {
-                'user_id': userId,
-                'controllers': controllerIds,
-              });
-
-              // Clear user data from SharedPreferences
-              await BaseStorage.getStorageFactory().clearAllData();
-
-              // Navigate to the login page
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
-              );
-            } catch (e) {
-              // Handle any errors that occur during the async operations
-              print('Error during logout: $e');
-            }
-          },
-        ),
-      ],
-    );
-  }
 }

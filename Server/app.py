@@ -1,4 +1,6 @@
 from flask import Flask
+from flask_cors import CORS
+
 import src.api.rest_api
 import src.api.mqtt_api
 import src.api.socket_api
@@ -6,6 +8,8 @@ from src.util.config import MQTT_BROKER, MQTT_PORT, HOST, PORT, SECRET_KEY, GOOG
 from src.util.extensions import socketio, mqtt
 
 app = Flask(__name__)
+
+CORS(app)
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['MQTT_BROKER_URL'] = MQTT_BROKER
 app.config['MQTT_BROKER_PORT'] = MQTT_PORT
@@ -26,6 +30,7 @@ app.config['OAUTH2_PROVIDERS'] = {
         'scope': 'email profile',
     }
 }
+
 
 app.register_blueprint(src.api.rest_api.auth_blueprint)
 

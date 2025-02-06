@@ -8,3 +8,5 @@ python-dotenv
 pandas
 openpyxl
 jwt
+google-auth
+google_auth_oauthlib

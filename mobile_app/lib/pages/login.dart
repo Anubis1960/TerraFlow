@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'register.dart';
-import '../util/socket_service.dart';
-import 'home.dart';
-import '../util/storage/base_storage.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mobile_app/util/socket_service.dart';
+import 'package:mobile_app/util/storage/base_storage.dart';
+import 'package:mobile_app/util/routes.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,10 +24,7 @@ class _LoginPageState extends State<LoginPage> {
       if (data['user_id'] != null && data['user_id'].isNotEmpty) {
         BaseStorage.getStorageFactory().saveData('user_id', data['user_id']);
         BaseStorage.getStorageFactory().saveData('controller_ids', data['controllers']);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Home()),
-        );
+        context.go(RouteURLs.HOME);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -131,10 +128,7 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(height: screenHeight * 0.02), // 2% of screen height
                 TextButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => RegisterPage()),
-                    );
+                    context.go(RouteURLs.REGISTER);
                   },
                   child: const Text('Don’t have an account? Register'),
                 ),

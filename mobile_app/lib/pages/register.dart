@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../util/socket_service.dart';
-import '../util/storage/base_storage.dart';
-import 'home.dart';
-import 'login.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mobile_app/util/socket_service.dart';
+import 'package:mobile_app/util/storage/base_storage.dart';
+import 'package:mobile_app/util/routes.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,6 +14,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   @override
   void initState() {
@@ -22,10 +23,7 @@ class _RegisterPageState extends State<RegisterPage> {
     SocketService.socket.on('register_response', (data) {
       if (data['user_id'] != null && data['user_id'].isNotEmpty) {
         BaseStorage.getStorageFactory().saveData('user_id', data['user_id']);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Home()),
-        );
+        context.go(RouteURLs.HOME);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -42,6 +40,7 @@ class _RegisterPageState extends State<RegisterPage> {
     print('Register Page Disposed');
     emailController.dispose();
     passwordController.dispose();
+    confirmPasswordController.dispose();
     SocketService.socket.off('register_response');
     super.dispose();
   }
@@ -107,6 +106,18 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                 ),
+                SizedBox(height: screenHeight * 0.02), // 2% of screen height
+                TextField(
+                  obscureText: true,
+                  controller: confirmPasswordController,
+                  decoration: InputDecoration(
+                    labelText: 'Confirm Password',
+                    prefixIcon: const Icon(Icons.lock),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
                 SizedBox(height: screenHeight * 0.03), // 3% of screen height
                 SizedBox(
                   width: double.infinity,
@@ -120,7 +131,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     onPressed: () {
-                      if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+                      if (emailController.text.isEmpty || passwordController.text.isEmpty || confirmPasswordController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Please fill in all fields.'),
@@ -129,6 +140,17 @@ class _RegisterPageState extends State<RegisterPage> {
                         );
                         return;
                       }
+
+                      if (passwordController.text != confirmPasswordController.text) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Passwords do not match.'),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                        return;
+                      }
+
                       Map<String, String> registerJson = {
                         'email': emailController.text,
                         'password': passwordController.text,
@@ -146,10 +168,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 SizedBox(height: screenHeight * 0.02), // 2% of screen height
                 TextButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => LoginPage()),
-                    );
+                    context.go(RouteURLs.LOGIN);
                   },
                   child: Text(
                     'Back to Login',

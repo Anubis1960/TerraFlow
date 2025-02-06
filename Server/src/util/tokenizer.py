@@ -1,11 +1,11 @@
 import jwt
 import datetime
-from config import SECRET_KEY
+from src.util.config import SECRET_KEY
 
 
 def generate_token(email, user_id):
     payload = {
-        'exp': datetime.datetime.now() + datetime.timedelta(days=1),
+        'exp': datetime.datetime.now() + datetime.timedelta(days=30),
         'iat': datetime.datetime.now(),
         'email': email,
         'user_id': user_id
