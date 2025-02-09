@@ -471,10 +471,13 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                   });
                 },
                 items: filteredValues.isNotEmpty
-                    ? filteredValues.map((value) => DropdownMenuItem<String>(value: value, child: Text(
+                    ? filteredValues.map((value) => DropdownMenuItem<String>(
+                    value: value,
+                    child: Center(
+                    child: Text(
                     value,
                   textAlign: TextAlign.center,
-                ))).toList()
+                )))).toList()
                     : [],
                 isExpanded: true,
                 style: TextStyle(

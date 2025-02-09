@@ -15,18 +15,12 @@ class Charts {
     double? maxX,
     ScrollController? scrollController,
   }) {
-    double targetPosition = 0;
+    scrollController ??= ScrollController(); // Ensure scrollController is initialized
 
-    // Check if a scroll controller is passed
-    if (scrollController != null) {
-      targetPosition = (maxX ?? (xAxisLabels.length - 1).toDouble()) * 40.0; // Adjust based on maxX
-    }
+    double targetPosition = (maxX ?? (xAxisLabels.length - 1).toDouble()) * 40.0;
 
-    // Update the scroll position after the widget builds
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController != null && scrollController.hasClients) {
-        print('Scrolling to the right end');
-        // Smooth scroll to the target position (right end)
         scrollController.animateTo(
           targetPosition,
           duration: const Duration(milliseconds: 800),
@@ -53,18 +47,35 @@ class Charts {
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 400,
-            child: Row(
-              children: [
-                Expanded(
-                  child: isScrollable
-                      ? SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    controller: scrollController,
-                    child: SizedBox(
-                      width: maxX != null ? maxX * 40.0 : xAxisLabels.length * 40.0,
-                      child: _buildLineChartContent(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SizedBox(
+                height: 400,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: isScrollable
+                          ? Scrollbar(
+                        controller: scrollController,
+                        thumbVisibility: true, // Makes scrollbar visible
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          controller: scrollController,
+                          child: SizedBox(
+                            width: maxX != null ? maxX * 40.0 : xAxisLabels.length * 40.0,
+                            child: _buildLineChartContent(
+                              data,
+                              lineColor,
+                              minY,
+                              maxY,
+                              xAxisLabels,
+                              showGrid,
+                              maxX: maxX,
+                            ),
+                          ),
+                        ),
+                      )
+                          : _buildLineChartContent(
                         data,
                         lineColor,
                         minY,
@@ -74,19 +85,10 @@ class Charts {
                         maxX: maxX,
                       ),
                     ),
-                  )
-                      : _buildLineChartContent(
-                    data,
-                    lineColor,
-                    minY,
-                    maxY,
-                    xAxisLabels,
-                    showGrid,
-                    maxX: maxX,
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ),
@@ -102,20 +104,29 @@ class Charts {
       bool showGrid, {
         double? maxX,
       }) {
+
+    TooltipBehavior tooltipBehavior = TooltipBehavior(
+      enable: true,
+      format: 'point.x : point.y', // Custom format
+      color: Colors.blue, // Background color
+      textStyle: const TextStyle(color: Colors.white, fontSize: 12),
+    );
+
     return SfCartesianChart(
+      tooltipBehavior: tooltipBehavior, // Attach tooltip behavior
       primaryXAxis: CategoryAxis(
         labelPlacement: LabelPlacement.onTicks,
         majorGridLines: MajorGridLines(width: showGrid ? 1 : 0, color: Colors.black),
         labelStyle: const TextStyle(fontSize: 10, color: Colors.black54),
         maximum: maxX ?? (xAxisLabels.length - 1).toDouble(),
         labelIntersectAction: AxisLabelIntersectAction.rotate45,
-        arrangeByIndex: true, // Ensure labels are displayed in the correct order
+        arrangeByIndex: true,
       ),
       primaryYAxis: NumericAxis(
         title: AxisTitle(text: 'Values'),
         minimum: minY,
         maximum: maxY,
-        interval: (maxY - minY) / 4, // Set a fixed interval to avoid doubled values
+        interval: (maxY - minY) / 4,
         majorGridLines: MajorGridLines(width: showGrid ? 1 : 0, color: Colors.black),
         labelStyle: const TextStyle(fontSize: 12, color: Colors.black54),
       ),
@@ -126,12 +137,14 @@ class Charts {
           yValueMapper: (ChartData data, _) => data.y,
           color: lineColor,
           width: 3,
-          markerSettings: const MarkerSettings(isVisible: true),
+          markerSettings: const MarkerSettings(isVisible: true), // Show markers on points
           dataLabelSettings: const DataLabelSettings(isVisible: false),
+          enableTooltip: true, // Enable tooltip for this series
         ),
       ],
     );
   }
+
 }
 
 class ChartData {

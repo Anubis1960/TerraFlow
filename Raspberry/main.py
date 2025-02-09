@@ -17,126 +17,50 @@ Modules and Constants:
 - `generate_object_id`: Function to create a unique device identifier.
 
 Attributes:
-    led (Pin): Represents the onboard LED, used for debugging or status.
     _device_id (str): A unique identifier for this IoT device.
 """
 
 from machine import Pin
 from time import sleep, localtime
+import ntptime
 import network
 import os
 from umqtt.simple import MQTTClient
 import asyncio
 import urandom
 import ujson as json
-from constants import SSID, PASSWORD, HOST, PORT, MQTT_BROKER, MQTT_CLIENT_ID
+from constants import SSID, PASSWORD, HOST, PORT, MQTT_BROKER, MQTT_CLIENT_ID, get_mqtt_topics
 from generate_id import generate_object_id
-
-
-
-class MQTTManager:
-    def __init__(self, client):
-        self.client = client
-
-    def handle_irrigation_cmd(self):
-        """
-        Handles the irrigation command.
-        """
-        timestamp = localtime()
-        year, month, day, hour, minute, second = timestamp[:6]
-        water_data = {
-            'water_used': urandom.randint(0, 100),
-            'date': "{:04d}/{:02d}".format(year, month)
-        }
-        print("Publishing water data:", water_data)
-        self.client.publish(RECORD_WATER_USED_PUB, json.dumps(water_data))
-
-    def mqtt_callback(self, topic, msg):
-        """
-        Handles incoming MQTT messages.
-
-        Args:
-            topic (bytes): The topic of the received message.
-            msg (bytes): The payload of the received message.
-        """
-        print('Received message on topic:', topic)
-        topic = topic.decode()
-        msg = msg.decode()
-        if topic == SCHEDULE_SUB:
-            json_data = json.loads(msg)
-            print("Schedule message:", json_data)
-        elif topic == IRRIGATE_SUB:
-            print("Irrigation command received:", msg)
-            self.handle_irrigation_cmd()
-
-    async def listen(self, period_ms: int = 2000):
-        """
-        Listens for incoming MQTT messages.
-
-        Args:
-            period_ms (int): The interval between checks in milliseconds.
-        """
-        print("Listening for MQTT messages...")
-        while True:
-            self.client.check_msg()
-            await asyncio.sleep_ms(period_ms)
-    
-    async def send(self,period_ms: int = 2000):
-        """
-        Publishes sensor and water usage data to MQTT topics.
-
-        Args:
-            client (MQTTClient): The MQTT client instance.
-            period_ms (int): The interval between messages in milliseconds.
-        """
-        while True:
-            # Generate timestamp
-            timestamp = localtime()
-            year, month, day, hour, minute, second = timestamp[:6]
-
-            time_str = "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(year, month, day, hour, minute, second)
-
-            # Sensor data
-            sensor_data = {
-                'sensor_data': {
-                    "air_temperature": urandom.randint(0, 100),
-                    "air_humidity": urandom.randint(0, 100),
-                    "soil_moisture": urandom.randint(0, 100)
-                },
-                'timestamp': time_str
-            }
-            print("Publishing sensor data:", sensor_data)
-            self.client.publish(RECORD_SENSOR_DATA_PUB, json.dumps(sensor_data))
-
-            await asyncio.sleep_ms(period_ms)
+from mqttman import MQTTManager
 
 # Initialize onboard LED
 led = Pin('LED', Pin.OUT)
 
-changed = False
 
-# Ensure a unique device ID is stored persistently
-if 'id.txt' not in os.listdir():
-    with open('id.txt', 'w') as f:
-        f.write('')  # Create an empty file
+def init():
+    changed = False
 
-with open('id.txt', 'r') as f:
-    _device_id = f.read().strip()  # Read and clean up whitespace
+    try:
+        ntptime.host = "pool.ntp.org"
+        ntptime.settime()
+    except OSError as e:
+        print("Error synchronizing time:", e)
 
-if not _device_id:
-    changed = True
-    _device_id = generate_object_id()
-    with open('id.txt', 'w') as f:
-        f.write(_device_id)
+    # Ensure a unique device ID is stored persistently
+    if 'id.txt' not in os.listdir():
+        with open('id.txt', 'w') as f:
+            f.write('')  # Create an empty file
 
-# MQTT Topics
-REGISTER_PUB = "register"
-RECORD_SENSOR_DATA_PUB = f"{_device_id}/record/sensor_data"
-RECORD_WATER_USED_PUB = f"{_device_id}/record/water_used"
-PREDICT_PUB = f"{_device_id}/predict"
-SCHEDULE_SUB = f"{_device_id}/schedule"
-IRRIGATE_SUB = f"{_device_id}/irrigate"
-PREDICTION_SUB = f"{_device_id}/prediction"
+    with open('id.txt', 'r') as f:
+        _device_id = f.read().strip()  # Read and clean up whitespace
+
+    if not _device_id:
+        changed = True
+        _device_id = generate_object_id()
+        with open('id.txt', 'w') as f:
+            f.write(_device_id)
+    
+    return _device_id, changed
 
 def connect_wifi(ssid: str, password: str):
     """
@@ -162,19 +86,26 @@ async def main():
     - Task scheduling for publishing and listening.
     """
     connect_wifi(SSID, PASSWORD)
-    print("Device Information:", os.uname())
+
+    # Initialize device ID
+    _device_id, changed = init()
+
+    print("Local time after synchronization：%s" %str(localtime()))
+
+    # Get MQTT topics
+    topics = get_mqtt_topics(_device_id)
 
     client = MQTTClient(MQTT_CLIENT_ID, MQTT_BROKER)
-    mqtt_manager = MQTTManager(client)
-    client.set_callback(mqtt_manager.mqtt_callback)
+    mqtt_mng = MQTTManager(client, topics)
+    client.set_callback(mqtt_mng.mqtt_callback)
     client.connect()
     print("Connected to MQTT broker")
 
     # Subscribe to topics
-    client.subscribe(IRRIGATE_SUB)
-    client.subscribe(SCHEDULE_SUB)
-    client.subscribe(PREDICTION_SUB)
-    print(f"Subscribed to topics: {IRRIGATE_SUB}, {SCHEDULE_SUB}, {PREDICTION_SUB}")
+    client.subscribe(topics['IRRIGATE_SUB'])
+    client.subscribe(topics['SCHEDULE_SUB'])
+    client.subscribe(topics['PREDICTION_SUB'])
+    print(f"Subscribed to topics: {topics['IRRIGATE_SUB']}, {topics['SCHEDULE_SUB']}, {topics['PREDICTION_SUB']}")
 
     # Register device
     timestamp = localtime()
@@ -182,7 +113,7 @@ async def main():
     registration_data = {
         'controller_id': _device_id
     }
-    client.publish(REGISTER_PUB, json.dumps(registration_data))
+    client.publish(topics['REGISTER_PUB'], json.dumps(registration_data))
     
     if changed:
         sensor_data = {
@@ -200,8 +131,9 @@ async def main():
         }
 
     # Start tasks
-    asyncio.create_task(mqtt_manager.listen())
-    asyncio.create_task(mqtt_manager.send())
+    asyncio.create_task(mqtt_mng.listen())
+    asyncio.create_task(mqtt_mng.send())
+    asyncio.create_task(mqtt_mng.check_irrigation())
 
 # Run the event loop
 loop = asyncio.get_event_loop()

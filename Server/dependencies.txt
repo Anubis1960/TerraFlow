@@ -7,6 +7,7 @@ redis
 python-dotenv
 pandas
 openpyxl
-jwt
+pyjwt
 google-auth
 google_auth_oauthlib
+Flask Authlib

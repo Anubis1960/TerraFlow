@@ -234,6 +234,30 @@ def schedule_irrigation_event(data):
     handle_schedule_irrigation(controller_id, schedule)
 
 
+@socketio.on('remove_schedule')
+def remove_schedule_event(data):
+    """
+    Removes irrigation schedule for a controller.
+
+    Args:
+        data (dict): JSON payload with the key 'controller_id'.
+
+    Actions:
+        - Validates presence of 'controller_id' in the payload.
+        - Calls `handle_schedule_irrigation` with an empty schedule to remove the existing schedule.
+
+    Logs:
+        - "Removing schedule for: <controller_id>"
+        - Errors if 'controller_id' is missing.
+    """
+    if 'controller_id' not in data:
+        print('controller ID not found, found:', data)
+        return
+    controller_id = data['controller_id']
+    print('Removing schedule for:', controller_id)
+    handle_schedule_irrigation(controller_id, {})
+
+
 @socketio.on('message')
 def message_event(data):
     """

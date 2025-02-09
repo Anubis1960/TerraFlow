@@ -72,7 +72,16 @@ class ScheduleDialog{
                     });
                     context.pop();
                   },
-                  child: const Text('Schedule'),
+                  child: const Text('Add Schedule'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    SocketService.socket.emit('remove_schedule', {
+                      'controller_id': controllerId,
+                    });
+                    context.pop();
+                  },
+                  child: const Text('Remove Schedule'),
                 ),
               ],
             );
