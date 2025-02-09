@@ -20,26 +20,22 @@ Attributes:
     _device_id (str): A unique identifier for this IoT device.
 """
 
-from machine import Pin
 from time import sleep, localtime
 import ntptime
 import network
 import os
 from umqtt.simple import MQTTClient
 import asyncio
-import urandom
 import ujson as json
-from constants import SSID, PASSWORD, HOST, PORT, MQTT_BROKER, MQTT_CLIENT_ID, get_mqtt_topics
+from constants import SSID, PASSWORD, MQTT_BROKER, MQTT_CLIENT_ID, get_mqtt_topics
 from generate_id import generate_object_id
 from mqttman import MQTTManager
 
-# Initialize onboard LED
-led = Pin('LED', Pin.OUT)
-
 
 def init():
-    changed = False
-
+    """
+    Initializes the IoT device by synchronizing the time and generating a unique device ID.
+    """
     try:
         ntptime.host = "pool.ntp.org"
         ntptime.settime()
@@ -55,12 +51,11 @@ def init():
         _device_id = f.read().strip()  # Read and clean up whitespace
 
     if not _device_id:
-        changed = True
         _device_id = generate_object_id()
         with open('id.txt', 'w') as f:
             f.write(_device_id)
     
-    return _device_id, changed
+    return _device_id
 
 def connect_wifi(ssid: str, password: str):
     """
@@ -88,9 +83,7 @@ async def main():
     connect_wifi(SSID, PASSWORD)
 
     # Initialize device ID
-    _device_id, changed = init()
-
-    print("Local time after synchronization：%s" %str(localtime()))
+    _device_id= init()
 
     # Get MQTT topics
     topics = get_mqtt_topics(_device_id)
@@ -105,30 +98,11 @@ async def main():
     client.subscribe(topics['IRRIGATE_SUB'])
     client.subscribe(topics['SCHEDULE_SUB'])
     client.subscribe(topics['PREDICTION_SUB'])
-    print(f"Subscribed to topics: {topics['IRRIGATE_SUB']}, {topics['SCHEDULE_SUB']}, {topics['PREDICTION_SUB']}")
 
-    # Register device
-    timestamp = localtime()
-    year, month, day, hour, minute, second = timestamp[:6]
     registration_data = {
         'controller_id': _device_id
     }
     client.publish(topics['REGISTER_PUB'], json.dumps(registration_data))
-    
-    if changed:
-        sensor_data = {
-                'sensor_data': {
-                    "air_temperature": 0,
-                    "air_humidity": 0,
-                    "soil_moisture": 0
-                },
-                'timestamp': "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(year, month, day, hour, minute, second)
-            }
-        
-        water_data = {
-            'water_used': 0,
-            'date': "{:04d}/{:02d}".format(year, month)
-        }
 
     # Start tasks
     asyncio.create_task(mqtt_mng.listen())

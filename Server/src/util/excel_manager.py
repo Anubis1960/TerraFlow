@@ -43,7 +43,7 @@ MONTH_MAP = {
 }
 
 
-def create_bar_chart(ws, df, title, y_axis_title, x_axis_title, start_col, start_row):
+def create_bar_chart(ws, title, y_axis_title, x_axis_title, start_col, start_row):
     chart = BarChart()
     chart.title = title
     chart.y_axis.title = y_axis_title
@@ -52,15 +52,15 @@ def create_bar_chart(ws, df, title, y_axis_title, x_axis_title, start_col, start
     chart.legend.position = "b"  # Place legend at the bottom
     chart.x_axis.majorGridlines = None  # Remove major gridlines for clarity
 
-    data = Reference(ws, min_col=2, min_row=1, max_row=13)
+    _data = Reference(ws, min_col=2, min_row=1, max_row=13)
     categories = Reference(ws, min_col=1, min_row=2, max_row=13)
 
-    chart.add_data(data, titles_from_data=True)
+    chart.add_data(_data, titles_from_data=True)
     chart.set_categories(categories)
     ws.add_chart(chart, f"{start_col}{start_row}")
 
 
-def create_line_chart(ws, df, title, y_axis_title, x_axis_title, start_col, start_row):
+def create_line_chart(ws, title, y_axis_title, x_axis_title, start_col, start_row):
     chart = LineChart()
     chart.title = title
     chart.y_axis.title = y_axis_title
@@ -68,33 +68,24 @@ def create_line_chart(ws, df, title, y_axis_title, x_axis_title, start_col, star
     chart.style = 12  # Apply a professional style
     chart.legend.position = "b"
 
-    data = Reference(ws, min_col=2, min_row=1, max_row=13)
+    _data = Reference(ws, min_col=2, min_row=1, max_row=13)
     categories = Reference(ws, min_col=1, min_row=2, max_row=13)
 
-    chart.add_data(data, titles_from_data=True)
+    chart.add_data(_data, titles_from_data=True)
     chart.set_categories(categories)
     ws.add_chart(chart, f"{start_col}{start_row}")
 
 
-def export_to_excel(data):
+def export_to_excel(_data):
     # Convert records to DataFrame
     records_df = pd.DataFrame(
-        [{**record["sensor_data"], "Timestamp": record["timestamp"]} for record in data["record"]]
+        [{**record["sensor_data"], "Timestamp": record["timestamp"]} for record in _data["record"]]
     )
 
     # Convert water usage to DataFrame
-    water_usage_df = pd.DataFrame(data["water_usage"])
+    water_usage_df = pd.DataFrame(_data["water_usage"])
     water_usage_df["Year"] = water_usage_df["date"].str[:4]
     water_usage_df["Month"] = water_usage_df["date"].str[5:].map(MONTH_MAP)
-
-    # Ensure all months are included with zero values if missing
-    all_months = pd.DataFrame({"Month": list(MONTH_MAP.values())})
-    water_usage_df = all_months.merge(water_usage_df, on="Month", how="left").fillna({"water_used": 0})
-
-    # Pivot data to get yearly structure
-    water_usage_pivot = water_usage_df.pivot(index="Month", columns="Year", values="water_used").fillna(0).reset_index()
-    water_usage_pivot["MonthOrder"] = water_usage_pivot["Month"].map({v: k for k, v in MONTH_MAP.items()})
-    water_usage_pivot = water_usage_pivot.sort_values("MonthOrder").drop(columns=["MonthOrder"])
 
     # Create Excel workbook
     wb = Workbook()
@@ -110,6 +101,17 @@ def export_to_excel(data):
     for row in dataframe_to_rows(water_usage_df.drop(columns=["Year"]), index=False, header=True):
         ws_water.append(row)
 
+    # Ensure all months are included with zero values if missing
+    all_months = pd.DataFrame({"Month": list(MONTH_MAP.values())})
+    water_usage_df = (
+        all_months.merge(water_usage_df, on="Month", how="left")
+        .fillna({"water_used": 0}))
+
+    # Pivot data to get yearly structure
+    water_usage_pivot = water_usage_df.pivot(index="Month", columns="Year", values="water_used").fillna(0).reset_index()
+    water_usage_pivot["MonthOrder"] = water_usage_pivot["Month"].map({v: k for k, v in MONTH_MAP.items()})
+    water_usage_pivot = water_usage_pivot.sort_values("MonthOrder").drop(columns=["MonthOrder"])
+
     # Write yearly water usage data and create charts
     for year in water_usage_df["Year"].dropna().unique():
         ws_year = wb.create_sheet(year)
@@ -118,17 +120,17 @@ def export_to_excel(data):
         for row in dataframe_to_rows(year_data, index=False, header=True):
             ws_year.append(row)
 
-        create_bar_chart(ws_year, year_data, f"Monthly Water Usage for {year}", "Water Used", "Month", "D", 2)
-        create_line_chart(ws_year, year_data, f"Monthly Trend for {year}", "Water Used", "Month", "H", 2)
+        create_bar_chart(ws_year, f"Monthly Water Usage for {year}", "Water Used", "Month", "D", 2)
+        create_line_chart(ws_year, f"Monthly Trend for {year}", "Water Used", "Month", "H", 2)
 
     # Save workbook to BytesIO buffer
-    buf = BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-    return buf
+    buff = BytesIO()
+    wb.save(buff)
+    buff.seek(0)
+    return buff
+
 
 if __name__ == "__main__":
     buf = export_to_excel(data)
     with open("output.xlsx", "wb") as f:
         f.write(buf.read())
-

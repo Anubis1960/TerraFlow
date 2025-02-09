@@ -1,7 +1,11 @@
-from time import sleep, localtime
+from time import localtime
 import asyncio
 import urandom
 import ujson as json
+from machine import Pin, ADC
+
+moisture_pin = ADC(Pin(26))
+moisture_conversion_factor = 100 / (65535)
 
 class MQTTManager:
     def __init__(self, client, topics):
@@ -15,7 +19,7 @@ class MQTTManager:
         Handles the irrigation command.
         """
         timestamp = localtime()
-        year, month, day, hour, minute, second = timestamp[:6]
+        year, month = timestamp[:2]
         water_data = {
             'water_used': urandom.randint(0, 100),
             'date': "{:04d}/{:02d}".format(year, month)
@@ -53,9 +57,9 @@ class MQTTManager:
         """
         topic = topic.decode()
         msg = msg.decode()
+        
         if topic == self.topics['SCHEDULE_SUB']:
             json_data = json.loads(msg)
-            print("Schedule message:", json_data)
             self.handle_schedule_cmd(json_data)
         elif topic == self.topics['IRRIGATE_SUB']:
             print("Irrigation command received:", msg)
@@ -102,7 +106,7 @@ class MQTTManager:
 
             await asyncio.sleep(period_s)
     
-    async def check_irrigation(self, period_s: int = 86400):
+    async def check_irrigation(self, period_s: int = 2):
         """
         If a schedule is set, it follows the schedule.
         """
@@ -145,4 +149,18 @@ class MQTTManager:
                 except asyncio.TimeoutError:
                     time_until_irrigation -= delay
             
+            moisture_level = self.read_moisture()
+            print("Moisture level:", moisture_level)
             self.handle_irrigation_cmd()
+    
+
+    def read_moisture(self):
+        """
+        Reads the moisture level from the sensor.
+
+        Returns:
+            float: The moisture level.
+        """
+        raw_value = moisture_pin.read_u16()
+        moisture_level = raw_value * moisture_conversion_factor
+        return moisture_level
