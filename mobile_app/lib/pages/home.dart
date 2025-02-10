@@ -5,14 +5,14 @@ import 'package:mobile_app/util/storage/base_storage.dart';
 import 'package:mobile_app/components/top_navbar.dart';
 import 'package:mobile_app/util/routes.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomeScreenState extends State<HomeScreen> {
   late Future<String> userId;
   late Future<List<String>> controllerIds;
 

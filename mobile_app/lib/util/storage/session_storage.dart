@@ -1,5 +1,5 @@
 import 'package:mobile_app/util/storage/base_storage.dart';
-import 'dart:html' as html;
+import 'dart:html' as html show Storage, window;
 
 class SessionStorage extends BaseStorage{
   static final html.Storage _sessionStorage = html.window.sessionStorage;
