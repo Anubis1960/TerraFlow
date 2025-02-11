@@ -2,19 +2,20 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'storage/base_storage.dart';
+import 'constants.dart';
 
 class SocketService {
   static IO.Socket? _socket;
-  static String url = '';
 
   static IO.Socket get socket {
+    String url = '';
     if (_socket == null) {
       if (kIsWeb) {
-        url = 'ws://localhost:5000'; // Adjust URL based on your server setup
+        url = Server.WEB_SOCKET_URL;
       } else if (Platform.isAndroid) {
-        url = 'ws://10.0.2.2:5000';
+        url = Server.MOBILE_SOCKET_URL;
       } else {
-        url = 'ws://localhost:5000';
+        url = Server.WEB_SOCKET_URL;
       }
       _socket = IO.io(url, <String, dynamic>{
         'transports': ['websocket'],

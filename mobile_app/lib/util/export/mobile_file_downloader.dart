@@ -10,7 +10,6 @@ import 'package:permission_handler/permission_handler.dart';
 class MobileFileDownloader extends FileDownloader {
   @override
   Future<void> downloadFile(BuildContext context, Uint8List fileData, String fileName) async {
-    // 🔹 Request storage permission (Android and iOS only)
     if (Platform.isAndroid) {
       AndroidDeviceInfo build = await DeviceInfoPlugin().androidInfo;
       if (build.version.sdkInt >= 30) {

@@ -32,10 +32,10 @@ and connected clients. The handlers process user requests, manage controllers, a
 from flask import request
 from src.service.socket_service import (
     handle_connect, handle_disconnect, handle_irrigate, handle_add_controller,
-    handle_remove_controller, handle_schedule_irrigation, handle_register,
-    handle_login, handle_retrieve_controller_data, remap_redis, handle_export
+    handle_remove_controller, handle_schedule_irrigation, handle_retrieve_controller_data, remap_redis, handle_export
 )
 from src.util.extensions import socketio
+from src.util.tokenizer import decode_token
 
 
 @socketio.on('connect')
@@ -77,13 +77,16 @@ def init_event(data):
     """
     print('Init:', data)
     socket_id = request.sid
-    if 'user_id' not in data or 'controllers' not in data:
+    if 'token' not in data or 'controllers' not in data:
         print('User ID not found, found:', data)
         return
     if not data['controllers']:
         print('No controllers found, found:', data)
         return
-    user_id = data['user_id']
+    token = data['token']
+    payload = decode_token(token)
+    print('Payload:', payload)
+    user_id = payload['user_id']
     for controller in data['controllers']:
         remap_redis(controller, user_id, socket_id)
 
@@ -164,11 +167,14 @@ def add_controller_event(data):
     Logs:
         - Errors if required keys are missing.
     """
-    if 'controller_id' not in data or 'user_id' not in data:
+    if 'controller_id' not in data or 'token' not in data:
         print('controller ID or User ID not found, found:', data)
         return
     controller_id = data['controller_id']
-    user_id = data['user_id']
+    token = data['token']
+    payload = decode_token(token)
+    user_id = payload['user_id']
+    print('User ID:', user_id, 'Controller ID:', controller_id, 'Socket ID:', request.sid, 'Token:', token, 'Payload:', payload)
     socket_id = request.sid
 
     if len(controller_id) != 24:
@@ -184,7 +190,7 @@ def remove_controller_event(data):
     Removes a controller for a user.
 
     Args:
-        data (dict): JSON payload with keys 'controller_id' and 'user_id'.
+        data (dict): JSON payload with keys 'controller_id' and 'token'.
 
     Actions:
         - Calls `handle_remove_controller` to remove the controller for the given user.
@@ -192,11 +198,14 @@ def remove_controller_event(data):
     Logs:
         - Errors if required keys are missing.
     """
-    if 'controller_id' not in data or 'user_id' not in data:
+    if 'controller_id' not in data or 'token' not in data:
         print('controller ID or User ID not found, found:', data)
         return
     controller_id = data['controller_id']
-    user_id = data['user_id']
+    token = data['token']
+    payload = decode_token(token)
+    user_id = payload['user_id']
+    print('User ID:', user_id, 'Controller ID:', controller_id, 'Socket ID:', request.sid, 'Token:', token, 'Payload:', payload)
     socket_id = request.sid
     handle_remove_controller(controller_id, user_id, socket_id)
 
@@ -272,56 +281,56 @@ def message_event(data):
     print('Message:', data)
 
 
-@socketio.on('register')
-def register_event(data):
-    """
-    Registers a new user.
+# @socketio.on('register')
+# def register_event(data):
+#     """
+#     Registers a new user.
+#
+#     Args:
+#         data (dict): JSON payload with keys 'email' and 'password'.
+#
+#     Actions:
+#         - Calls `handle_register` to create a new user.
+#         - Emits a response to the client with the registration result.
+#
+#     Logs:
+#         - Errors if required keys are missing.
+#     """
+#     if 'email' not in data or 'password' not in data:
+#         print('Email or Password not found, found:', data)
+#         return
+#     email = data['email']
+#     password = data['password']
+#     socket_id = request.sid
+#     user = handle_register(email, password)
+#     socketio.emit('register_response', user, room=socket_id)
 
-    Args:
-        data (dict): JSON payload with keys 'email' and 'password'.
 
-    Actions:
-        - Calls `handle_register` to create a new user.
-        - Emits a response to the client with the registration result.
-
-    Logs:
-        - Errors if required keys are missing.
-    """
-    if 'email' not in data or 'password' not in data:
-        print('Email or Password not found, found:', data)
-        return
-    email = data['email']
-    password = data['password']
-    socket_id = request.sid
-    user = handle_register(email, password)
-    socketio.emit('register_response', user, room=socket_id)
-
-
-@socketio.on('login')
-def login_event(data):
-    """
-    Logs in a user.
-
-    Args:
-        data (dict): JSON payload with keys 'email' and 'password'.
-
-    Actions:
-        - Calls `handle_login` to authenticate the user.
-        - Emits a response to the client with the login result.
-
-    Logs:
-        - "User: <user>"
-        - Errors if required keys are missing.
-    """
-    if 'email' not in data or 'password' not in data:
-        print('Email or Password not found, found:', data)
-        return
-    email = data['email']
-    password = data['password']
-    socket_id = request.sid
-    user = handle_login(email, password)
-    print('User:', user)
-    socketio.emit('login_response', user, room=socket_id)
+# @socketio.on('login')
+# def login_event(data):
+#     """
+#     Logs in a user.
+#
+#     Args:
+#         data (dict): JSON payload with keys 'email' and 'password'.
+#
+#     Actions:
+#         - Calls `handle_login` to authenticate the user.
+#         - Emits a response to the client with the login result.
+#
+#     Logs:
+#         - "User: <user>"
+#         - Errors if required keys are missing.
+#     """
+#     if 'email' not in data or 'password' not in data:
+#         print('Email or Password not found, found:', data)
+#         return
+#     email = data['email']
+#     password = data['password']
+#     socket_id = request.sid
+#     user = handle_login(email, password)
+#     print('User:', user)
+#     socketio.emit('login_response', user, room=socket_id)
 
 
 @socketio.on('fetch_controller_data')

@@ -15,8 +15,8 @@ class SessionStorage extends BaseStorage{
   }
 
   @override
-  Future<String> getUserId() async{
-    return _sessionStorage['user_id'] ?? '';
+  Future<String> getToken() async{
+    return _sessionStorage['token'] ?? '';
   }
 
   @override
@@ -40,8 +40,8 @@ class SessionStorage extends BaseStorage{
       }
     }
 
-    if (key == 'user_id') {
-      _sessionStorage['user_id'] = value;
+    if (key == 'token') {
+      _sessionStorage['token'] = value;
     }
   }
   

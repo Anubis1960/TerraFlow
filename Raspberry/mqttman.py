@@ -65,7 +65,7 @@ class MQTTManager:
             print("Irrigation command received:", msg)
             self.handle_irrigation_cmd()
 
-    async def listen(self, period_s: int = 4):
+    async def listen(self, period_s: int = 10):
         """
         Listens for incoming MQTT messages.
 
@@ -77,7 +77,7 @@ class MQTTManager:
             self.client.check_msg()
             await asyncio.sleep(period_s)
     
-    async def send(self,period_s: int = 4):
+    async def send(self,period_s: int = 6):
         """
         Publishes sensor and water usage data to MQTT topics.
 
@@ -106,7 +106,7 @@ class MQTTManager:
 
             await asyncio.sleep(period_s)
     
-    async def check_irrigation(self, period_s: int = 2):
+    async def check_irrigation(self, period_s: int = 3600):
         """
         If a schedule is set, it follows the schedule.
         """

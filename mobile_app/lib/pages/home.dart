@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_app/util/socket_service.dart';
 import 'package:mobile_app/util/storage/base_storage.dart';
 import 'package:mobile_app/components/top_navbar.dart';
-import 'package:mobile_app/util/routes.dart';
+import 'package:mobile_app/util/constants.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,15 +13,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late Future<String> userId;
+  late Future<String> token;
   late Future<List<String>> controllerIds;
 
   @override
   void initState() {
     super.initState();
     print('Home Page init');
-    userId = BaseStorage.getStorageFactory().getUserId();
-    controllerIds = BaseStorage.getStorageFactory().getControllerList();
+    token = BaseStorage.getStorageFactory().getToken();
+    controllerIds = _loadControllerIds();
 
     SocketService.socket.on('error', (data) {
       if (data['error_msg'] != null && data['error_msg'].isNotEmpty) {
@@ -37,19 +37,39 @@ class _HomeScreenState extends State<HomeScreen> {
     SocketService.socket.on('controllers', (data) {
       BaseStorage.getStorageFactory().saveData('controller_ids', data['controllers']);
       setState(() {
-        controllerIds = BaseStorage.getStorageFactory().getControllerList();
+        controllerIds = _loadControllerIds();
       });
     });
 
-    userId.then((onUser) {
+    token.then((onUser) {
       controllerIds.then((onController) {
         Map<String, dynamic> data = {
-          'user_id': onUser,
+          'token': onUser,
           'controllers': onController,
         };
         SocketService.socket.emit('init', data);
       });
     });
+  }
+
+  void _deleteController(String controllerId) async {
+    // TODO - FIX DELETE CONTROLLER
+    final token = await BaseStorage.getStorageFactory().getToken();
+
+    Map<String, dynamic> data = {
+      'controller_id': controllerId,
+      'token': token,
+    };
+    SocketService.socket.emit('remove_controller', data);
+
+    setState(() {
+      controllerIds = _loadControllerIds();
+    });
+  }
+
+
+  Future<List<String>> _loadControllerIds() async {
+    return await BaseStorage.getStorageFactory().getControllerList();
   }
 
   @override
@@ -106,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ListView.builder(
                     itemCount: controllerIds.length,
                     itemBuilder: (context, index) {
-                      final controllerId = controllerIds[index];
+                      var controllerId = controllerIds[index];
                       return Padding(
                         padding: EdgeInsets.all(screenWidth * 0.02), // 2% of screen width
                         child: Card(
@@ -128,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Colors.deepPurpleAccent,
                             ),
                             onTap: () {
-                              context.go('${RouteURLs.CONTROLLER}/$controllerId');
+                              context.go('${Routes.CONTROLLER}/$controllerId');
                             },
                             onLongPress: () {
                               showDialog(
@@ -146,17 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       TextButton(
                                         onPressed: () {
-                                          userId.then((onValue) {
-                                            Map<String, dynamic> data = {
-                                              'controller_id': controllerId,
-                                              'user_id': onValue,
-                                            };
-                                            SocketService.socket.emit('remove_controller', data);
-                                          });
-
-                                          setState(() {
-                                            controllerIds.remove(controllerId);
-                                          });
+                                          _deleteController(controllerId);
 
                                           context.pop();
                                         },
@@ -232,10 +242,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                     return;
                   }
-                  userId.then((onValue) {
+                  token.then((onValue) {
                     Map<String, dynamic> data = {
                       'controller_id': newControllerId,
-                      'user_id': onValue,
+                      'token': onValue,
                     };
                     SocketService.socket.emit('add_controller', data);
                   });

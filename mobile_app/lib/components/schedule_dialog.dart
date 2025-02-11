@@ -18,7 +18,9 @@ class ScheduleDialog{
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Schedule Irrigation'),
+              title: const Center(
+                  child: Text('Schedule Irrigation', style: TextStyle(fontSize: 20))
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -72,7 +74,7 @@ class ScheduleDialog{
                     });
                     context.pop();
                   },
-                  child: const Text('Add Schedule'),
+                  child: const Text('Add'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -81,7 +83,7 @@ class ScheduleDialog{
                     });
                     context.pop();
                   },
-                  child: const Text('Remove Schedule'),
+                  child: const Text('Remove'),
                 ),
               ],
             );

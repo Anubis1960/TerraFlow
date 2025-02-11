@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_app/util/socket_service.dart';
 import 'package:mobile_app/util/storage/base_storage.dart';
-import 'package:mobile_app/util/routes.dart';
+import 'package:mobile_app/util/constants.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,19 +22,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void initState() {
     super.initState();
     print('Register Page init');
-    SocketService.socket.on('register_response', (data) {
-      if (data['user_id'] != null && data['user_id'].isNotEmpty) {
-        BaseStorage.getStorageFactory().saveData('user_id', data['user_id']);
-        context.go(RouteURLs.HOME);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(data['error_msg'] ?? 'Invalid email or password.'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    });
   }
 
   @override
@@ -41,7 +30,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
-    SocketService.socket.off('register_response');
     super.dispose();
   }
 
@@ -130,7 +118,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       if (emailController.text.isEmpty || passwordController.text.isEmpty || confirmPasswordController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -155,7 +143,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         'email': emailController.text,
                         'password': passwordController.text,
                       };
-                      SocketService.socket.emit('register', registerJson);
+
+                      String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
+
+                      url += Server.REGISTER_REST_URL;
+
+                      var res = await http.post(
+                        Uri.parse(url),
+                        headers: <String, String>{
+                          'Content-Type': 'application/json; charset=UTF-8',
+                        },
+                        body: jsonEncode(registerJson),
+                      );
+
+                      if (res.statusCode == 200) {
+                        var data = jsonDecode(res.body);
+                        if (data['token'] != null && data['token'].isNotEmpty) {
+                          BaseStorage.getStorageFactory().saveData('token', data['token']);
+                          context.go(Routes.HOME);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(data['error_msg'] ?? 'Invalid email or password.'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Failed to register.'),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                      }
                     },
                     child: Text(
                       'Register',
@@ -168,7 +189,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(height: screenHeight * 0.02), // 2% of screen height
                 TextButton(
                   onPressed: () {
-                    context.go(RouteURLs.LOGIN);
+                    context.go(Routes.LOGIN);
                   },
                   child: Text(
                     'Back to Login',

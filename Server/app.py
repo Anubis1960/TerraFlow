@@ -11,7 +11,7 @@ from src.api.auth_route import auth_blueprint
 app = Flask(__name__)
 
 CORS(app)
-app.config['SECRET_KEY'] = SECRET_KEY
+app.secret_key = SECRET_KEY
 app.config['MQTT_BROKER_URL'] = MQTT_BROKER
 app.config['MQTT_BROKER_PORT'] = MQTT_PORT
 app.config['MQTT_USERNAME'] = ''
@@ -32,4 +32,5 @@ mqtt.subscribe('register')
 
 # Run the app
 if __name__ == '__main__':
+    # app.run(debug=True)
     socketio.run(app, host=HOST, port=PORT, use_reloader=False, debug=True)

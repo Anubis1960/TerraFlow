@@ -175,3 +175,5 @@ cython_debug/
 .pypirc
 
 .dart_tools
+
+key.jks

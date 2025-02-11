@@ -1,9 +1,7 @@
 import 'package:mobile_app/util/url/strategy_stub.dart'
-  if (flutter_web_plugins) 'web_strategy.dart';
+  if (dart.library.html) 'package:mobile_app/util/url/web_strategy.dart';
 
 abstract class Strategy{
-  void configure(){
-  }
-
+  void configure();
   static Strategy getStrategyFactory() => getStrategy();
 }

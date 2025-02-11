@@ -26,6 +26,7 @@ from src.util.crypt import encrypt, decrypt
 from src.util.db import r, mongo_db, USER_COLLECTION, CONTROLLER_COLLECTION
 from src.util.extensions import mqtt, socketio
 from src.util.excel_manager import export_to_excel
+from src.util.tokenizer import generate_token
 
 email_regex = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
@@ -188,65 +189,67 @@ def handle_schedule_irrigation(controller_id: str, schedule: dict) -> None:
     mqtt.publish(f'{controller_id}/schedule', json.dumps(schedule))
 
 
-def handle_register(email: str, password: str) -> dict[str, str]:
-    """
-    Registers a new user.
+# def handle_register(email: str, password: str) -> dict[str, str]:
+#     """
+#     Registers a new user.
+#
+#     Args:
+#         email (str): The email address of the user.
+#         password (str): The password for the user.
+#
+#     Returns:
+#         dict: A dictionary containing either an error message or the user ID if registration is successful.
+#     """
+#     try:
+#         res = mongo_db[USER_COLLECTION].find({'email': email})
+#         users = list(res)
+#
+#         if len(users) > 0:
+#             return {'error_msg': 'An account with this email already exists'}
+#
+#         if not email_regex.match(email):
+#             return {'error_msg': 'Invalid email'}
+#
+#         encrypted_password = encrypt(password)
+#
+#         user = mongo_db[USER_COLLECTION].insert_one({'email': email, 'password': encrypted_password, 'controllers': []})
+#         token = generate_token(email, str(user.inserted_id))
+#         return {'token': token}
+#     except Exception as e:
+#         print(f"Unexpected error: {e}")
+#         return {'error_msg': 'An error occurred'}
 
-    Args:
-        email (str): The email address of the user.
-        password (str): The password for the user.
 
-    Returns:
-        dict: A dictionary containing either an error message or the user ID if registration is successful.
-    """
-    try:
-        res = mongo_db[USER_COLLECTION].find({'email': email})
-        users = list(res)
-
-        if len(users) > 0:
-            return {'error_msg': 'An account with this email already exists'}
-
-        if not email_regex.match(email):
-            return {'error_msg': 'Invalid email'}
-
-        encrypted_password = encrypt(password)
-
-        user = mongo_db[USER_COLLECTION].insert_one({'email': email, 'password': encrypted_password, 'controllers': []})
-        return {'user_id': str(user.inserted_id)}
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        return {'error_msg': 'An error occurred'}
-
-
-def handle_login(email: str, password: str) -> dict[str, str]:
-    """
-    Logs in an existing user.
-
-    Args:
-        email (str): The email address of the user.
-        password (str): The password for the user.
-
-    Returns:
-        dict: A dictionary containing either an error message or the user ID and controllers if login is successful.
-    """
-    try:
-        res = mongo_db[USER_COLLECTION].find({'email': email})
-        users = list(res)
-
-        if len(users) == 0:
-            return {'error_msg': 'Invalid email or password'}
-
-        user = users[0]
-        encrypted_password = user['password']
-        decrypted_password = decrypt(encrypted_password)
-
-        if decrypted_password == password:
-            return {'user_id': str(user['_id']), 'controllers': user['controllers']}
-        else:
-            return {'error_msg': 'Invalid email or password'}
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        return {'error_msg': 'An error occurred'}
+# def handle_login(email: str, password: str) -> dict[str, str]:
+#     """
+#     Logs in an existing user.
+#
+#     Args:
+#         email (str): The email address of the user.
+#         password (str): The password for the user.
+#
+#     Returns:
+#         dict: A dictionary containing either an error message or the user ID and controllers if login is successful.
+#     """
+#     try:
+#         res = mongo_db[USER_COLLECTION].find({'email': email})
+#         users = list(res)
+#
+#         if len(users) == 0:
+#             return {'error_msg': 'Invalid email or password'}
+#
+#         user = users[0]
+#         encrypted_password = user['password']
+#         decrypted_password = decrypt(encrypted_password)
+#
+#         if decrypted_password == password:
+#             token = generate_token(email, str(user['_id']))
+#             return {'token': token, 'controllers': user['controllers']}
+#         else:
+#             return {'error_msg': 'Invalid email or password'}
+#     except Exception as e:
+#         print(f"Unexpected error: {e}")
+#         return {'error_msg': 'An error occurred'}
 
 
 def handle_retrieve_controller_data(controller_id: str, socket_id: str) -> None:

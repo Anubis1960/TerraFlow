@@ -30,7 +30,7 @@ class SharedPrefs extends BaseStorage {
       }
     }
 
-    if (key == 'user_id') {
+    if (key == 'token') {
       prefs.setString(key, value);
     }
   }
@@ -42,9 +42,9 @@ class SharedPrefs extends BaseStorage {
   }
 
   @override
-  Future<String> getUserId() async {
+  Future<String> getToken() async {
     final prefs = await _prefs; // Await for the SharedPreferences instance
-    return prefs.getString('user_id') ?? '';
+    return prefs.getString('token') ?? '';
   }
 
   @override

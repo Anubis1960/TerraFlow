@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_app/util/routes.dart';
+import 'package:mobile_app/util/constants.dart';
 import 'package:mobile_app/util/socket_service.dart';
 import 'package:mobile_app/components/schedule_dialog.dart';
 
@@ -25,7 +25,7 @@ class BottomNavBar{
                 IconButton(
                   onPressed: () {
                     // Navigate to Home Screen
-                    context.go(RouteURLs.HOME);
+                    context.go(Routes.HOME);
                   },
                   icon: Icon(Icons.home, color: Colors.deepPurpleAccent),
                   tooltip: 'Home',
