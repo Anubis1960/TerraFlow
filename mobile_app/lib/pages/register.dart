@@ -111,11 +111,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                        vertical: screenHeight * 0.02, // 2% of screen height
-                      ),
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Colors
+                            .grey), // Add border
                       ),
                     ),
                     onPressed: () async {

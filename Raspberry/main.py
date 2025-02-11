@@ -71,6 +71,7 @@ def connect_wifi(ssid: str, password: str):
     print("Connecting to Wi-Fi...")
     while not wlan.isconnected():
         sleep(1)
+        print(".", end="")
     print("Connected to Wi-Fi:", wlan.ifconfig()[0])
 
 async def main():

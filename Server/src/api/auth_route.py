@@ -1,10 +1,12 @@
 from http import HTTPStatus
-from urllib.parse import urlencode
+
 from flask import redirect, url_for, session, Blueprint, request, jsonify, current_app
+
 from src.service.rest_service import handle_simple_login, handle_token_login, handle_register
-from src.util.tokenizer import generate_token
 
 auth_blueprint = Blueprint('auth', __name__)
+
+
 @auth_blueprint.route('/')
 def hello_world():
     email = session.get('email', None)
@@ -13,16 +15,19 @@ def hello_world():
 
 @auth_blueprint.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Logs in the user using the provided credentials or access token.
+
+    Returns:
+        A JSON response with the user's token and controllers if successful, an error message otherwise.
+    """
     print("Logging in...")
-    print(f"Request method: {request.method}")
     if request.method == 'POST':
         data = request.get_json()
         if 'password' in data:
             password = data['password']
             email = data['email']
-            print(f"Email: {email}, Password: {password}")
             res = handle_simple_login(email, password)
-            print(f"Response: {res}")
             if 'error' in res:
                 return jsonify(res), HTTPStatus.BAD_REQUEST
             else:
@@ -45,11 +50,18 @@ def login():
 
     return jsonify({"error": "Invalid request"}), HTTPStatus.BAD_REQUEST
 
+
 @auth_blueprint.route('/authorize', methods=['GET'])
 def authorize():
+    """
+    Authorizes the user using Google OAuth.
+
+    Returns:
+        A redirect to the callback URL with the user's token if successful, an error message otherwise.
+
+    """
     print("Authorizing...")
     google = current_app.oauth_manager.get_provider('google')
-    print(google)
     try:
         token = google.authorize_access_token()
         # Retrieve the access token
@@ -60,8 +72,6 @@ def authorize():
         user_info = resp.json()
         user_email = user_info['email']
         user_name = user_info['name']
-
-        print(f"User info: {user_info}, {user_email}, {user_name}, {access_token}, {resp}")
 
         res = handle_token_login(user_email)
 
@@ -75,6 +85,13 @@ def authorize():
 
 @auth_blueprint.route('/register', methods=['POST'])
 def register():
+    """
+    Registers a new user with the provided email and password.
+
+    Returns:
+        A JSON response with the user's token if successful, an error message otherwise.
+
+    """
     data = request.get_json()
     if 'password' in data and 'email' in data:
         password = data['password']

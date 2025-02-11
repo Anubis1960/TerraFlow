@@ -21,12 +21,9 @@ import bson.errors
 import regex as re
 from bson.objectid import ObjectId
 from redis.exceptions import ResponseError
-
-from src.util.crypt import encrypt, decrypt
 from src.util.db import r, mongo_db, USER_COLLECTION, CONTROLLER_COLLECTION
 from src.util.extensions import mqtt, socketio
 from src.util.excel_manager import export_to_excel
-from src.util.tokenizer import generate_token
 
 email_regex = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
@@ -37,6 +34,9 @@ def handle_connect(data) -> None:
 
     Args:
         data (dict): Data associated with the connection.
+
+    Returns:
+        None
     """
     print(data)
 
@@ -47,6 +47,9 @@ def handle_disconnect(data) -> None:
 
     Args:
         data (dict): Data associated with the disconnection.
+
+    Returns:
+        None
     """
     print(data)
 
@@ -57,6 +60,9 @@ def handle_irrigate(controller_id: str) -> None:
 
     Args:
         controller_id (str): The unique identifier of the controller to trigger irrigation for.
+
+    Returns:
+        None
     """
     json_data = {
         'irrigate': True
@@ -189,69 +195,6 @@ def handle_schedule_irrigation(controller_id: str, schedule: dict) -> None:
     mqtt.publish(f'{controller_id}/schedule', json.dumps(schedule))
 
 
-# def handle_register(email: str, password: str) -> dict[str, str]:
-#     """
-#     Registers a new user.
-#
-#     Args:
-#         email (str): The email address of the user.
-#         password (str): The password for the user.
-#
-#     Returns:
-#         dict: A dictionary containing either an error message or the user ID if registration is successful.
-#     """
-#     try:
-#         res = mongo_db[USER_COLLECTION].find({'email': email})
-#         users = list(res)
-#
-#         if len(users) > 0:
-#             return {'error_msg': 'An account with this email already exists'}
-#
-#         if not email_regex.match(email):
-#             return {'error_msg': 'Invalid email'}
-#
-#         encrypted_password = encrypt(password)
-#
-#         user = mongo_db[USER_COLLECTION].insert_one({'email': email, 'password': encrypted_password, 'controllers': []})
-#         token = generate_token(email, str(user.inserted_id))
-#         return {'token': token}
-#     except Exception as e:
-#         print(f"Unexpected error: {e}")
-#         return {'error_msg': 'An error occurred'}
-
-
-# def handle_login(email: str, password: str) -> dict[str, str]:
-#     """
-#     Logs in an existing user.
-#
-#     Args:
-#         email (str): The email address of the user.
-#         password (str): The password for the user.
-#
-#     Returns:
-#         dict: A dictionary containing either an error message or the user ID and controllers if login is successful.
-#     """
-#     try:
-#         res = mongo_db[USER_COLLECTION].find({'email': email})
-#         users = list(res)
-#
-#         if len(users) == 0:
-#             return {'error_msg': 'Invalid email or password'}
-#
-#         user = users[0]
-#         encrypted_password = user['password']
-#         decrypted_password = decrypt(encrypted_password)
-#
-#         if decrypted_password == password:
-#             token = generate_token(email, str(user['_id']))
-#             return {'token': token, 'controllers': user['controllers']}
-#         else:
-#             return {'error_msg': 'Invalid email or password'}
-#     except Exception as e:
-#         print(f"Unexpected error: {e}")
-#         return {'error_msg': 'An error occurred'}
-
-
 def handle_retrieve_controller_data(controller_id: str, socket_id: str) -> None:
     """
     Retrieves controller data from the database and sends it to the client.
@@ -311,6 +254,9 @@ def handle_export(controller_id: str, socket_id: str) -> None:
     Args:
         controller_id (str): The unique identifier of the controller.
         socket_id (str): the sid of the socket connection.
+
+    Returns:
+        None
     """
     try:
         res = mongo_db[CONTROLLER_COLLECTION].find_one({'_id': ObjectId(controller_id)})
@@ -323,6 +269,60 @@ def handle_export(controller_id: str, socket_id: str) -> None:
         socketio.emit('export_response', {'file': buf.getvalue()}, room=socket_id)
 
     except bson.errors.InvalidId as e:
-        print(f"Invalid controller ID: {controller_id}")
+        print(f"Invalid controller ID: {controller_id}, error: {e}")
     except Exception as e:
         print(f"Unexpected error: {e}")
+
+
+def handle_logout(user_id: str, controller_ids: list) -> None:
+    """
+    Logs out a user and removes their associations with controllers.
+
+    Args:
+        user_id:
+        controller_ids:
+
+    Returns:
+        None
+
+    """
+    try:
+        user = mongo_db[USER_COLLECTION].find_one({'_id': user_id})
+        if not user:
+            return
+
+        for controller_id in controller_ids:
+            if r.exists(controller_id):
+                user_list = json.loads(r.get(controller_id))
+                user_list = [user for user in user_list if user['user_id'] != user_id]
+                json_data = json.dumps(user_list)
+                if json_data != '[]':
+                    r.set(controller_id, json_data)
+                else:
+                    r.delete(controller_id)
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return
+
+
+def handle_fetch_controllers(user_id: str, socket_id: str) -> None:
+    """
+    Fetches the list of controllers associated with a user.
+
+    Args:
+        user_id (str): The unique identifier of the user.
+        socket_id (str): The socket ID for the current connection.
+
+    Returns:
+        None
+    """
+    try:
+        user = mongo_db[USER_COLLECTION].find_one({'_id': ObjectId(user_id)})
+        if not user:
+            return
+
+        controllers = user.get('controllers', [])
+        socketio.emit('controllers', {'controllers': controllers}, room=socket_id)
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return

@@ -1,10 +1,8 @@
-
-import redis
 import pymongo
 from bson import ObjectId
 
-from src.util.config import MONGO_URI, MONGO_DB, REDIS_HOST, REDIS_PORT
-from src.util.db import CONTROLLER_COLLECTION, USER_COLLECTION
+from src.util.config import MONGO_URI, MONGO_DB
+from src.util.db import CONTROLLER_COLLECTION
 
 try:
     mongo_client = pymongo.MongoClient(MONGO_URI)

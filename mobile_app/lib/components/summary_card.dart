@@ -8,6 +8,7 @@ class SummaryCard{
     required double screenWidth,
     required double screenHeight}) {
     return Card(
+      color: Colors.white,
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -28,7 +29,7 @@ class SummaryCard{
               textAlign: TextAlign.center,
             ),
             SizedBox(height: screenHeight * 0.008), // 0.8% of screen height
-            FittedBox( // Ensures text scales properly
+            FittedBox(
               child: Text(
                 value.toStringAsFixed(2),
                 style: TextStyle(

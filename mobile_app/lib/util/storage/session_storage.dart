@@ -20,9 +20,15 @@ class SessionStorage extends BaseStorage{
   }
 
   @override
-  Future<List<String>> getControllerList() async{
-    return _sessionStorage['controller_ids']?.split(',') ?? [];
+  Future<List<String>> getControllerList() async {
+    List<String> controllerIds = _sessionStorage['controller_ids']?.split(',') ?? [];
+
+    controllerIds = controllerIds.where((id) => id.isNotEmpty).toList();
+
+    print('Controller IDs: $controllerIds');
+    return controllerIds;
   }
+
 
   @override
   Future<void> saveData(String key, value) async{

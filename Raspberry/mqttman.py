@@ -1,11 +1,18 @@
-from time import localtime
+from time import localtime, sleep
 import asyncio
 import urandom
 import ujson as json
 from machine import Pin, ADC
+import dht
 
 moisture_pin = ADC(Pin(26))
-moisture_conversion_factor = 100 / (65535)
+rain_pin = ADC(Pin(27))
+wet_soil = 19000
+dry_soil = 44300
+rain_upper = 65535
+rain_lower = 13000
+DHT = dht.DHT22(Pin(2))
+# moisture_conversion_factor = 100 / (65535)
 
 class MQTTManager:
     def __init__(self, client, topics):
@@ -106,7 +113,7 @@ class MQTTManager:
 
             await asyncio.sleep(period_s)
     
-    async def check_irrigation(self, period_s: int = 3600):
+    async def check_irrigation(self, period_s: int = 4):
         """
         If a schedule is set, it follows the schedule.
         """
@@ -151,6 +158,11 @@ class MQTTManager:
             
             moisture_level = self.read_moisture()
             print("Moisture level:", moisture_level)
+            rain_level = self.read_rain()
+            print("Rain level:", rain_level)
+            temperature, humidity = self.read_dht()
+            print("Temperature:", temperature)
+            print("Humidity:", humidity)
             self.handle_irrigation_cmd()
     
 
@@ -162,5 +174,38 @@ class MQTTManager:
             float: The moisture level.
         """
         raw_value = moisture_pin.read_u16()
-        moisture_level = raw_value * moisture_conversion_factor
+        moisture_level = ((dry_soil - raw_value) / (dry_soil - wet_soil)) * 100
+        moisture_level = max(0, min(100, moisture_level))
         return moisture_level
+    
+    def read_rain(self):
+        """
+        Reads the rain level from the sensor.
+
+        Returns:
+            float: The rain level.
+        """
+        rain_state = rain_pin.read_u16()
+        if rain_state > rain_upper:
+            rain_state = 100
+        elif rain_state < rain_lower:
+            rain_state = 0
+        else:
+            rain_state = ((rain_upper - rain_state) / (rain_upper - rain_lower)) * 100
+        return rain_state
+
+    def read_dht(self):
+        """
+        Reads the temperature and humidity from the DHT sensor.
+
+        Returns:
+            tuple: The temperature and humidity.
+        """
+        try:
+            DHT.measure()
+            temperature = DHT.temperature()
+            humidity = DHT.humidity()
+            return temperature, humidity
+        except OSError as e:
+            print("Error reading DHT sensor:", e)
+            return None, None

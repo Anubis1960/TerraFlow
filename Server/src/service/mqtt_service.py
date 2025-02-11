@@ -64,6 +64,9 @@ def register_controller(payload: str) -> None:
     Args:
         payload (str): JSON string containing the controller ID.
 
+    Returns:
+        None
+
     Steps:
         1. Parses the JSON payload to extract the controller ID.
         2. Attempts to insert a new controller record into MongoDB.
@@ -123,6 +126,9 @@ def predict(payload: str, topic: str) -> None:
         payload (str): JSON string containing prediction data.
         topic (str): MQTT topic string.
 
+    Returns:
+        None
+
     Logs the prediction data and controller ID for further processing.
 
     Note:
@@ -141,6 +147,9 @@ def record_sensor_data(payload: str, topic: str) -> None:
     Args:
         payload (str): JSON string containing sensor data and timestamp.
         topic (str): MQTT topic string.
+
+    Returns:
+        None
 
     Workflow:
         1. Parses the JSON payload to extract sensor data and timestamp.
@@ -203,6 +212,9 @@ def record_water_used(payload: str, topic: str) -> None:
     Args:
         payload (str): JSON string containing water usage data and timestamp.
         topic (str): MQTT topic string.
+
+    Returns:
+        None
 
     Workflow:
         1. Parses the JSON payload to extract water usage and timestamp.

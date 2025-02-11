@@ -32,20 +32,24 @@ and connected clients. The handlers process user requests, manage controllers, a
 from flask import request
 from src.service.socket_service import (
     handle_connect, handle_disconnect, handle_irrigate, handle_add_controller,
-    handle_remove_controller, handle_schedule_irrigation, handle_retrieve_controller_data, remap_redis, handle_export
+    handle_remove_controller, handle_schedule_irrigation, handle_retrieve_controller_data, remap_redis, handle_export,
+    handle_logout, handle_fetch_controllers
 )
 from src.util.extensions import socketio
 from src.util.tokenizer import decode_token
 
 
 @socketio.on('connect')
-def connet_event():
+def connet_event() -> None:
     """
     Handles client connection.
 
     Actions:
         - Prints a connection message and logs the socket ID.
         - Calls `handle_connect` to process the new connection.
+
+    Returns:
+        None
 
     Logs:
         - "Client connected"
@@ -59,13 +63,16 @@ def connet_event():
 
 
 @socketio.on('init')
-def init_event(data):
+def init_event(data: dict) -> None:
     """
     Initializes the client session by remapping Redis with controllers.
 
     Args:
         data (dict): JSON containing user information and associated controllers.
             Required keys: 'user_id', 'controllers'.
+
+    Returns:
+        None
 
     Actions:
         - Remaps Redis with the user ID, controllers, and the socket ID.
@@ -85,19 +92,24 @@ def init_event(data):
         return
     token = data['token']
     payload = decode_token(token)
-    print('Payload:', payload)
+    if 'error' in payload:
+        print('Invalid token:', payload)
+        return
     user_id = payload['user_id']
     for controller in data['controllers']:
         remap_redis(controller, user_id, socket_id)
 
 
 @socketio.on('disconnect')
-def disconnect_event(data):
+def disconnect_event(data: dict) -> None:
     """
     Handles client disconnection.
 
     Args:
         data (dict): JSON payload (optional) sent during disconnection.
+
+    Returns:
+        None
 
     Actions:
         - Calls `handle_disconnect` to process the disconnection.
@@ -110,12 +122,15 @@ def disconnect_event(data):
 
 
 @socketio.on('trigger_irrigation')
-def irrigate_event(data):
+def irrigate_event(data: dict) -> None:
     """
     Triggers manual irrigation for a controller.
 
     Args:
         data (dict): JSON payload with the required key 'controller_id'.
+
+    Returns:
+        None
 
     Actions:
         - Validates presence of 'controller_id' in the payload.
@@ -134,12 +149,15 @@ def irrigate_event(data):
 
 
 @socketio.on('export')
-def export_event(data):
+def export_event(data: dict) -> None:
     """
     Handles export requests for controller data.
 
     Args:
         data (dict): JSON payload with keys 'controller_id' and 'type'.
+
+    Returns:
+        None
 
     Logs:
         - Errors if required keys are missing.
@@ -154,12 +172,15 @@ def export_event(data):
 
 
 @socketio.on('add_controller')
-def add_controller_event(data):
+def add_controller_event(data: dict) -> None:
     """
     Adds a controller for a user.
 
     Args:
         data (dict): JSON payload with keys 'controller_id' and 'user_id'.
+
+    Returns:
+        None
 
     Actions:
         - Calls `handle_add_controller` with the controller ID, user ID, and socket ID.
@@ -173,8 +194,10 @@ def add_controller_event(data):
     controller_id = data['controller_id']
     token = data['token']
     payload = decode_token(token)
+    if 'error' in payload:
+        print('Invalid token:', payload)
+        return
     user_id = payload['user_id']
-    print('User ID:', user_id, 'Controller ID:', controller_id, 'Socket ID:', request.sid, 'Token:', token, 'Payload:', payload)
     socket_id = request.sid
 
     if len(controller_id) != 24:
@@ -185,12 +208,15 @@ def add_controller_event(data):
 
 
 @socketio.on('remove_controller')
-def remove_controller_event(data):
+def remove_controller_event(data: dict) -> None:
     """
     Removes a controller for a user.
 
     Args:
         data (dict): JSON payload with keys 'controller_id' and 'token'.
+
+    Returns:
+        None
 
     Actions:
         - Calls `handle_remove_controller` to remove the controller for the given user.
@@ -204,14 +230,16 @@ def remove_controller_event(data):
     controller_id = data['controller_id']
     token = data['token']
     payload = decode_token(token)
+    if 'error' in payload:
+        print('Invalid token:', payload)
+        return
     user_id = payload['user_id']
-    print('User ID:', user_id, 'Controller ID:', controller_id, 'Socket ID:', request.sid, 'Token:', token, 'Payload:', payload)
     socket_id = request.sid
     handle_remove_controller(controller_id, user_id, socket_id)
 
 
 @socketio.on('schedule_irrigation')
-def schedule_irrigation_event(data):
+def schedule_irrigation_event(data: dict) -> None:
     """
     Schedules irrigation for a controller.
 
@@ -220,6 +248,9 @@ def schedule_irrigation_event(data):
             - 'controller_id': ID of the controller.
             - 'schedule_type': Type of schedule ('DAILY', 'WEEKLY', 'MONTHLY').
             - 'schedule_time': Time for the schedule.
+
+    Returns:
+        None
 
     Actions:
         - Validates required keys and schedule type.
@@ -244,12 +275,15 @@ def schedule_irrigation_event(data):
 
 
 @socketio.on('remove_schedule')
-def remove_schedule_event(data):
+def remove_schedule_event(data: dict) -> None:
     """
     Removes irrigation schedule for a controller.
 
     Args:
         data (dict): JSON payload with the key 'controller_id'.
+
+    Returns:
+        None
 
     Actions:
         - Validates presence of 'controller_id' in the payload.
@@ -268,12 +302,15 @@ def remove_schedule_event(data):
 
 
 @socketio.on('message')
-def message_event(data):
+def message_event(data: dict) -> None:
     """
     Handles general messages.
 
     Args:
         data (dict): JSON payload of the message.
+
+    Returns:
+        None
 
     Logs:
         - "Message: <data>"
@@ -281,60 +318,8 @@ def message_event(data):
     print('Message:', data)
 
 
-# @socketio.on('register')
-# def register_event(data):
-#     """
-#     Registers a new user.
-#
-#     Args:
-#         data (dict): JSON payload with keys 'email' and 'password'.
-#
-#     Actions:
-#         - Calls `handle_register` to create a new user.
-#         - Emits a response to the client with the registration result.
-#
-#     Logs:
-#         - Errors if required keys are missing.
-#     """
-#     if 'email' not in data or 'password' not in data:
-#         print('Email or Password not found, found:', data)
-#         return
-#     email = data['email']
-#     password = data['password']
-#     socket_id = request.sid
-#     user = handle_register(email, password)
-#     socketio.emit('register_response', user, room=socket_id)
-
-
-# @socketio.on('login')
-# def login_event(data):
-#     """
-#     Logs in a user.
-#
-#     Args:
-#         data (dict): JSON payload with keys 'email' and 'password'.
-#
-#     Actions:
-#         - Calls `handle_login` to authenticate the user.
-#         - Emits a response to the client with the login result.
-#
-#     Logs:
-#         - "User: <user>"
-#         - Errors if required keys are missing.
-#     """
-#     if 'email' not in data or 'password' not in data:
-#         print('Email or Password not found, found:', data)
-#         return
-#     email = data['email']
-#     password = data['password']
-#     socket_id = request.sid
-#     user = handle_login(email, password)
-#     print('User:', user)
-#     socketio.emit('login_response', user, room=socket_id)
-
-
 @socketio.on('fetch_controller_data')
-def retrieve_controller_data_event(data):
+def retrieve_controller_data_event(data: dict) -> None:
     """
     Fetches data for a specific controller.
 
@@ -354,3 +339,57 @@ def retrieve_controller_data_event(data):
     controller_id = data['controller_id']
     socket_id = request.sid
     handle_retrieve_controller_data(controller_id, socket_id)
+
+
+@socketio.on('fetch_controllers')
+def fetch_controllers_event(data: dict) -> None:
+    """
+    Fetches controllers associated with a user.
+
+    Args:
+        data (dict): JSON payload with the key
+            - 'token': User authentication token.
+
+    Actions:
+        - Calls
+        - Calls `handle_fetch_controllers` to fetch controller data.
+
+    Logs:
+        - Errors if 'token' is missing.
+
+    Returns:
+        None
+    """
+    print('Fetching controllers:', data)
+
+    if 'token' not in data:
+        print('Token not found, found:', data)
+        return
+    token = data['token']
+    payload = decode_token(token)
+    if 'error' in payload:
+        print('Invalid token:', payload)
+        return
+    user_id = payload['user_id']
+    socket_id = request.sid
+    handle_fetch_controllers(user_id, socket_id)
+
+
+@socketio.on('logout')
+def logout(data: dict) -> None:
+    """
+    Handles user logout requests.
+
+    Returns:
+        None
+
+    """
+    print('Logging out:', data)
+    if 'token' in data and 'controllerIds' in data:
+        token = data['token']
+        controller_ids = data['controllerIds']
+        decoded_token = decode_token(token)
+        if 'error' in decoded_token:
+            return
+        user_id = decoded_token['user_id']
+        handle_logout(user_id, controller_ids)

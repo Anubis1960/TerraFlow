@@ -43,7 +43,8 @@ MONTH_MAP = {
 }
 
 
-def create_bar_chart(ws, title, y_axis_title, x_axis_title, start_col, start_row):
+def create_bar_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title: str, start_col: str, start_row: int) \
+        -> None:
     chart = BarChart()
     chart.title = title
     chart.y_axis.title = y_axis_title
@@ -60,7 +61,8 @@ def create_bar_chart(ws, title, y_axis_title, x_axis_title, start_col, start_row
     ws.add_chart(chart, f"{start_col}{start_row}")
 
 
-def create_line_chart(ws, title, y_axis_title, x_axis_title, start_col, start_row):
+def create_line_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title: str, start_col: str, start_row: int) \
+        -> None:
     chart = LineChart()
     chart.title = title
     chart.y_axis.title = y_axis_title
@@ -76,7 +78,7 @@ def create_line_chart(ws, title, y_axis_title, x_axis_title, start_col, start_ro
     ws.add_chart(chart, f"{start_col}{start_row}")
 
 
-def export_to_excel(_data):
+def export_to_excel(_data: dict) -> BytesIO:
     # Convert records to DataFrame
     records_df = pd.DataFrame(
         [{**record["sensor_data"], "Timestamp": record["timestamp"]} for record in _data["record"]]

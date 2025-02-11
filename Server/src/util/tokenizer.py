@@ -3,7 +3,7 @@ import datetime
 from src.util.config import SECRET_KEY
 
 
-def generate_token(email, user_id):
+def generate_token(email: str, user_id: str) -> str:
     payload = {
         'exp': datetime.datetime.now() + datetime.timedelta(days=30),
         'iat': datetime.datetime.now() - datetime.timedelta(seconds=10000),
@@ -14,14 +14,14 @@ def generate_token(email, user_id):
     return token
 
 
-def decode_token(token):
+def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         return payload
     except jwt.ExpiredSignatureError:
-        return 'Signature expired. Please log in again.'
+        return {'error': 'Token expired. Please log in again.'}
     except jwt.InvalidTokenError:
-        return 'Invalid token. Please log in again.'
+        return {'error': 'Invalid token. Please log in again.'}
 
 
 if __name__ == '__main__':

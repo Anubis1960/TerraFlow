@@ -36,13 +36,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
     SocketService.socket.on('controllers', (data) {
       BaseStorage.getStorageFactory().saveData('controller_ids', data['controllers']);
+
       setState(() {
         controllerIds = _loadControllerIds();
       });
+      print('Controllers: $controllerIds');
     });
 
     token.then((onUser) {
       controllerIds.then((onController) {
+        if (onController.isEmpty) {
+          SocketService.socket.emit('fetch_controllers', {'token': onUser});
+          return;
+        }
         Map<String, dynamic> data = {
           'token': onUser,
           'controllers': onController,

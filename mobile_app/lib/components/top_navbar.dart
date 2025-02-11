@@ -6,6 +6,31 @@ import 'package:mobile_app/util/storage/base_storage.dart';
 import 'package:mobile_app/util/google/sign_in.dart';
 
 class TopBar{
+
+  static void _handle_logout(BuildContext context) async {
+    try {
+      final String token = await BaseStorage.getStorageFactory().getToken();
+      final List<String> controllerIds = await BaseStorage.getStorageFactory().getControllerList();
+
+      SocketService.socket.emit('logout', {
+        'token': token,
+        'controllerIds': controllerIds,
+      });
+
+      // Clear user data from SharedPreferences
+      await BaseStorage.getStorageFactory().clearAllData();
+
+      await GoogleSignInUtil.getGoogleSignInFactory().signOut();
+
+      // Navigate to the login page
+      context.go(Routes.LOGIN);
+    } catch (e) {
+      // Handle any errors that occur during the async operations
+      print('Error during logout: $e');
+    }
+  }
+
+
   static PreferredSizeWidget buildTopBar({
     required String title,
     required BuildContext context,
@@ -26,31 +51,7 @@ class TopBar{
         IconButton(
           icon: Icon(Icons.logout, color: Colors.white), // Logout icon
           onPressed: () async {
-            try {
-              // Fetch user ID and controller IDs asynchronously
-              final String token = await BaseStorage.getStorageFactory().getToken();
-              final List<String> controllerIds = await BaseStorage.getStorageFactory().getControllerList();
-
-              // Emit logout event via SocketService
-              SocketService.socket.emit('logout', {
-                'token': token,
-                'controllers': controllerIds,
-              });
-
-              // SocketService.socket.disconnect();
-
-              // Clear user data from SharedPreferences
-              await BaseStorage.getStorageFactory().clearAllData();
-
-              await GoogleSignInUtil.getGoogleSignInFactory().signOut();
-
-
-              // Navigate to the login page
-              context.go(Routes.LOGIN);
-            } catch (e) {
-              // Handle any errors that occur during the async operations
-              print('Error during logout: $e');
-            }
+            _handle_logout(context);
           },
         ),
       ],

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mobile_app/util/google/sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -9,7 +10,6 @@ import 'package:mobile_app/util/storage/base_storage.dart';
 class MobileSignIn extends GoogleSignInUtil {
   static final _googleSignIn = GoogleSignIn();
 
-  //TODO - FIX THIS
   @override
   Future<void> signIn(BuildContext context) async {
     try {
@@ -31,7 +31,8 @@ class MobileSignIn extends GoogleSignInUtil {
 
         if (req.statusCode == 200) {
           String token = jsonDecode(req.body)['token'];
-          await BaseStorage.getStorageFactory().saveData('token', token);
+          BaseStorage.getStorageFactory().saveData('token', token);
+          context.go(Routes.HOME);
         } else {
           print('Login failed: ${req.body}');
           ScaffoldMessenger.of(context).showSnackBar(

@@ -3,11 +3,9 @@ from flask_mqtt import Mqtt
 from authlib.integrations.flask_client import OAuth
 from src.util.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 
-# Initialize socketio (but don't bind it to the app yet)
 socketio = SocketIO(cors_allowed_origins='*', logger=False, engineio_logger=False)
 mqtt = Mqtt()
 
-# Initialize OAuth
 oauth = OAuth()
 
 google = oauth.register(
