@@ -110,6 +110,7 @@ class Charts {
       format: 'point.x : point.y',
       color: Colors.blue,
       textStyle: const TextStyle(color: Colors.white, fontSize: 12),
+      header: '',
     );
 
     return SfCartesianChart(

@@ -166,7 +166,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       return chartData;
     }
     else if (filterType == 'year'){
-      List<String> xAxisLabels = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+      List<String> xAxisLabels = List.generate(12, (index) => (index + 1).toString().padLeft(2, '0'));
       Map<String, String> monthMap = {
         '01': 'Jan',
         '02': 'Feb',

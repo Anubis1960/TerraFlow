@@ -11,3 +11,5 @@ pyjwt
 google-auth
 google_auth_oauthlib
 Flask Authlib
+scikit-learn
+matplotlib

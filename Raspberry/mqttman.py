@@ -99,9 +99,18 @@ class MQTTManager:
 
             time_str = "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(year, month, day, hour, minute, second)
 
-            moisture_level = self.read_moisture()
-            temperature, humidity = self.read_dht()
-
+            try:
+                DHT.measure()
+                moisture_level = self.read_moisture()
+                temperature = DHT.temperature()
+                humidity = DHT.humidity()
+                rain = self.read_rain()
+                print(f"\n\n Moisture level: {moisture_level}, temp: {temperature}, humidity: {humidity}, rain : {rain} \n\n")
+            except OSError as e:
+                print("Error reading DHT sensor:", e)
+            except Exception as e:
+                print("Error reading DHT sensor:", e)
+    
             # Sensor data
             sensor_data = {
                 'sensor_data': {
@@ -116,7 +125,7 @@ class MQTTManager:
 
             await asyncio.sleep(period_s)
     
-    async def check_irrigation(self, period_s: int = 4):
+    async def check_irrigation(self, period_s: int = 3600):
         """
         If a schedule is set, it follows the schedule.
         """
