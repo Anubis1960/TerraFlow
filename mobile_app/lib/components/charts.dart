@@ -107,8 +107,8 @@ class Charts {
 
     TooltipBehavior tooltipBehavior = TooltipBehavior(
       enable: true,
-      format: 'point.x : point.y', // Custom format
-      color: Colors.blue, // Background color
+      format: 'point.x : point.y',
+      color: Colors.blue,
       textStyle: const TextStyle(color: Colors.white, fontSize: 12),
     );
 
@@ -123,7 +123,6 @@ class Charts {
         arrangeByIndex: true,
       ),
       primaryYAxis: NumericAxis(
-        title: AxisTitle(text: 'Values'),
         minimum: minY,
         maximum: maxY,
         interval: (maxY - minY) / 4,

@@ -139,65 +139,74 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
             index.toString(), record['sensor_data'][sensorKey].toDouble());
       }).toList();
     }
-    List<String> xAxisLabels = filterType == 'year'
-        ? ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-        :  List.generate(31, (index) => (index + 1).toString().padLeft(2, '0'));
-
-    // Map to store aggregated data
-    Map<String, List<double>> aggregatedData = {};
-
-    // Map to convert month numbers to month names
-    Map<String, String> monthMap = {
-      '01': 'Jan',
-      '02': 'Feb',
-      '03': 'Mar',
-      '04': 'Apr',
-      '05': 'May',
-      '06': 'Jun',
-      '07': 'Jul',
-      '08': 'Aug',
-      '09': 'Sep',
-      '10': 'Oct',
-      '11': 'Nov',
-      '12': 'Dec',
-    };
-
-    // Aggregate data
-    for (var record in records) {
-      String timestamp = record['timestamp'];
-      String key = filterType == 'year'
-          ? timestamp.substring(5, 7) // Extract MM
-          : timestamp.substring(8, 10); // Extract DD
-
-      double value = record['sensor_data'][sensorKey].toDouble();
-      if (!aggregatedData.containsKey(key)) {
-        aggregatedData[key] = [];
-      }
-      aggregatedData[key]!.add(value);
-    }
-
-    print("Aggregated Data: $aggregatedData");
-
-    List<ChartData> chartData = [];
-    for (var label in xAxisLabels) {
-      if (aggregatedData.containsKey(label)) {
-        double avg = aggregatedData[label]!.reduce((a, b) => a + b) / aggregatedData[label]!.length;
-        if (filterType == 'year') {
-          chartData.add(ChartData(monthMap[label] ?? label, avg));
-        } else {
-          chartData.add(ChartData(label, avg));
+    else if (filterType == 'month'){
+      List<String> xAxisLabels = List.generate(31, (index) => (index + 1).toString().padLeft(2, '0'));
+      Map<String, List<double>> aggregatedData = {};
+      for (var record in records) {
+        String timestamp = record['timestamp'];
+        String key = timestamp.substring(8, 10); // Extract DD
+        double value = record['sensor_data'][sensorKey].toDouble();
+        if (!aggregatedData.containsKey(key)) {
+          aggregatedData[key] = [];
         }
-      } else {
-        // Add null for missing data
-        if (filterType == 'year') {
-          chartData.add(ChartData(monthMap[label] ?? label, null));
+        aggregatedData[key]!.add(value);
+      }
+
+      print("Aggregated Data: $aggregatedData");
+
+      List<ChartData> chartData = [];
+      for (var label in xAxisLabels) {
+        if (aggregatedData.containsKey(label)) {
+          double avg = aggregatedData[label]!.reduce((a, b) => a + b) / aggregatedData[label]!.length;
+          chartData.add(ChartData(label, avg));
         } else {
           chartData.add(ChartData(label, null));
         }
       }
+      return chartData;
     }
+    else if (filterType == 'year'){
+      List<String> xAxisLabels = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+      Map<String, String> monthMap = {
+        '01': 'Jan',
+        '02': 'Feb',
+        '03': 'Mar',
+        '04': 'Apr',
+        '05': 'May',
+        '06': 'Jun',
+        '07': 'Jul',
+        '08': 'Aug',
+        '09': 'Sep',
+        '10': 'Oct',
+        '11': 'Nov',
+        '12': 'Dec',
+      };
+      Map<String, List<double>> aggregatedData = {};
 
-    return chartData;
+      for (var record in records) {
+        String timestamp = record['timestamp'];
+        String key = timestamp.substring(5, 7); // Extract MM
+        double value = record['sensor_data'][sensorKey].toDouble();
+        if (!aggregatedData.containsKey(key)) {
+          aggregatedData[key] = [];
+        }
+        aggregatedData[key]!.add(value);
+      }
+
+      print("Aggregated Data: $aggregatedData");
+
+      List<ChartData> chartData = [];
+      for (var label in xAxisLabels) {
+        if (aggregatedData.containsKey(label)) {
+          double avg = aggregatedData[label]!.reduce((a, b) => a + b) / aggregatedData[label]!.length;
+          chartData.add(ChartData(monthMap[label] ?? label, avg));
+        } else {
+          chartData.add(ChartData(monthMap[label] ?? label, null));
+        }
+      }
+      return chartData;
+    }
+    return [];
   }
 
   List<dynamic> _filterRecords(List<dynamic> records) {

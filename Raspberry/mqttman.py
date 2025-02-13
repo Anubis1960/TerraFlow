@@ -99,6 +99,9 @@ class MQTTManager:
 
             time_str = "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(year, month, day, hour, minute, second)
 
+            moisture_level = self.read_moisture()
+            temperature, humidity = self.read_dht()
+
             # Sensor data
             sensor_data = {
                 'sensor_data': {
