@@ -7,7 +7,7 @@ from scipy.interpolate import interp1d
 
 # Load the dataset
 data = pd.read_csv(
-    './dataset/Soil Moisture, Air Temperature and humidity, and Water Motor onoff Monitor data.AmritpalKaur.csv')
+    'dataset/AmritpalKaur.csv')
 
 X = data[['Soil Moisture', 'Temperature', 'Air Humidity']]
 y = data['Pump Data']
