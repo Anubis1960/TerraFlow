@@ -12,6 +12,7 @@ dry_soil = 44300
 rain_upper = 65535
 rain_lower = 13000
 DHT = dht.DHT22(Pin(2))
+relay = Pin(16, Pin.OUT)
 # moisture_conversion_factor = 100 / (65535)
 
 class MQTTManager:
@@ -101,10 +102,10 @@ class MQTTManager:
 
             try:
                 DHT.measure()
-                moisture_level = self.read_moisture()
+                moisture_level = read_moisture()
                 temperature = DHT.temperature()
                 humidity = DHT.humidity()
-                rain = self.read_rain()
+                rain = read_rain()
                 print(f"\n\n Moisture level: {moisture_level}, temp: {temperature}, humidity: {humidity}, rain : {rain} \n\n")
             except OSError as e:
                 print("Error reading DHT sensor:", e)
@@ -125,11 +126,15 @@ class MQTTManager:
 
             await asyncio.sleep(period_s)
     
-    async def check_irrigation(self, period_s: int = 3600):
+    async def check_irrigation(self, period_s: int = 3):
         """
         If a schedule is set, it follows the schedule.
         """
         while True:
+            relay_on()
+            sleep(5)
+            relay_off()
+            sleep(5)
             if self.schedule:
                 schedule_type = self.schedule.get("type")
                 schedule_time = self.schedule.get("time")
@@ -168,56 +173,64 @@ class MQTTManager:
                 except asyncio.TimeoutError:
                     time_until_irrigation -= delay
             
-            moisture_level = self.read_moisture()
+            moisture_level = read_moisture()
             print("Moisture level:", moisture_level)
-            rain_level = self.read_rain()
+            rain_level = read_rain()
             print("Rain level:", rain_level)
-            temperature, humidity = self.read_dht()
+            temperature, humidity = read_dht()
             print("Temperature:", temperature)
             print("Humidity:", humidity)
             self.handle_irrigation_cmd()
-    
 
-    def read_moisture(self):
-        """
-        Reads the moisture level from the sensor.
+def relay_on():
+    print("relay is ON")
+    relay.value(0)
 
-        Returns:
-            float: The moisture level.
-        """
-        raw_value = moisture_pin.read_u16()
-        moisture_level = ((dry_soil - raw_value) / (dry_soil - wet_soil)) * 100
-        moisture_level = max(0, min(100, moisture_level))
-        return moisture_level
-    
-    def read_rain(self):
-        """
-        Reads the rain level from the sensor.
+def relay_off():
+    print("relay is OFF")
+    relay.value(1)
 
-        Returns:
-            float: The rain level.
-        """
-        rain_state = rain_pin.read_u16()
-        if rain_state > rain_upper:
-            rain_state = 100
-        elif rain_state < rain_lower:
-            rain_state = 0
-        else:
-            rain_state = ((rain_upper - rain_state) / (rain_upper - rain_lower)) * 100
-        return rain_state
 
-    def read_dht(self):
-        """
-        Reads the temperature and humidity from the DHT sensor.
+def read_dht():
+    """
+    Reads the temperature and humidity from the DHT sensor.
 
-        Returns:
-            tuple: The temperature and humidity.
-        """
-        try:
-            DHT.measure()
-            temperature = DHT.temperature()
-            humidity = DHT.humidity()
-            return temperature, humidity
-        except OSError as e:
-            print("Error reading DHT sensor:", e)
-            return None, None
+    Returns:
+        tuple: The temperature and humidity.
+    """
+    try:
+        DHT.measure()
+        temperature = DHT.temperature()
+        humidity = DHT.humidity()
+        return temperature, humidity
+    except OSError as e:
+        print("Error reading DHT sensor:", e)
+        return None, None
+
+def read_moisture():
+    """
+    Reads the moisture level from the sensor.
+
+    Returns:
+        float: The moisture level.
+    """
+    raw_value = moisture_pin.read_u16()
+    moisture_level = ((dry_soil - raw_value) / (dry_soil - wet_soil)) * 100
+    moisture_level = max(0, min(100, moisture_level))
+    return moisture_level
+
+def read_rain():
+    """
+    Reads the rain level from the sensor.
+
+    Returns:
+        float: The rain level.
+    """
+    rain_state = rain_pin.read_u16()
+    if rain_state > rain_upper:
+        rain_state = 100
+    elif rain_state < rain_lower:
+        rain_state = 0
+    else:
+        rain_state = ((rain_upper - rain_state) / (rain_upper - rain_lower)) * 100
+    return rain_state

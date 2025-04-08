@@ -36,12 +36,14 @@ MongoDB Collection:
 
 import json
 
+import pandas as pd
 from bson.objectid import ObjectId
 from pymongo.errors import DuplicateKeyError
 from redis import ResponseError
 
 from src.util.db import r, mongo_db, CONTROLLER_COLLECTION
 from src.util.extensions import socketio, mqtt
+from src.util.predict import predict_water
 
 
 def extract_controller_id(topic: str) -> str:
@@ -128,16 +130,23 @@ def predict(payload: str, topic: str) -> None:
 
     Returns:
         None
-
-    Logs the prediction data and controller ID for further processing.
-
-    Note:
-        - This function currently serves as a placeholder for actual prediction logic.
     """
     json_data = json.loads(payload)
+    soil_moisture = json_data.get('soil_moisture')
+    temperature = json_data.get('temperature')
+    humidity = json_data.get('humidity')
+    df = pd.DataFrame({
+        'Soil Moisture': [soil_moisture],
+        'Temperature': [temperature],
+        'Air Humidity': [humidity]
+    })
     controller_id = extract_controller_id(topic)
     print('JSON data:', json_data)
+    print('DataFrame:', df)
     print('Controller ID:', controller_id)
+    prediction = predict_water(df)
+    print('Prediction:', prediction)
+    mqtt.publish(f'{controller_id}/prediction', json.dumps({'prediction': prediction}))
 
 
 def record_sensor_data(payload: str, topic: str) -> None:

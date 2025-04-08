@@ -136,7 +136,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
         int index = entry.key;
         var record = entry.value;
         return ChartData(
-            index.toString(), record['sensor_data'][sensorKey].toDouble());
+            record['timestamp'].substring(12, 19), record['sensor_data'][sensorKey].toDouble());
       }).toList();
     }
     else if (filterType == 'month'){
