@@ -1,11 +1,7 @@
 from authlib.integrations.flask_client import OAuth
-from src.util.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+from src.utils.secrets import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 
-#######################
-#
-# OAuth 2.0 Config - GOOGLE
-#
-#######################
+
 class OAuthManager:
     """
     Manages OAuth 2.0 authentication with external providers, in this case, Google.

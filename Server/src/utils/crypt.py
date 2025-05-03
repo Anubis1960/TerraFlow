@@ -27,7 +27,7 @@ import base64
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 from Crypto import Random
-from src.util.config import ENCRYPT_KEY as key  # Key imported from configuration
+from src.utils.secrets import ENCRYPT_KEY as key  # Key imported from configuration
 
 
 def encrypt(source: str, encode=True) -> str:

@@ -1,7 +1,7 @@
 from flask_socketio import SocketIO
 from flask_mqtt import Mqtt
 from authlib.integrations.flask_client import OAuth
-from src.util.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+from src.utils.secrets import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 
 socketio = SocketIO(cors_allowed_origins='*', logger=False, engineio_logger=False)
 mqtt = Mqtt()

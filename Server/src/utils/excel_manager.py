@@ -4,44 +4,6 @@ from openpyxl import Workbook
 from openpyxl.chart import BarChart, Reference, LineChart
 from openpyxl.utils.dataframe import dataframe_to_rows
 
-data = {
-    "record": [
-        {"sensor_data": {"soil_moisture": 45, "air_humidity": 60, "air_temperature": 25},
-         "timestamp": "2023/10/01 12:00:00"},
-        {"sensor_data": {"soil_moisture": 50, "air_humidity": 65, "air_temperature": 26},
-         "timestamp": "2023/10/02 12:00:00"},
-        {"sensor_data": {"soil_moisture": 55, "air_humidity": 70, "air_temperature": 27},
-         "timestamp": "2023/10/03 12:00:00"},
-        {"sensor_data": {"soil_moisture": 60, "air_humidity": 75, "air_temperature": 28},
-         "timestamp": "2023/11/01 12:00:00"},
-        {"sensor_data": {"soil_moisture": 65, "air_humidity": 80, "air_temperature": 29},
-         "timestamp": "2023/11/02 12:00:00"},
-    ],
-    "water_usage": [
-        {"water_used": 100, "date": "2023/10"},
-        {"water_used": 120, "date": "2023/11"},
-        {"water_used": 90, "date": "2023/12"},
-        {"water_used": 110, "date": "2024/01"},
-        {"water_used": 130, "date": "2024/02"},
-        {"water_used": 140, "date": "2024/03"},
-        {"water_used": 150, "date": "2024/04"},
-        {"water_used": 160, "date": "2024/05"},
-        {"water_used": 170, "date": "2024/06"},
-        {"water_used": 180, "date": "2024/07"},
-        {"water_used": 190, "date": "2024/08"},
-        {"water_used": 200, "date": "2024/09"},
-        {"water_used": 210, "date": "2024/10"},
-        {"water_used": 220, "date": "2024/11"},
-        {"water_used": 230, "date": "2024/12"},
-    ]
-}
-
-MONTH_MAP = {
-    "01": "January", "02": "February", "03": "March", "04": "April",
-    "05": "May", "06": "June", "07": "July", "08": "August",
-    "09": "September", "10": "October", "11": "November", "12": "December"
-}
-
 
 def create_bar_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title: str, start_col: str, start_row: int) \
         -> None:
@@ -79,6 +41,12 @@ def create_line_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title:
 
 
 def export_to_excel(_data: dict) -> BytesIO:
+    MONTH_MAP = {
+        "01": "January", "02": "February", "03": "March", "04": "April",
+        "05": "May", "06": "June", "07": "July", "08": "August",
+        "09": "September", "10": "October", "11": "November", "12": "December"
+    }
+
     # Convert records to DataFrame
     records_df = pd.DataFrame(
         [{**record["sensor_data"], "Timestamp": record["timestamp"]} for record in _data["record"]]
@@ -130,9 +98,3 @@ def export_to_excel(_data: dict) -> BytesIO:
     wb.save(buff)
     buff.seek(0)
     return buff
-
-
-if __name__ == "__main__":
-    buf = export_to_excel(data)
-    with open("output.xlsx", "wb") as f:
-        f.write(buf.read())

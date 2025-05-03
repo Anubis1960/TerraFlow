@@ -12,7 +12,7 @@ Dependencies:
 - `paho.mqtt.client`: For MQTT functionality.
 - `src.service.mqtt_service`: Includes service methods for registering controllers, making predictions,
 recording sensor data, and water usage.
-- `src.util.extensions.mqtt`: MQTT utility extension.
+- `src.utils.extensions.mqtt`: MQTT utility extension.
 
 Functionality:
 - Handles messages for topics such as:
@@ -28,7 +28,7 @@ Exceptions:
 import typing
 import paho.mqtt.client
 from src.service.mqtt_service import register_controller, predict, record_sensor_data, record_water_used
-from src.util.extensions import mqtt
+from src.config.protocol import mqtt
 
 
 @mqtt.on_connect()

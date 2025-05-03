@@ -21,9 +21,10 @@ import bson.errors
 import regex as re
 from bson.objectid import ObjectId
 from redis.exceptions import ResponseError
-from src.util.db import r, mongo_db, USER_COLLECTION, CONTROLLER_COLLECTION
-from src.util.extensions import mqtt, socketio
-from src.util.excel_manager import export_to_excel
+from src.config.mongo import mongo_db, CONTROLLER_COLLECTION, USER_COLLECTION
+from src.config.redis import r
+from src.config.protocol import mqtt, socketio
+from src.utils.excel_manager import export_to_excel
 
 email_regex = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 

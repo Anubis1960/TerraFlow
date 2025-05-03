@@ -3,8 +3,8 @@ from flask_cors import CORS
 import src.api.mqtt_api
 import src.api.socket_api
 from src.model.oauth_manager import OAuthManager
-from src.util.config import MQTT_BROKER, MQTT_PORT, HOST, PORT, SECRET_KEY
-from src.util.extensions import socketio, mqtt, oauth
+from src.utils.secrets import MQTT_BROKER, MQTT_PORT, HOST, PORT, SECRET_KEY
+from src.config.protocol import socketio, mqtt, oauth
 from src.api.auth_route import auth_blueprint
 
 

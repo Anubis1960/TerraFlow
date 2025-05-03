@@ -11,7 +11,7 @@ from src.service.socket_service import (
     handle_retrieve_controller_data,
     remap_redis
 )
-from src.util.db import USER_COLLECTION, CONTROLLER_COLLECTION
+from src.utils.db import USER_COLLECTION, CONTROLLER_COLLECTION
 
 
 class TestControllerManagement(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestControllerManagement(unittest.TestCase):
         self.mongo_patcher = patch('src.service.socket_service.mongo_db', self.mongo_db_mock)
         self.redis_patcher = patch('src.service.socket_service.r', self.redis_mock)
         self.socketio_patcher = patch('src.service.socket_service.socketio', self.socketio_mock)
-        self.decrypt_patcher = patch('src.util.crypt.decrypt', self.decrypt_mock)
+        self.decrypt_patcher = patch('src.utils.crypt.decrypt', self.decrypt_mock)
 
         self.mongo_patcher.start()
         self.redis_patcher.start()

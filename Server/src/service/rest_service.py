@@ -1,10 +1,10 @@
 import regex as re
 from google.auth.transport import (requests as google_requests, Request)
 
-from src.util.config import GOOGLE_CLIENT_ID
-from src.util.crypt import encrypt, decrypt
-from src.util.db import mongo_db, USER_COLLECTION
-from src.util.tokenizer import generate_token
+from src.utils.secrets import GOOGLE_CLIENT_ID
+from src.utils.crypt import encrypt, decrypt
+from src.config.mongo import mongo_db, USER_COLLECTION
+from src.utils.tokenizer import generate_token
 
 email_regex = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 

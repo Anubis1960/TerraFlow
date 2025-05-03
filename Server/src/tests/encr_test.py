@@ -1,6 +1,6 @@
 import unittest
-from src.util.config import ENCRYPT_KEY as key
-from src.util.crypt import encrypt, decrypt
+from src.utils.secrets import ENCRYPT_KEY as key
+from src.utils.crypt import encrypt, decrypt
 
 
 class TestEncryption(unittest.TestCase):

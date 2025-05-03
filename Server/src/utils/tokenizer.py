@@ -1,6 +1,6 @@
 import jwt
 import datetime
-from src.util.config import SECRET_KEY
+from src.utils.secrets import SECRET_KEY
 
 
 def generate_token(email: str, user_id: str) -> str:
@@ -22,11 +22,3 @@ def decode_token(token: str) -> dict:
         return {'error': 'Token expired. Please log in again.'}
     except jwt.InvalidTokenError:
         return {'error': 'Invalid token. Please log in again.'}
-
-
-if __name__ == '__main__':
-    email = "test@example.com"
-    user_id = "12345"
-    token = generate_token(email, user_id)
-    decoded_token = decode_token(token)
-    print('Decoded token:', decoded_token)

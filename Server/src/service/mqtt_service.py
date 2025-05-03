@@ -40,10 +40,10 @@ import pandas as pd
 from bson.objectid import ObjectId
 from pymongo.errors import DuplicateKeyError
 from redis import ResponseError
-
-from src.util.db import r, mongo_db, CONTROLLER_COLLECTION
-from src.util.extensions import socketio, mqtt
-from src.util.predict import predict_water
+from src.config.mongo import mongo_db, CONTROLLER_COLLECTION
+from src.config.redis import r
+from src.config.protocol import mqtt, socketio
+from src.utils.predict import predict_water
 
 
 def extract_controller_id(topic: str) -> str:

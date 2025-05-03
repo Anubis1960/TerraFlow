@@ -35,8 +35,8 @@ from src.service.socket_service import (
     handle_remove_controller, handle_schedule_irrigation, handle_retrieve_controller_data, remap_redis, handle_export,
     handle_logout, handle_fetch_controllers
 )
-from src.util.extensions import socketio
-from src.util.tokenizer import decode_token
+from src.config.protocol import socketio
+from src.utils.tokenizer import decode_token
 
 
 @socketio.on('connect')
