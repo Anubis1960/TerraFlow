@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 class TopBar{
 
-  static void _handle_logout(BuildContext context) async {
+  static void _handleLogout(BuildContext context) async {
     try {
       final String token = await BaseStorage.getStorageFactory().getToken();
       final List<String> deviceIds = await BaseStorage.getStorageFactory().getDeviceList();
@@ -26,15 +26,13 @@ class TopBar{
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode(<String, List<String>>{
-          'device_ids': deviceIds,
+          'deviceIds': deviceIds,
         }),
       ).then((res) {
         if (res.statusCode == 200) {
           // Successfully logged out
-          print('Logout successful');
         } else {
           // Handle error response
-          print('Logout failed: ${res.body}');
         }
       });
 
@@ -47,7 +45,6 @@ class TopBar{
       context.go(Routes.LOGIN);
     } catch (e) {
       // Handle any errors that occur during the async operations
-      print('Error during logout: $e');
     }
   }
 
@@ -72,7 +69,7 @@ class TopBar{
         IconButton(
           icon: Icon(Icons.logout, color: Colors.white), // Logout icon
           onPressed: () async {
-            _handle_logout(context);
+            _handleLogout(context);
           },
         ),
       ],

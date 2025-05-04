@@ -22,12 +22,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    print('Login Page init');
   }
 
   @override
   void dispose() {
-    print('Login Page Disposed');
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
@@ -82,9 +80,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    hintText: 'Enter your email',
+                    fillColor: Colors.white,
+                    filled: true,
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.02),
+                SizedBox(
+                    height: screenHeight * 0.02,
+                ),
                 TextField(
                   obscureText: true,
                   controller: passwordController,
@@ -94,6 +97,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    hintText: 'Enter your password',
+                    fillColor: Colors.white,
+                    filled: true,
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.03),

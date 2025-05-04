@@ -31,9 +31,8 @@ and connected clients. The handlers process user requests, manage devices, and h
 
 from flask import request
 from src.service.socket_service import (
-    handle_connect, handle_disconnect, handle_irrigate, handle_add_device,
-    handle_remove_device, handle_schedule_irrigation, handle_retrieve_device_data, remap_redis, handle_export,
-    handle_logout, handle_fetch_devices
+    handle_connect, handle_disconnect, handle_irrigate,
+    handle_schedule_irrigation, remap_redis, handle_export,
 )
 from src.config.protocol import socketio
 from src.utils.tokenizer import decode_token
@@ -171,75 +170,6 @@ def export_event(data: dict) -> None:
     handle_export(device_id, socket_id)
 
 
-# TODO Convert to REST
-@socketio.on('add_device')
-def add_device_event(data: dict) -> None:
-    """
-    Adds a device for a user.
-
-    Args:
-        data (dict): JSON payload with keys 'device_id' and 'user_id'.
-
-    Returns:
-        None
-
-    Actions:
-        - Calls `handle_add_device` with the device ID, user ID, and socket ID.
-
-    Logs:
-        - Errors if required keys are missing.
-    """
-    if 'device_id' not in data or 'token' not in data:
-        print('device ID or User ID not found, found:', data)
-        return
-    device_id = data['device_id']
-    token = data['token']
-    payload = decode_token(token)
-    if 'error' in payload:
-        print('Invalid token:', payload)
-        return
-    user_id = payload['user_id']
-    socket_id = request.sid
-
-    if len(device_id) != 24:
-        print(f"Invalid device ID: {device_id}")
-        socketio.emit('error', {'error_msg': f"Invalid device ID: {device_id}"}, room=socket_id)
-
-    handle_add_device(device_id, user_id, socket_id)
-
-
-# TODO Convert to REST
-@socketio.on('remove_device')
-def remove_device_event(data: dict) -> None:
-    """
-    Removes a device for a user.
-
-    Args:
-        data (dict): JSON payload with keys 'device_id' and 'token'.
-
-    Returns:
-        None
-
-    Actions:
-        - Calls `handle_remove_device` to remove the device for the given user.
-
-    Logs:
-        - Errors if required keys are missing.
-    """
-    if 'device_id' not in data or 'token' not in data:
-        print('device ID or User ID not found, found:', data)
-        return
-    device_id = data['device_id']
-    token = data['token']
-    payload = decode_token(token)
-    if 'error' in payload:
-        print('Invalid token:', payload)
-        return
-    user_id = payload['user_id']
-    socket_id = request.sid
-    handle_remove_device(device_id, user_id, socket_id)
-
-
 @socketio.on('schedule_irrigation')
 def schedule_irrigation_event(data: dict) -> None:
     """
@@ -318,83 +248,3 @@ def message_event(data: dict) -> None:
         - "Message: <data>"
     """
     print('Message:', data)
-
-
-# TODO Convert to REST
-@socketio.on('fetch_device_data')
-def retrieve_device_data_event(data: dict) -> None:
-    """
-    Fetches data for a specific device.
-
-    Args:
-        data (dict): JSON payload with the key 'device_id'.
-
-    Actions:
-        - Calls `handle_retrieve_device_data` to fetch device data.
-
-    Logs:
-        - Errors if 'device_id' is missing.
-    """
-    print('Retrieving device data:', data)
-    if 'device_id' not in data:
-        print('device ID not found, found:', data)
-        return
-    device_id = data['device_id']
-    socket_id = request.sid
-    handle_retrieve_device_data(device_id, socket_id)
-
-
-# TODO Convert to REST
-@socketio.on('fetch_devices')
-def fetch_devices_event(data: dict) -> None:
-    """
-    Fetches devices associated with a user.
-
-    Args:
-        data (dict): JSON payload with the key
-            - 'token': User authentication token.
-
-    Actions:
-        - Calls
-        - Calls `handle_fetch_devices` to fetch device data.
-
-    Logs:
-        - Errors if 'token' is missing.
-
-    Returns:
-        None
-    """
-    print('Fetching devices:', data)
-
-    if 'token' not in data:
-        print('Token not found, found:', data)
-        return
-    token = data['token']
-    payload = decode_token(token)
-    if 'error' in payload:
-        print('Invalid token:', payload)
-        return
-    user_id = payload['user_id']
-    socket_id = request.sid
-    handle_fetch_devices(user_id, socket_id)
-
-
-# TODO Convert to REST
-@socketio.on('logout')
-def logout(data: dict) -> None:
-    """
-    Handles user logout requests.
-
-    Returns:
-        None
-
-    """
-    print('Logging out:', data)
-    if 'token' in data and 'deviceIds' in data:
-        token = data['token']
-        device_ids = data['deviceIds']
-        decoded_token = decode_token(token)
-        if 'error' in decoded_token:
-            return
-        user_id = decoded_token['user_id']
-        handle_logout(user_id, device_ids)

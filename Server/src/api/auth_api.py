@@ -114,4 +114,10 @@ def logout():
         if 'error' in decoded_token:
             return
         user_id = decoded_token['user_id']
-        handle_logout(user_id, device_ids)
+        res = handle_logout(user_id, device_ids)
+        if 'error' in res:
+            return jsonify(res), HTTPStatus.BAD_REQUEST
+        else:
+            return jsonify(res), HTTPStatus.OK
+
+    return jsonify({"error": "Invalid request"}), HTTPStatus.BAD_REQUEST

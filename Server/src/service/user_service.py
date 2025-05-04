@@ -54,8 +54,6 @@ def handle_add_device(device_id: str, user_id: str):
         devices.append(device_id)
         mongo_db[USER_COLLECTION].update_one({"_id": ObjectId(user_id)}, {"$set": {"devices": devices}})
 
-    #  TODO Redis
-
     device_key = f"device:{device_id}"
 
     # Check if the device is already in Redis

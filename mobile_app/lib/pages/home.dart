@@ -22,7 +22,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    print('Home Page init');
     token = BaseStorage.getStorageFactory().getToken();
     deviceIds = _loadDeviceIds();
 
@@ -36,15 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     });
-
-    // SocketService.socket.on('devices', (data) {
-    //   BaseStorage.getStorageFactory().saveData('device_ids', data['devices']);
-    //
-    //   setState(() {
-    //     deviceIds = _loadDeviceIds();
-    //   });
-    //   print('Devices: $deviceIds');
-    // });
 
     token.then((onUser) {
       deviceIds.then((onDevice) async {
@@ -60,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
           );
           if (res.statusCode == 200) {
             var devices = jsonDecode(res.body);
-            print(devices);
             if (devices.isNotEmpty) {
               BaseStorage.getStorageFactory().saveData('device_ids', devices);
               setState(() {
@@ -78,10 +67,11 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         Map<String, dynamic> data = {
           'token': onUser,
-          'devices': onDevice,
+          'devices': BaseStorage.getStorageFactory().getDeviceList(),
         };
         SocketService.socket.emit('init', data);
       });
+
     });
   }
 
@@ -127,7 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    print('Home Disposed');
     SocketService.socket.off('error');
     // SocketService.socket.off('devices');
     super.dispose();
@@ -183,6 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       return Padding(
                         padding: EdgeInsets.all(screenWidth * 0.02), // 2% of screen width
                         child: Card(
+                          color: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -313,11 +303,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (response.statusCode == 201) {
                         var deviceIds = BaseStorage.getStorageFactory().getDeviceList();
                         deviceIds.then((onDevice) {
+                          for (var device in onDevice) {
+                            if (device == newDeviceId) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Device already exists.'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                              return;
+                            }
+                          }
                           onDevice.add(newDeviceId);
                           BaseStorage.getStorageFactory().saveData('device_ids', onDevice);
-                        });
-                        setState(() {
-                          this.deviceIds = _loadDeviceIds();
+                          setState(() {
+                            this.deviceIds = _loadDeviceIds();
+                          });
                         });
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

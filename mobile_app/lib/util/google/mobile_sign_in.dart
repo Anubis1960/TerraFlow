@@ -34,14 +34,12 @@ class MobileSignIn extends GoogleSignInUtil {
           BaseStorage.getStorageFactory().saveData('token', token);
           context.go(Routes.HOME);
         } else {
-          print('Login failed: ${req.body}');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Login failed: ${req.body}')),
           );
         }
       }
     } catch (e) {
-      print('Error during login: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed: $e')),
       );

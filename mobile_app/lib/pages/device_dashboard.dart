@@ -44,7 +44,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
   @override
   void initState() {
     super.initState();
-    print('Device Dashboard init');
 
     // Socket response listeners
     SocketService.socket.on('export_response', (data) async {
@@ -82,7 +81,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
     http.get(Uri.parse(url)).then((response) {
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body) as Map<String, dynamic>;
-        print(data);
         setState(() {
           deviceData = data;
           if (deviceData['record'] != null && deviceData['record'].isNotEmpty) {
@@ -95,7 +93,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
           }
         });
       } else {
-        print('Failed to load device data');
       }
     });
 
@@ -121,7 +118,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
           filteredValues = filteredValues;
           humidity = _calculateAverage(filteredRecords, 'humidity');
           temperature = _calculateAverage(filteredRecords, 'temperature');
-          print("setState triggered, selectedFilterValue: $selectedFilterValue");
         });
       }
     });
@@ -130,15 +126,11 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
     //   'device_id': deviceId,
     // });
 
-    print('Selected Filter Value: $selectedFilterValue');
-    print('Filtered Records: $filteredRecords');
-    print('Filtered Values: $filteredValues');
 
   }
 
   @override
   void dispose() {
-    print('Device Dashboard Disposed');
     // SocketService.socket.off('device_data_response');
     SocketService.socket.off('record');
     SocketService.socket.off('export_response');
@@ -155,15 +147,12 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
   }
 
   List<ChartData> _getSensorDataSpots(List<dynamic> records, String sensorKey) {
-    print("getSensorDataSpots");
 
     if (filterType == 'day') {
-      print("Filtering records for day: $selectedFilterValue");
       return records
           .asMap()
           .entries
           .map((entry) {
-        int index = entry.key;
         var record = entry.value;
         return ChartData(
             record['timestamp'].substring(12, 19), record['sensor_data'][sensorKey].toDouble());
@@ -182,7 +171,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
         aggregatedData[key]!.add(value);
       }
 
-      print("Aggregated Data: $aggregatedData");
 
       List<ChartData> chartData = [];
       for (var label in xAxisLabels) {
@@ -223,7 +211,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
         aggregatedData[key]!.add(value);
       }
 
-      print("Aggregated Data: $aggregatedData");
 
       List<ChartData> chartData = [];
       for (var label in xAxisLabels) {
@@ -240,7 +227,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
   }
 
   List<dynamic> _filterRecords(List<dynamic> records) {
-    print("Filtering records for: $selectedFilterValue with filterType: $filterType");
 
     if (filterType == 'day') {
       return _binarySearchDateSubsection(records, selectedFilterValue, 'timestamp');
@@ -253,7 +239,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
   }
 
   List<dynamic> _binarySearchDateSubsection(List<dynamic> records, String timestamp, String key) {
-    print("Performing binary search for timestamp: $timestamp");
 
     int findBoundaryIndex(bool findFirst) {
       int low = 0, high = records.length - 1, result = -1;
@@ -282,14 +267,12 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
     if (firstIndex == -1) return [];
     int lastIndex = findBoundaryIndex(false);
 
-    print("Binary search result: firstIndex=$firstIndex, lastIndex=$lastIndex");
 
 
     return records.sublist(firstIndex, lastIndex + 1);
   }
 
   Set<String> _getFilterValues(List<dynamic> records) {
-    print("getFilterValues");
     Set<String> values = {};
     if (records.isEmpty) {
       return values;
@@ -308,7 +291,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
   }
 
   double _calculateAverage(List<dynamic> records, String key) {
-    print("calculateAverage");
     if (records.isEmpty) {
       return 0;
     }
@@ -316,7 +298,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
   }
 
   double _calculateWaterUsage(List<dynamic> records) {
-    print("calculateWaterUsage");
     if (records.isEmpty) {
       return 0;
     }

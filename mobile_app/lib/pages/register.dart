@@ -21,12 +21,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     super.initState();
-    print('Register Page init');
   }
 
   @override
   void dispose() {
-    print('Register Page Disposed');
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
@@ -80,6 +78,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    fillColor: Colors.white,
+                    filled: true,
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.02), // 2% of screen height
@@ -92,6 +92,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    fillColor: Colors.white,
+                    filled: true,
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.02), // 2% of screen height
@@ -104,6 +106,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    fillColor: Colors.white,
+                    filled: true,
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.03), // 3% of screen height

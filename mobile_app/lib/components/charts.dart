@@ -113,7 +113,6 @@ class Charts {
     // Debugging: Print data to verify consistency
     for (int i = 0; i < data.length; i++) {
       for (int j = 0; j < data[i].length; j++) {
-        print('Data $i, Point $j: ${data[i][j].x}, ${data[i][j].y}');
       }
     }
 
@@ -121,7 +120,7 @@ class Charts {
     TooltipBehavior tooltipBehavior = TooltipBehavior(
       enable: true,
       format: 'point.x : point.y',
-      color: Colors.blue,
+      color: Colors.deepPurple,
       textStyle: const TextStyle(
         color: Colors.white,
         fontSize: 12,
@@ -130,25 +129,38 @@ class Charts {
       header: ' Time : Value',
     );
 
+    const shapes = [
+      DataMarkerType.circle,
+      DataMarkerType.rectangle,
+      DataMarkerType.triangle,
+      DataMarkerType.diamond,
+      DataMarkerType.invertedTriangle,
+    ];
+
     // Generate LineSeries for each dataset
     final List<LineSeries<ChartData, String>> seriesList =
     List.generate(data.length, (index) {
 
       return LineSeries<ChartData, String>(
-        name: '${headers[index]}', // Assign a name to each series
+        name: headers[index], // Assign a name to each series
         dataSource: data[index],
         xValueMapper: (ChartData data, _) => data.x,
         yValueMapper: (ChartData data, _) => data.y,
         color: lineColors[index % lineColors.length],
         width: 3,
-        markerSettings: const MarkerSettings(isVisible: true),
-        dataLabelSettings: const DataLabelSettings(isVisible: false),
+        markerSettings: MarkerSettings(
+            isVisible: true,
+            shape: shapes[index % shapes.length], // Cycle through shapes
+        ),
+        dataLabelSettings: const DataLabelSettings(
+            isVisible: false,
+
+        ),
         enableTooltip: true,
       );
     });
 
     for (int i = 0; i < seriesList.length; i++) {
-      print('Series $i: ${seriesList[i].xValueMapper}, ${seriesList[i].yValueMapper}');
     }
 
     return SfCartesianChart(

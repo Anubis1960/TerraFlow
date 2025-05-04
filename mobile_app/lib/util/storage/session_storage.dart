@@ -25,7 +25,6 @@ class SessionStorage extends BaseStorage{
 
     deviceIds = deviceIds.where((id) => id.isNotEmpty).toList();
 
-    print('Device IDs: $deviceIds');
     return deviceIds;
   }
 

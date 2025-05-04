@@ -18,53 +18,81 @@ class ScheduleDialog{
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
+              backgroundColor: Colors.white,
               title: const Center(
                   child: Text('Schedule Irrigation', style: TextStyle(fontSize: 20))
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  DropdownButton<String>(
-                    value: selectedType,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedType = newValue!;
-                      });
-                    },
-                    items: type.map((value) => DropdownMenuItem(
-                      value: value,
-                      child: Text(value),
-                    )).toList(),
+                  Theme(
+                      data: Theme.of(context).copyWith(
+                        canvasColor: Colors.white,
+                      ),
+                      child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: selectedType,
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                selectedType = newValue!;
+                              });
+                            },
+                            items: type.map((value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(value),
+                            )).toList(),
+                      )
                   ),
-                  const SizedBox(height: 20),
-                  ListTile(
-                    title: const Text('Select Time'),
-                    trailing: Text(
-                      '${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}',
-                      style: const TextStyle(fontSize: 16),
+                    const SizedBox(height: 20),
+                    ListTile(
+                      title: const Text('Select Time'),
+                      trailing: Text(
+                        '${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      onTap: () async {
+                        final TimeOfDay? pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: selectedTime,
+                          builder: (BuildContext context, Widget? child) {
+                            return Theme(data: Theme.of(context).copyWith(
+                              colorScheme: const ColorScheme.light(primary: Colors.deepPurple),
+                              textButtonTheme: TextButtonThemeData(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.deepPurple,
+                                  textStyle: const TextStyle(fontSize: 20),
+                                  padding: const EdgeInsets.all(16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ), child: child!);
+                          },
+                        );
+                        if (pickedTime != null) {
+                          setState(() {
+                            selectedTime = pickedTime;
+                          });
+                        }
+                      },
                     ),
-                    onTap: () async {
-                      final TimeOfDay? pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: selectedTime,
-                      );
-                      if (pickedTime != null) {
-                        setState(() {
-                          selectedTime = pickedTime;
-                        });
-                      }
-                    },
-                  ),
-                ],
+                  ],
               ),
               actions: [
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                  ),
                   onPressed: () {
                     context.pop();
                   },
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                  ),
                   onPressed: () {
                     final formattedTime = '${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}';
                     SocketService.socket.emit('schedule_irrigation', {
@@ -77,6 +105,9 @@ class ScheduleDialog{
                   child: const Text('Add'),
                 ),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                  ),
                   onPressed: () {
                     SocketService.socket.emit('remove_schedule', {
                       'device_id': deviceId,
