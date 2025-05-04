@@ -102,11 +102,10 @@ class MQTTManager:
 
             try:
                 DHT.measure()
-                moisture_level = read_moisture()
-                temperature = DHT.temperature()
-                humidity = DHT.humidity()
+                moisture = read_moisture()
+                temperature, humidity = read_dht()
                 rain = read_rain()
-                print(f"\n\n Moisture level: {moisture_level}, temp: {temperature}, humidity: {humidity}, rain : {rain} \n\n")
+                print(f"\n\n Moisture level: {moisture}, temp: {temperature}, humidity: {humidity}, rain : {rain} \n\n")
             except OSError as e:
                 print("Error reading DHT sensor:", e)
             except Exception as e:
@@ -115,9 +114,9 @@ class MQTTManager:
             # Sensor data
             sensor_data = {
                 'sensor_data': {
-                    "air_temperature": urandom.randint(0, 100),
-                    "air_humidity": urandom.randint(0, 100),
-                    "soil_moisture": urandom.randint(0, 100)
+                    "temperature": urandom.randint(0, 100),
+                    "humidity": urandom.randint(0, 100),
+                    "moisture": urandom.randint(0, 100)
                 },
                 'timestamp': time_str
             }
@@ -131,10 +130,10 @@ class MQTTManager:
         If a schedule is set, it follows the schedule.
         """
         while True:
-            relay_on()
-            sleep(5)
-            relay_off()
-            sleep(5)
+            # relay_on()
+            # sleep(5)
+            # relay_off()
+            # sleep(5)
             if self.schedule:
                 schedule_type = self.schedule.get("type")
                 schedule_time = self.schedule.get("time")
@@ -198,14 +197,22 @@ def read_dht():
     Returns:
         tuple: The temperature and humidity.
     """
-    try:
-        DHT.measure()
-        temperature = DHT.temperature()
-        humidity = DHT.humidity()
-        return temperature, humidity
-    except OSError as e:
-        print("Error reading DHT sensor:", e)
-        return None, None
+    count = 0
+    while count < 5:
+        count += 1
+        try:
+            DHT.measure()
+            temperature = DHT.temperature()
+            humidity = DHT.humidity()
+            return temperature, humidity
+        except OSError as e:
+            print("Error reading DHT sensor:", e)
+            sleep(2)
+        except Exception as e:
+            print("Error reading DHT sensor:", e)
+            sleep(2)
+    
+    return 0, 0
 
 def read_moisture():
     """

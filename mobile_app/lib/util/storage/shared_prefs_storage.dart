@@ -16,17 +16,17 @@ class SharedPrefs extends BaseStorage {
   Future<void> saveData(String key, dynamic value) async {
     final prefs = await _prefs; // Await for the SharedPreferences instance
 
-    if (key == 'controller_ids') {
+    if (key == 'device_ids') {
       if (value is List<dynamic>) {
-        List<String> controllerIds = [];
-        for (var controllerId in value) {
-          controllerIds.add(controllerId);
+        List<String> deviceIds = [];
+        for (var deviceId in value) {
+          deviceIds.add(deviceId);
         }
-        prefs.setStringList(key, controllerIds);
+        prefs.setStringList(key, deviceIds);
       } else if (value is String) {
-        List<String> controllerIds = await getControllerList();
-        controllerIds.add(value);
-        prefs.setStringList(key, controllerIds);
+        List<String> deviceIds = await getDeviceList();
+        deviceIds.add(value);
+        prefs.setStringList(key, deviceIds);
       }
     }
 
@@ -48,9 +48,9 @@ class SharedPrefs extends BaseStorage {
   }
 
   @override
-  Future<List<String>> getControllerList() async {
+  Future<List<String>> getDeviceList() async {
     final prefs = await _prefs; // Await for the SharedPreferences instance
-    return prefs.getStringList('controller_ids') ?? [];
+    return prefs.getStringList('device_ids') ?? [];
   }
 }
 

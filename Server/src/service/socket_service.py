@@ -1,18 +1,18 @@
 """
-Service handlers for IoT irrigation controllers, including user management, controller interaction,
+Service handlers for IoT irrigation devices, including user management, device interaction,
 and irrigation scheduling.
 
 ### Functions:
 1. **handle_connect** - Handles the event when a client connects.
 2. **handle_disconnect** - Handles the event when a client disconnects.
-3. **handle_irrigate** - Triggers an irrigation event for a specific controller.
-4. **handle_add_controller** - Adds a controller to a user's account and updates Redis.
-5. **handle_remove_controller** - Removes a controller from a user's account and updates Redis.
-6. **handle_schedule_irrigation** - Schedules irrigation for a specific controller.
+3. **handle_irrigate** - Triggers an irrigation event for a specific device.
+4. **handle_add_device** - Adds a device to a user's account and updates Redis.
+5. **handle_remove_device** - Removes a device from a user's account and updates Redis.
+6. **handle_schedule_irrigation** - Schedules irrigation for a specific device.
 7. **handle_register** - Registers a new user.
 8. **handle_login** - Logs in an existing user.
-9. **handle_retrieve_controller_data** - Retrieves controller data from the database and sends it to the client.
-10. **remap_redis** - Updates Redis with new user-controller associations.
+9. **handle_retrieve_device_data** - Retrieves device data from the database and sends it to the client.
+10. **remap_redis** - Updates Redis with new user-device associations.
 """
 
 import json
@@ -21,7 +21,7 @@ import bson.errors
 import regex as re
 from bson.objectid import ObjectId
 from redis.exceptions import ResponseError
-from src.config.mongo import mongo_db, CONTROLLER_COLLECTION, USER_COLLECTION
+from src.config.mongo import mongo_db, DEVICE_COLLECTION, USER_COLLECTION
 from src.config.redis import r
 from src.config.protocol import mqtt, socketio
 from src.utils.excel_manager import export_to_excel
@@ -55,12 +55,12 @@ def handle_disconnect(data) -> None:
     print(data)
 
 
-def handle_irrigate(controller_id: str) -> None:
+def handle_irrigate(device_id: str) -> None:
     """
-    Triggers an irrigation event for a specific controller.
+    Triggers an irrigation event for a specific device.
 
     Args:
-        controller_id (str): The unique identifier of the controller to trigger irrigation for.
+        device_id (str): The unique identifier of the device to trigger irrigation for.
 
     Returns:
         None
@@ -68,15 +68,16 @@ def handle_irrigate(controller_id: str) -> None:
     json_data = {
         'irrigate': True
     }
-    mqtt.publish(f'{controller_id}/irrigate', json.dumps(json_data))
+    mqtt.publish(f'{device_id}/irrigate', json.dumps(json_data))
 
 
-def handle_add_controller(controller_id: str, user_id: str, socket_id: str) -> None:
+# TODO: Convert to REST
+def handle_add_device(device_id: str, user_id: str, socket_id: str) -> None:
     """
-    Adds a controller to a user's account and updates Redis.
+    Adds a device to a user's account and updates Redis.
 
     Args:
-        controller_id (str): The unique identifier of the controller to add.
+        device_id (str): The unique identifier of the device to add.
         user_id (str): The unique identifier of the user.
         socket_id (str): The socket ID for the current connection.
 
@@ -90,54 +91,55 @@ def handle_add_controller(controller_id: str, user_id: str, socket_id: str) -> N
             print(f"User with ID {user_id} not found.")
             return
         
-        controllers = u_res.get('controllers', [])
+        devices = u_res.get('devices', [])
 
-        c_res = mongo_db[CONTROLLER_COLLECTION].find_one({'_id': ObjectId(controller_id)})
+        c_res = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
 
         if not c_res:
-            print(f"Please connect the controller with ID {controller_id} to the network first.")
-            socketio.emit('error', {'error_msg': f"controller with ID {controller_id} not found."}, room=socket_id)
+            print(f"Please connect the device with ID {device_id} to the network first.")
+            socketio.emit('error', {'error_msg': f"device with ID {device_id} not found."}, room=socket_id)
             return
 
-        if controller_id in controllers:
-            print(f"User {user_id} already has controller {controller_id} registered.")
-            socketio.emit('error', {'error_msg': f"User {user_id} already has controller {controller_id} registered."},
+        if device_id in devices:
+            print(f"User {user_id} already has device {device_id} registered.")
+            socketio.emit('error', {'error_msg': f"User {user_id} already has device {device_id} registered."},
                           room=socket_id)
             return
 
-        controllers.append(controller_id)
-        socketio.emit('controllers', {'controllers': controllers}, room=socket_id)
-        mongo_db[USER_COLLECTION].update_one({'_id': ObjectId(user_id)}, {'$set': {'controllers': controllers}})
+        devices.append(device_id)
+        socketio.emit('devices', {'devices': devices}, room=socket_id)
+        mongo_db[USER_COLLECTION].update_one({'_id': ObjectId(user_id)}, {'$set': {'devices': devices}})
 
         try:
-            if r.exists(controller_id):
-                user_list = json.loads(r.get(controller_id))
+            if r.exists(device_id):
+                user_list = json.loads(r.get(device_id))
             else:
                 user_list = []
 
             if not any(user['user_id'] == user_id for user in user_list):
                 user_list.append({'user_id': user_id, 'socket_id': socket_id})
                 json_data = json.dumps(user_list)
-                r.set(controller_id, json_data)
+                r.set(device_id, json_data)
             else:
-                socketio.emit('error', {'error_msg': f"This controller is already registered to user {user_id}."},
+                socketio.emit('error', {'error_msg': f"This device is already registered to user {user_id}."},
                               room=socket_id)
         except ResponseError as e:
             print(f"Redis ResponseError: {e}")
         except Exception as e:
             print(f"Unexpected error: {e}")
         finally:
-            print(f"Final value for {controller_id}: {r.get(controller_id)}")
+            print(f"Final value for {device_id}: {r.get(device_id)}")
     except Exception as e:
         print(f"Unexpected error: {e}")
 
 
-def handle_remove_controller(controller_id: str, user_id: str, socket_id: str) -> None:
+# TODO: Convert to REST
+def handle_remove_device(device_id: str, user_id: str, socket_id: str) -> None:
     """
-    Removes a controller from a user's account and updates Redis.
+    Removes a device from a user's account and updates Redis.
 
     Args:
-        controller_id (str): The unique identifier of the controller to remove.
+        device_id (str): The unique identifier of the device to remove.
         user_id (str): The unique identifier of the user.
         socket_id (str): The socket ID for the current connection.
 
@@ -151,81 +153,82 @@ def handle_remove_controller(controller_id: str, user_id: str, socket_id: str) -
             print(f"User with ID {user_id} not found.")
             return
 
-        controllers = res.get('controllers', [])
+        devices = res.get('devices', [])
 
-        if controller_id not in controllers:
-            print(f"User {user_id} does not have controller {controller_id} registered.")
+        if device_id not in devices:
+            print(f"User {user_id} does not have device {device_id} registered.")
             return
 
-        controllers.remove(controller_id)
-        socketio.emit('controllers', {'controllers': controllers}, room=socket_id)
-        mongo_db[USER_COLLECTION].update_one({'_id': ObjectId(user_id)}, {'$set': {'controllers': controllers}})
+        devices.remove(device_id)
+        socketio.emit('devices', {'devices': devices}, room=socket_id)
+        mongo_db[USER_COLLECTION].update_one({'_id': ObjectId(user_id)}, {'$set': {'devices': devices}})
 
         try:
-            if r.exists(controller_id):
-                user_list = json.loads(r.get(controller_id))
+            if r.exists(device_id):
+                user_list = json.loads(r.get(device_id))
                 user_list = [user for user in user_list if user['user_id'] != user_id]
                 json_data = json.dumps(user_list)
                 if json_data != '[]':
-                    r.set(controller_id, json_data)
+                    r.set(device_id, json_data)
                 else:
-                    r.delete(controller_id)
+                    r.delete(device_id)
             else:
-                print('controller not found')
+                print('device not found')
         except ResponseError as e:
             print(f"Redis ResponseError: {e}")
         except Exception as e:
             print(f"Unexpected error: {e}")
         finally:
-            print(f"Final value for {controller_id}: {r.get(controller_id)}")
+            print(f"Final value for {device_id}: {r.get(device_id)}")
     except Exception as e:
         print(f"Unexpected error: {e}")
 
 
-def handle_schedule_irrigation(controller_id: str, schedule: dict) -> None:
+def handle_schedule_irrigation(device_id: str, schedule: dict) -> None:
     """
-    Schedules irrigation for a specific controller.
+    Schedules irrigation for a specific device.
 
     Args:
-        controller_id (str): The unique identifier of the controller.
+        device_id (str): The unique identifier of the device.
         schedule (dict): The schedule for irrigation containing the type and time.
 
     Returns:
         None
     """
-    mqtt.publish(f'{controller_id}/schedule', json.dumps(schedule))
+    mqtt.publish(f'{device_id}/schedule', json.dumps(schedule))
 
 
-def handle_retrieve_controller_data(controller_id: str, socket_id: str) -> None:
+# TODO: Convert to REST
+def handle_retrieve_device_data(device_id: str, socket_id: str) -> None:
     """
-    Retrieves controller data from the database and sends it to the client.
+    Retrieves device data from the database and sends it to the client.
 
     Args:
-        controller_id (str): The unique identifier of the controller.
+        device_id (str): The unique identifier of the device.
         socket_id (str): The socket ID for the current connection.
 
     Returns:
         None
     """
     try:
-        res = mongo_db[CONTROLLER_COLLECTION].find_one({'_id': ObjectId(controller_id)})
+        res = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
         if not res:
             return
         json_data = {
             'record': res.get('record', []),
             'water_usage': res.get('water_usage', [])
         }
-        socketio.emit('controller_data_response', json_data, room=socket_id)
+        socketio.emit('device_data_response', json_data, room=socket_id)
     except Exception as e:
         print(f"Unexpected error: {e}")
 
 
-def remap_redis(controller_id: str, user_id: str, socket_id: str) -> None:
+def remap_redis(device_id: str, user_id: str, socket_id: str) -> None:
     """
-    Updates Redis with new user-controller associations.
+    Updates Redis with new user-device associations.
 
     Args:
-        controller_id (str): The unique identifier of the controller.
+        device_id (str): The unique identifier of the device.
         user_id (str): The unique identifier of the user.
         socket_id (str): The socket ID for the current connection.
 
@@ -233,36 +236,40 @@ def remap_redis(controller_id: str, user_id: str, socket_id: str) -> None:
         None
     """
     try:
-        if r.exists(controller_id):
-            user_list = json.loads(r.get(controller_id))
-            user_list = [user for user in user_list if user['user_id'] != user_id]
-            user_list.append({'user_id': user_id, 'socket_id': socket_id})
+        device_key = f"device:{device_id}"
+        if r.exists(device_key):
+            user_list = json.loads(r.get(device_key))
+            if user_id not in user_list:
+                user_list.append(user_id)
             json_data = json.dumps(user_list)
             if json_data != '[]':
-                r.set(controller_id, json_data)
+                r.set(device_id, json_data)
             else:
-                r.delete(controller_id)
+                r.delete(device_id)
+
+            user_key = f"user:{user_id}"
+            r.set(user_key, socket_id)
         else:
-            print('controller not found')
+            print('device not found')
     except Exception as e:
         print(f"Unexpected error: {e}")
 
 
-def handle_export(controller_id: str, socket_id: str) -> None:
+def handle_export(device_id: str, socket_id: str) -> None:
     """
-    Exports data from the controller to a file.
+    Exports data from the device to a file.
 
     Args:
-        controller_id (str): The unique identifier of the controller.
+        device_id (str): The unique identifier of the device.
         socket_id (str): the sid of the socket connection.
 
     Returns:
         None
     """
     try:
-        res = mongo_db[CONTROLLER_COLLECTION].find_one({'_id': ObjectId(controller_id)})
+        res = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
         if not res:
-            print(f"Controller with ID {controller_id} not found.")
+            print(f"device with ID {device_id} not found.")
             return
 
         buf = export_to_excel(res)
@@ -270,18 +277,19 @@ def handle_export(controller_id: str, socket_id: str) -> None:
         socketio.emit('export_response', {'file': buf.getvalue()}, room=socket_id)
 
     except bson.errors.InvalidId as e:
-        print(f"Invalid controller ID: {controller_id}, error: {e}")
+        print(f"Invalid device ID: {device_id}, error: {e}")
     except Exception as e:
         print(f"Unexpected error: {e}")
 
 
-def handle_logout(user_id: str, controller_ids: list) -> None:
+# TODO: Convert to REST
+def handle_logout(user_id: str, device_ids: list) -> None:
     """
-    Logs out a user and removes their associations with controllers.
+    Logs out a user and removes their associations with devices.
 
     Args:
         user_id:
-        controller_ids:
+        device_ids:
 
     Returns:
         None
@@ -292,23 +300,24 @@ def handle_logout(user_id: str, controller_ids: list) -> None:
         if not user:
             return
 
-        for controller_id in controller_ids:
-            if r.exists(controller_id):
-                user_list = json.loads(r.get(controller_id))
+        for device_id in device_ids:
+            if r.exists(device_id):
+                user_list = json.loads(r.get(device_id))
                 user_list = [user for user in user_list if user['user_id'] != user_id]
                 json_data = json.dumps(user_list)
                 if json_data != '[]':
-                    r.set(controller_id, json_data)
+                    r.set(device_id, json_data)
                 else:
-                    r.delete(controller_id)
+                    r.delete(device_id)
     except Exception as e:
         print(f"Unexpected error: {e}")
         return
 
 
-def handle_fetch_controllers(user_id: str, socket_id: str) -> None:
+# TODO: Convert to REST
+def handle_fetch_devices(user_id: str, socket_id: str) -> None:
     """
-    Fetches the list of controllers associated with a user.
+    Fetches the list of devices associated with a user.
 
     Args:
         user_id (str): The unique identifier of the user.
@@ -322,8 +331,8 @@ def handle_fetch_controllers(user_id: str, socket_id: str) -> None:
         if not user:
             return
 
-        controllers = user.get('controllers', [])
-        socketio.emit('controllers', {'controllers': controllers}, room=socket_id)
+        devices = user.get('devices', [])
+        socketio.emit('devices', {'devices': devices}, room=socket_id)
     except Exception as e:
         print(f"Unexpected error: {e}")
         return

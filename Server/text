@@ -1,0 +1,6 @@
+REDIS:
+    "device:{device_id}": [
+
+    ]
+
+    "user:{user_id}": socket_id

@@ -1,27 +1,27 @@
 """
-Controller Data Management and MQTT Integration.
+device Data Management and MQTT Integration.
 
-This module handles the registration and data processing for IoT controllers using MQTT messages.
-It supports registering controllers, processing sensor data, water usage data, and handling predictions.
+This module handles the registration and data processing for IoT devices using MQTT messages.
+It supports registering devices, processing sensor data, water usage data, and handling predictions.
 
 ### Key Features:
-1. **Controller Registration**:
-   - Registers a new IoT controller by storing its details in MongoDB.
-   - Subscribes the controller to its relevant MQTT topics.
+1. **device Registration**:
+   - Registers a new IoT device by storing its details in MongoDB.
+   - Subscribes the device to its relevant MQTT topics.
 
 2. **Sensor Data Management**:
-   - Records sensor data received from MQTT and updates the MongoDB document for the controller.
+   - Records sensor data received from MQTT and updates the MongoDB document for the device.
    - Emits updates via Socket.IO for real-time communication with connected clients.
 
 3. **Water Usage Management**:
-   - Records water usage statistics and updates MongoDB for the respective controller.
+   - Records water usage statistics and updates MongoDB for the respective device.
 
 4. **Prediction Processing**:
    - Processes prediction-related data (currently a placeholder).
 
 ### Dependencies:
 - `bson`: For working with MongoDB ObjectId.
-- `redis`: For caching and tracking active controllers.
+- `redis`: For caching and tracking active devices.
 - `pymongo`: For MongoDB operations.
 - `json`: For parsing and formatting JSON payloads.
 - `socketio`: For real-time event communication.
@@ -30,7 +30,7 @@ It supports registering controllers, processing sensor data, water usage data, a
 - Logs detailed errors for issues like invalid JSON, missing keys, and database operations.
 
 MongoDB Collection:
-- Controllers are stored in the `CONTROLLER_COLLECTION`.
+- devices are stored in the `device_COLLECTION`.
 
 """
 
@@ -40,40 +40,40 @@ import pandas as pd
 from bson.objectid import ObjectId
 from pymongo.errors import DuplicateKeyError
 from redis import ResponseError
-from src.config.mongo import mongo_db, CONTROLLER_COLLECTION
+from src.config.mongo import mongo_db, DEVICE_COLLECTION
 from src.config.redis import r
 from src.config.protocol import mqtt, socketio
 from src.utils.predict import predict_water
 
 
-def extract_controller_id(topic: str) -> str:
+def extract_device_id(topic: str) -> str:
     """
-    Extracts the controller ID from an MQTT topic string.
+    Extracts the device ID from an MQTT topic string.
 
     Args:
-        topic (str): The MQTT topic string (e.g., "controller_id/record/sensor_data").
+        topic (str): The MQTT topic string (e.g., "device_id/record/sensor_data").
 
     Returns:
-        str: Extracted controller ID.
+        str: Extracted device ID.
     """
     return topic.split('/')[0]
 
 
-def register_controller(payload: str) -> None:
+def register_device(payload: str) -> None:
     """
-    Registers a new IoT controller.
+    Registers a new IoT device.
 
     Args:
-        payload (str): JSON string containing the controller ID.
+        payload (str): JSON string containing the device ID.
 
     Returns:
         None
 
     Steps:
-        1. Parses the JSON payload to extract the controller ID.
-        2. Attempts to insert a new controller record into MongoDB.
+        1. Parses the JSON payload to extract the device ID.
+        2. Attempts to insert a new device record into MongoDB.
         3. Handles duplicate registration by skipping insertion.
-        4. Subscribes the controller to its relevant MQTT topics.
+        4. Subscribes the device to its relevant MQTT topics.
 
     Exceptions:
         - Handles `KeyError` for missing keys in payload.
@@ -82,35 +82,39 @@ def register_controller(payload: str) -> None:
 
     Example JSON Payload:
     {
-        "controller_id": "63c9f5e56e13d1d1234abcd9"
+        "device_id": "63c9f5e56e13d1d1234abcd9"
     }
     """
     try:
         json_data = json.loads(payload)
         print('JSON data:', json_data)
 
-        controller_id = json_data['controller_id']
+        device_id = json_data['device_id']
 
-        ctrl_json = {
-            '_id': ObjectId(controller_id),
-            'record': [],
-            'water_usage': []
-        }
+        device = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
+        if not device:
+            print(f"device with ID {device_id} already exists. Skipping registration.")
 
-        try:
-            controller = mongo_db[CONTROLLER_COLLECTION].insert_one(ctrl_json)
-            print('Controller registered:', controller.inserted_id)
-        except DuplicateKeyError:
-            print(f"Controller with ID {controller_id} is already registered. Skipping insertion.")
+            ctrl_json = {
+                '_id': ObjectId(device_id),
+                'record': [],
+                'water_usage': []
+            }
+
+            try:
+                device = mongo_db[DEVICE_COLLECTION].insert_one(ctrl_json)
+                print('device registered:', device.inserted_id)
+            except DuplicateKeyError:
+                print(f"device with ID {device_id} is already registered. Skipping insertion.")
 
         # Manage MQTT subscriptions
-        mqtt.unsubscribe(f'{controller_id}/record/sensor_data')
-        mqtt.unsubscribe(f'{controller_id}/record/water_used')
-        mqtt.unsubscribe(f'{controller_id}/predict')
+        mqtt.unsubscribe(f'{device_id}/record/sensor_data')
+        mqtt.unsubscribe(f'{device_id}/record/water_used')
+        mqtt.unsubscribe(f'{device_id}/predict')
 
-        mqtt.subscribe(f'{controller_id}/record/sensor_data')
-        mqtt.subscribe(f'{controller_id}/record/water_used')
-        mqtt.subscribe(f'{controller_id}/predict')
+        mqtt.subscribe(f'{device_id}/record/sensor_data')
+        mqtt.subscribe(f'{device_id}/record/water_used')
+        mqtt.subscribe(f'{device_id}/predict')
 
     except KeyError as e:
         print(f"KeyError: Missing key in payload - {e}")
@@ -122,7 +126,7 @@ def register_controller(payload: str) -> None:
 
 def predict(payload: str, topic: str) -> None:
     """
-    Handles prediction requests for a controller.
+    Handles prediction requests for a device.
 
     Args:
         payload (str): JSON string containing prediction data.
@@ -132,21 +136,21 @@ def predict(payload: str, topic: str) -> None:
         None
     """
     json_data = json.loads(payload)
-    soil_moisture = json_data.get('soil_moisture')
+    moisture = json_data.get('moisture')
     temperature = json_data.get('temperature')
     humidity = json_data.get('humidity')
     df = pd.DataFrame({
-        'Soil Moisture': [soil_moisture],
+        'Soil Moisture': [moisture],
         'Temperature': [temperature],
         'Air Humidity': [humidity]
     })
-    controller_id = extract_controller_id(topic)
+    device_id = extract_device_id(topic)
     print('JSON data:', json_data)
     print('DataFrame:', df)
-    print('Controller ID:', controller_id)
+    print('device ID:', device_id)
     prediction = predict_water(df)
     print('Prediction:', prediction)
-    mqtt.publish(f'{controller_id}/prediction', json.dumps({'prediction': prediction}))
+    mqtt.publish(f'{device_id}/prediction', json.dumps({'prediction': prediction}))
 
 
 def record_sensor_data(payload: str, topic: str) -> None:
@@ -162,19 +166,19 @@ def record_sensor_data(payload: str, topic: str) -> None:
 
     Workflow:
         1. Parses the JSON payload to extract sensor data and timestamp.
-        2. Updates the controller's `record` field in MongoDB.
+        2. Updates the device's `record` field in MongoDB.
         3. Emits real-time updates via Socket.IO to connected users.
         4. Handles Redis operations for tracking active users.
 
     Exceptions:
-        - Handles invalid JSON payloads, invalid controller IDs, and database errors.
+        - Handles invalid JSON payloads, invalid device IDs, and database errors.
 
     Example JSON Payload:
     {
         "sensor_data": {
             "temperature": 25,
             "humidity": 60,
-            "soil_moisture": 40
+            "moisture": 40
         },
         "timestamp": "2025-01-28T12:34:56"
     }
@@ -185,11 +189,11 @@ def record_sensor_data(payload: str, topic: str) -> None:
             print('Invalid payload: Missing sensor_data or timestamp:', json_data)
             return
 
-        controller_id = extract_controller_id(topic)
-        res = mongo_db[CONTROLLER_COLLECTION].find_one({'_id': ObjectId(controller_id)})
+        device_id = extract_device_id(topic)
+        res = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
 
         if not res:
-            print(f"Controller with ID {controller_id} not found in database.")
+            print(f"device with ID {device_id} not found in database.")
             return
 
         sensor_data = res.get('record', [])
@@ -198,17 +202,21 @@ def record_sensor_data(payload: str, topic: str) -> None:
             return
 
         sensor_data.append(json_data)
-        mongo_db[CONTROLLER_COLLECTION].update_one({'_id': ObjectId(controller_id)}, {'$set': {'record': sensor_data}})
+        mongo_db[DEVICE_COLLECTION].update_one({'_id': ObjectId(device_id)}, {'$set': {'record': sensor_data}})
 
-        # Emit real-time updates
         try:
-            user_list = json.loads(r.get(controller_id)) if r.exists(controller_id) else []
+            device_key = f"device:{device_id}"
+            user_list = json.loads(r.get(device_key)) if r.exists(device_key) else []
+            print("User list:", user_list)
             for user in user_list:
-                socketio.emit('record', json_data, room=user['socket_id'])
+                user_key = f"user:{user}"
+                user_data = r.get(user_key) if r.exists(user_key) else ""
+                print("User data:", user_data)
+                socketio.emit('record', json_data, room=user_data)
         except ResponseError as redis_error:
             print(f"Redis ResponseError: {redis_error}")
         finally:
-            print(f"Redis value for {controller_id}: {r.get(controller_id)}")
+            print(f"Redis value for {device_id}: {r.get(device_id)}")
 
     except Exception as e:
         print(f"Unexpected error: {e}")
@@ -227,10 +235,10 @@ def record_water_used(payload: str, topic: str) -> None:
 
     Workflow:
         1. Parses the JSON payload to extract water usage and timestamp.
-        2. Updates the controller's `water_usage` field in MongoDB.
+        2. Updates the device's `water_usage` field in MongoDB.
 
     Exceptions:
-        - Handles invalid JSON payloads, invalid controller IDs, and database errors.
+        - Handles invalid JSON payloads, invalid device IDs, and database errors.
 
     Example JSON Payload:
     {
@@ -244,11 +252,11 @@ def record_water_used(payload: str, topic: str) -> None:
             print('Invalid payload: Missing water_used or date:', json_data)
             return
 
-        controller_id = extract_controller_id(topic)
-        res = mongo_db[CONTROLLER_COLLECTION].find_one({'_id': ObjectId(controller_id)})
+        device_id = extract_device_id(topic)
+        res = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
 
         if not res:
-            print(f"Controller with ID {controller_id} not found in database.")
+            print(f"device with ID {device_id} not found in database.")
             return
 
         water_used = res.get('water_usage', [])
@@ -264,9 +272,9 @@ def record_water_used(payload: str, topic: str) -> None:
         else:
             water_used.append(json_data)
 
-        mongo_db[CONTROLLER_COLLECTION].update_one({'_id': ObjectId(controller_id)},
-                                                   {'$set': {'water_usage': water_used}})
-        print(f"Updated water used data for controller {controller_id}")
+        mongo_db[DEVICE_COLLECTION].update_one({'_id': ObjectId(device_id)},
+                                               {'$set': {'water_usage': water_used}})
+        print(f"Updated water used data for device {device_id}")
 
     except Exception as e:
         print(f"Unexpected error: {e}")

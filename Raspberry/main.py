@@ -101,7 +101,7 @@ async def main():
     client.subscribe(topics['PREDICTION_SUB'])
 
     registration_data = {
-        'controller_id': _device_id
+        'device_id': _device_id
     }
     client.publish(topics['REGISTER_PUB'], json.dumps(registration_data))
 

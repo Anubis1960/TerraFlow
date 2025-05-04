@@ -6,7 +6,7 @@ import 'base_storage_stub.dart'
 abstract class BaseStorage {
   Future<void> saveData(String key, dynamic value);
   Future<String> getToken();
-  Future<List<String>> getControllerList();
+  Future<List<String>> getDeviceList();
   Future<void> deleteData(String key);
   Future<void> clearAllData();
 

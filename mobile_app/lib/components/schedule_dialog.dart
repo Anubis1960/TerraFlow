@@ -5,7 +5,7 @@ import 'package:mobile_app/util/socket_service.dart';
 class ScheduleDialog{
   static void showScheduleDialog({
     required BuildContext context,
-    required String controllerId,
+    required String deviceId,
   }) {
     List<String> type = ['DAILY', 'WEEKLY', 'MONTHLY'];
     String selectedType = type[0];
@@ -68,7 +68,7 @@ class ScheduleDialog{
                   onPressed: () {
                     final formattedTime = '${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}';
                     SocketService.socket.emit('schedule_irrigation', {
-                      'controller_id': controllerId,
+                      'device_id': deviceId,
                       'schedule_type': selectedType,
                       'schedule_time': formattedTime,
                     });
@@ -79,7 +79,7 @@ class ScheduleDialog{
                 ElevatedButton(
                   onPressed: () {
                     SocketService.socket.emit('remove_schedule', {
-                      'controller_id': controllerId,
+                      'device_id': deviceId,
                     });
                     context.pop();
                   },

@@ -11,7 +11,7 @@ from src.service.mqtt_service import (
     record_sensor_data,
     record_water_used,
     extract_controller_id,
-    CONTROLLER_COLLECTION,
+    DEVICE_COLLECTION,
 )
 
 
@@ -51,14 +51,14 @@ class TestMqtt(unittest.TestCase):
     def test_register_controller_success(self):
         # Test successful controller registration
         payload = json.dumps({"controller_id": "507f1f77bcf86cd799439011"})
-        self.mongo_db_mock[CONTROLLER_COLLECTION].insert_one.return_value.inserted_id = ObjectId(
+        self.mongo_db_mock[DEVICE_COLLECTION].insert_one.return_value.inserted_id = ObjectId(
             "507f1f77bcf86cd799439011"
         )
 
         register_controller(payload)
 
         # Assert MongoDB insert was called
-        self.mongo_db_mock[CONTROLLER_COLLECTION].insert_one.assert_called_once()
+        self.mongo_db_mock[DEVICE_COLLECTION].insert_one.assert_called_once()
         # Assert MQTT subscriptions
         self.mqtt_mock.subscribe.assert_any_call("507f1f77bcf86cd799439011/record/sensor_data")
         self.mqtt_mock.subscribe.assert_any_call("507f1f77bcf86cd799439011/record/water_used")
@@ -69,7 +69,7 @@ class TestMqtt(unittest.TestCase):
         payload = "invalid_json"
         register_controller(payload)
         # Assert no MongoDB or MQTT calls were made
-        self.mongo_db_mock[CONTROLLER_COLLECTION].insert_one.assert_not_called()
+        self.mongo_db_mock[DEVICE_COLLECTION].insert_one.assert_not_called()
         self.mqtt_mock.subscribe.assert_not_called()
 
     def test_predict(self):
@@ -89,7 +89,7 @@ class TestMqtt(unittest.TestCase):
         topic = "507f1f77bcf86cd799439011/record/sensor_data"
 
         # Mock MongoDB find and update
-        self.mongo_db_mock[CONTROLLER_COLLECTION].find_one.return_value = {
+        self.mongo_db_mock[DEVICE_COLLECTION].find_one.return_value = {
             "_id": ObjectId("507f1f77bcf86cd799439011"),
             "record": [],
         }
@@ -99,7 +99,7 @@ class TestMqtt(unittest.TestCase):
         record_sensor_data(payload, topic)
 
         # Assert MongoDB update was called
-        self.mongo_db_mock[CONTROLLER_COLLECTION].update_one.assert_called_once()
+        self.mongo_db_mock[DEVICE_COLLECTION].update_one.assert_called_once()
         # Assert Redis and Socket.IO interactions
         self.redis_mock.exists.assert_called_once_with("507f1f77bcf86cd799439011")
         self.socketio_mock.emit.assert_called_once_with("record", json.loads(payload), room="12345")
@@ -112,7 +112,7 @@ class TestMqtt(unittest.TestCase):
         record_sensor_data(payload, topic)
 
         # Assert no MongoDB or Redis calls were made
-        self.mongo_db_mock[CONTROLLER_COLLECTION].find_one.assert_not_called()
+        self.mongo_db_mock[DEVICE_COLLECTION].find_one.assert_not_called()
         self.redis_mock.exists.assert_not_called()
 
     def test_record_water_used_success(self):
@@ -121,7 +121,7 @@ class TestMqtt(unittest.TestCase):
         topic = "507f1f77bcf86cd799439011/record/water_used"
 
         # Mock MongoDB find and update
-        self.mongo_db_mock[CONTROLLER_COLLECTION].find_one.return_value = {
+        self.mongo_db_mock[DEVICE_COLLECTION].find_one.return_value = {
             "_id": ObjectId("507f1f77bcf86cd799439011"),
             "water_used_month": [],
         }
@@ -129,7 +129,7 @@ class TestMqtt(unittest.TestCase):
         record_water_used(payload, topic)
 
         # Assert MongoDB update was called
-        self.mongo_db_mock[CONTROLLER_COLLECTION].update_one.assert_called_once()
+        self.mongo_db_mock[DEVICE_COLLECTION].update_one.assert_called_once()
 
     def test_record_water_used_invalid_payload(self):
         # Test handling of invalid water used payload
@@ -139,7 +139,7 @@ class TestMqtt(unittest.TestCase):
         record_water_used(payload, topic)
 
         # Assert no MongoDB calls were made
-        self.mongo_db_mock[CONTROLLER_COLLECTION].find_one.assert_not_called()
+        self.mongo_db_mock[DEVICE_COLLECTION].find_one.assert_not_called()
 
 
 if __name__ == '__main__':

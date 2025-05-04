@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_app/util/socket_service.dart';
@@ -14,14 +17,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late Future<String> token;
-  late Future<List<String>> controllerIds;
+  late Future<List<String>> deviceIds;
 
   @override
   void initState() {
     super.initState();
     print('Home Page init');
     token = BaseStorage.getStorageFactory().getToken();
-    controllerIds = _loadControllerIds();
+    deviceIds = _loadDeviceIds();
 
     SocketService.socket.on('error', (data) {
       if (data['error_msg'] != null && data['error_msg'].isNotEmpty) {
@@ -34,55 +37,99 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
 
-    SocketService.socket.on('controllers', (data) {
-      BaseStorage.getStorageFactory().saveData('controller_ids', data['controllers']);
-
-      setState(() {
-        controllerIds = _loadControllerIds();
-      });
-      print('Controllers: $controllerIds');
-    });
+    // SocketService.socket.on('devices', (data) {
+    //   BaseStorage.getStorageFactory().saveData('device_ids', data['devices']);
+    //
+    //   setState(() {
+    //     deviceIds = _loadDeviceIds();
+    //   });
+    //   print('Devices: $deviceIds');
+    // });
 
     token.then((onUser) {
-      controllerIds.then((onController) {
-        if (onController.isEmpty) {
-          SocketService.socket.emit('fetch_controllers', {'token': onUser});
-          return;
+      deviceIds.then((onDevice) async {
+        if (onDevice.isEmpty) {
+          String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
+          url += '${Server.USER_REST_URL}/devices';
+          var res = await http.get(
+            Uri.parse(url),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+              'Authorization': 'Bearer $onUser',
+            },
+          );
+          if (res.statusCode == 200) {
+            var devices = jsonDecode(res.body);
+            print(devices);
+            if (devices.isNotEmpty) {
+              BaseStorage.getStorageFactory().saveData('device_ids', devices);
+              setState(() {
+                deviceIds = _loadDeviceIds();
+              });
+            }
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to load devices.'),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          }
         }
         Map<String, dynamic> data = {
           'token': onUser,
-          'controllers': onController,
+          'devices': onDevice,
         };
         SocketService.socket.emit('init', data);
       });
     });
   }
 
-  void _deleteController(String controllerId) async {
-    // TODO - FIX DELETE CONTROLLER
+  void _deleteDevice(String deviceId) async {
     final token = await BaseStorage.getStorageFactory().getToken();
 
-    Map<String, dynamic> data = {
-      'controller_id': controllerId,
-      'token': token,
-    };
-    SocketService.socket.emit('remove_controller', data);
-
-    setState(() {
-      controllerIds = _loadControllerIds();
-    });
+    String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
+    url += '${Server.USER_REST_URL}/devices/$deviceId';
+    var res = await http.delete(
+      Uri.parse(url),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (res.statusCode == 200) {
+      var deviceIds = await BaseStorage.getStorageFactory().getDeviceList();
+      deviceIds.remove(deviceId);
+      BaseStorage.getStorageFactory().saveData('device_ids', deviceIds);
+      setState(() {
+        this.deviceIds = _loadDeviceIds();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Device deleted successfully.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to delete device.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
 
-  Future<List<String>> _loadControllerIds() async {
-    return await BaseStorage.getStorageFactory().getControllerList();
+  Future<List<String>> _loadDeviceIds() async {
+    return await BaseStorage.getStorageFactory().getDeviceList();
   }
 
   @override
   void dispose() {
     print('Home Disposed');
     SocketService.socket.off('error');
-    SocketService.socket.off('controllers');
+    // SocketService.socket.off('devices');
     super.dispose();
   }
 
@@ -93,9 +140,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: TopBar.buildTopBar(title: 'Controllers', context: context),
+      appBar: TopBar.buildTopBar(title: 'Devices', context: context),
       body: FutureBuilder<List<String>>(
-        future: controllerIds,
+        future: deviceIds,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -107,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'No controllers found.',
+                    'No devices found.',
                     style: TextStyle(
                       fontSize: screenHeight * 0.025, // 2.5% of screen height
                       fontWeight: FontWeight.w600,
@@ -116,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(height: screenHeight * 0.02), // 2% of screen height
                   FloatingActionButton(
                     onPressed: () {
-                      _showAddControllerDialog(context);
+                      _showAddDeviceDialog(context);
                     },
                     backgroundColor: Colors.deepPurpleAccent,
                     child: const Icon(Icons.add),
@@ -125,14 +172,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             );
           } else {
-            var controllerIds = snapshot.data!;
+            var deviceIds = snapshot.data!;
             return Column(
               children: [
                 Expanded(
                   child: ListView.builder(
-                    itemCount: controllerIds.length,
+                    itemCount: deviceIds.length,
                     itemBuilder: (context, index) {
-                      var controllerId = controllerIds[index];
+                      var deviceId = deviceIds[index];
                       return Padding(
                         padding: EdgeInsets.all(screenWidth * 0.02), // 2% of screen width
                         child: Card(
@@ -143,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: ListTile(
                             contentPadding: EdgeInsets.all(screenWidth * 0.04), // 4% of screen width
                             title: Text(
-                              'Controller ID: $controllerId',
+                              'Device ID: $deviceId',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: screenHeight * 0.02, // 2% of screen height
@@ -154,15 +201,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Colors.deepPurpleAccent,
                             ),
                             onTap: () {
-                              context.go('${Routes.CONTROLLER}/$controllerId');
+                              context.go('${Routes.DEVICE}/$deviceId');
                             },
                             onLongPress: () {
                               showDialog(
                                 context: context,
                                 builder: (context) {
                                   return AlertDialog(
-                                    title: const Text('Delete Controller'),
-                                    content: Text('Are you sure you want to delete controller ID: $controllerId?'),
+                                    title: const Text('Delete Device'),
+                                    content: Text('Are you sure you want to delete device ID: $deviceId?'),
                                     actions: [
                                       TextButton(
                                         onPressed: () {
@@ -172,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       TextButton(
                                         onPressed: () {
-                                          _deleteController(controllerId);
+                                          _deleteDevice(deviceId);
 
                                           context.pop();
                                         },
@@ -193,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: EdgeInsets.all(screenWidth * 0.04), // 4% of screen width
                   child: FloatingActionButton(
                     onPressed: () {
-                      _showAddControllerDialog(context);
+                      _showAddDeviceDialog(context);
                     },
                     backgroundColor: Colors.deepPurpleAccent,
                     child: const Icon(
@@ -210,8 +257,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showAddControllerDialog(BuildContext context) {
-    final TextEditingController controllerIdController = TextEditingController();
+  void _showAddDeviceDialog(BuildContext context) {
+    final TextEditingController deviceIdController = TextEditingController();
 
     showDialog(
       context: context,
@@ -220,11 +267,11 @@ class _HomeScreenState extends State<HomeScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text('Add Controller', style: TextStyle(fontSize: 18)),
+          title: const Text('Add Device', style: TextStyle(fontSize: 18)),
           content: TextField(
-            controller: controllerIdController,
+            controller: deviceIdController,
             decoration: const InputDecoration(
-              hintText: 'Enter controller ID',
+              hintText: 'Enter device ID',
               border: OutlineInputBorder(),
             ),
           ),
@@ -237,28 +284,61 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                final newControllerId = controllerIdController.text.trim();
-                if (newControllerId.isNotEmpty) {
-                  if (newControllerId.length != 24) {
+                final newDeviceId = deviceIdController.text.trim();
+                if (newDeviceId.isNotEmpty) {
+                  if (newDeviceId.length != 24) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Controller ID must be 24 characters long.'),
+                        content: Text('Device ID must be 24 characters long.'),
                         backgroundColor: Colors.redAccent,
                       ),
                     );
                     return;
                   }
                   token.then((onValue) {
-                    Map<String, dynamic> data = {
-                      'controller_id': newControllerId,
-                      'token': onValue,
-                    };
-                    SocketService.socket.emit('add_controller', data);
+
+                    String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
+                    url += '${Server.USER_REST_URL}/';
+                    var res = http.patch(
+                      Uri.parse(url),
+                      headers: <String, String>{
+                        'Content-Type': 'application/json; charset=UTF-8',
+                        'Authorization': 'Bearer $onValue',
+                      },
+                      body: jsonEncode(<String, String>{
+                        'device_id': newDeviceId,
+                      }),
+                    );
+                    res.then((response) {
+                      if (response.statusCode == 201) {
+                        var deviceIds = BaseStorage.getStorageFactory().getDeviceList();
+                        deviceIds.then((onDevice) {
+                          onDevice.add(newDeviceId);
+                          BaseStorage.getStorageFactory().saveData('device_ids', onDevice);
+                        });
+                        setState(() {
+                          this.deviceIds = _loadDeviceIds();
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Device added successfully.'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Failed to add device.'),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                      }
+                    });
                   });
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Please enter a valid controller ID.'),
+                      content: Text('Please enter a valid device ID.'),
                       backgroundColor: Colors.redAccent,
                     ),
                   );

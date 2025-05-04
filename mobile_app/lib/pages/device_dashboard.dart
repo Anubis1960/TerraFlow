@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/util/export/file_downloader.dart';
@@ -6,24 +7,27 @@ import 'package:mobile_app/components/charts.dart';
 import 'package:mobile_app/components/summary_card.dart';
 import 'package:mobile_app/components/top_navbar.dart';
 import 'package:mobile_app/components/bottom_navbar.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:mobile_app/util/constants.dart';
+import 'package:http/http.dart' as http;
 
-class ControllerDashBoard extends StatefulWidget {
-  final dynamic controllerId;
+class DeviceDashBoard extends StatefulWidget {
+  final dynamic deviceId;
 
-  const ControllerDashBoard({super.key, required this.controllerId});
+  const DeviceDashBoard({super.key, required this.deviceId});
 
   @override
-  _ControllerDashBoard createState() => _ControllerDashBoard(controllerId);
+  _DeviceDashBoard createState() => _DeviceDashBoard(deviceId);
 }
 
-class _ControllerDashBoard extends State<ControllerDashBoard> {
-  final dynamic controllerId;
+class _DeviceDashBoard extends State<DeviceDashBoard> {
+  final dynamic deviceId;
 
   final ScrollController _scrollController = ScrollController(initialScrollOffset: 0, keepScrollOffset: true);
 
-  _ControllerDashBoard(this.controllerId);
+  _DeviceDashBoard(this.deviceId);
 
-  Map<String, dynamic> controllerData = {
+  Map<String, dynamic> deviceData = {
     'record': [],
     'water_usage': [],
   };
@@ -40,7 +44,7 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
   @override
   void initState() {
     super.initState();
-    print('Controller Dashboard init');
+    print('Device Dashboard init');
 
     // Socket response listeners
     SocketService.socket.on('export_response', (data) async {
@@ -52,27 +56,53 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       }
     });
 
-    SocketService.socket.on('controller_data_response', (data) {
-      setState(() {
-        controllerData = data;
-        if (controllerData['record'] != null && controllerData['record'].isNotEmpty) {
-          selectedFilterValue = controllerData['record'].last['timestamp'].substring(0, 10);
+    // SocketService.socket.on('device_data_response', (data) {
+    //   setState(() {
+    //     deviceData = data;
+    //     if (deviceData['record'] != null && deviceData['record'].isNotEmpty) {
+    //       selectedFilterValue = deviceData['record'].last['timestamp'].substring(0, 10);
+    //
+    //       filteredRecords = _filterRecords(deviceData['record']);
+    //       humidity = _calculateAverage(filteredRecords, 'humidity');
+    //       temperature = _calculateAverage(filteredRecords, 'temperature');
+    //       waterUsage = _calculateWaterUsage(deviceData['water_usage']);
+    //       filteredValues = _getFilterValues(deviceData['record']);
+    //
+    //       setState(() {
+    //         selectedFilterValue = selectedFilterValue; // This will update correctly now
+    //       });
+    //     }
+    //   });
+    // });
 
-          filteredRecords = _filterRecords(controllerData['record']);
-          humidity = _calculateAverage(filteredRecords, 'air_humidity');
-          temperature = _calculateAverage(filteredRecords, 'air_temperature');
-          waterUsage = _calculateWaterUsage(controllerData['water_usage']);
-          filteredValues = _getFilterValues(controllerData['record']);
+    // Fetch device data
+    String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
+    url += '${Server.DEVICE_REST_URL}/$deviceId/data';
 
-          setState(() {
-            selectedFilterValue = selectedFilterValue; // This will update correctly now
-          });
-        }
-      });
+    http.get(Uri.parse(url)).then((response) {
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body) as Map<String, dynamic>;
+        print(data);
+        setState(() {
+          deviceData = data;
+          if (deviceData['record'] != null && deviceData['record'].isNotEmpty) {
+            selectedFilterValue = deviceData['record'].last['timestamp'].substring(0, 10);
+            filteredRecords = _filterRecords(deviceData['record']);
+            humidity = _calculateAverage(filteredRecords, 'humidity');
+            temperature = _calculateAverage(filteredRecords, 'temperature');
+            waterUsage = _calculateWaterUsage(deviceData['water_usage']);
+            filteredValues = _getFilterValues(deviceData['record']);
+          }
+        });
+      } else {
+        print('Failed to load device data');
+      }
     });
 
+
+
     SocketService.socket.on('record', (data) {
-      controllerData['record'].add(data);
+      deviceData['record'].add(data);
 
       if (data['timestamp'].startsWith(selectedFilterValue)) {
         filteredRecords.add(data);
@@ -86,19 +116,19 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
         }
 
         setState(() {
-          controllerData = controllerData;
+          deviceData = deviceData;
           filteredRecords = filteredRecords;
           filteredValues = filteredValues;
-          humidity = _calculateAverage(filteredRecords, 'air_humidity');
-          temperature = _calculateAverage(filteredRecords, 'air_temperature');
+          humidity = _calculateAverage(filteredRecords, 'humidity');
+          temperature = _calculateAverage(filteredRecords, 'temperature');
           print("setState triggered, selectedFilterValue: $selectedFilterValue");
         });
       }
     });
 
-    SocketService.socket.emit('fetch_controller_data', {
-      'controller_id': controllerId,
-    });
+    // SocketService.socket.emit('fetch_device_data', {
+    //   'device_id': deviceId,
+    // });
 
     print('Selected Filter Value: $selectedFilterValue');
     print('Filtered Records: $filteredRecords');
@@ -108,8 +138,8 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
 
   @override
   void dispose() {
-    print('Controller Dashboard Disposed');
-    SocketService.socket.off('controller_data_response');
+    print('Device Dashboard Disposed');
+    // SocketService.socket.off('device_data_response');
     SocketService.socket.off('record');
     SocketService.socket.off('export_response');
     _scrollController.dispose();
@@ -329,8 +359,8 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: TopBar.buildTopBar(context: context, title: 'Controller Dashboard'),
-      body: selectedFilterValue.isEmpty || filteredRecords.isEmpty || controllerData.isEmpty
+      appBar: TopBar.buildTopBar(context: context, title: 'Device Dashboard'),
+      body: selectedFilterValue.isEmpty || filteredRecords.isEmpty || deviceData.isEmpty
           ? Center(
         child: CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurpleAccent),
@@ -377,13 +407,14 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       ),
       bottomNavigationBar: SizedBox(
         height: screenHeight * 0.15, // 15% of screen height
-        child: BottomNavBar.buildBottomNavBar(context: context, controllerId: controllerId),
+        child: BottomNavBar.buildBottomNavBar(context: context, deviceId: deviceId),
       ),
     );
   }
 
 
   Widget _buildLineChart(){
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -392,18 +423,20 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
       child: Padding(
         padding: const EdgeInsets.all(2.0),
         child: Charts.buildLineChart(
-          title: 'Soil Moisture',
-          data: _getSensorDataSpots(filteredRecords, 'soil_moisture'),
-          lineColor: Colors.green,
-          minY: 0,
+          title: 'Sensor Data',
+          data: [_getSensorDataSpots(filteredRecords, 'moisture'), _getSensorDataSpots(filteredRecords, 'humidity'), _getSensorDataSpots(filteredRecords, 'temperature')],
+          lineColors: [Colors.green, Colors.blue, Colors.red],
+          headers: ['Moisture', 'Humidity', 'Temperature'],
+          isScrollable: filterType == 'day',
+          scrollController: _scrollController, // Pass the scroll device here
+          minY: -30,
           maxY: 110,
           xAxisLabels: filterType == 'year'
               ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
               : filterType == 'month'
               ? List.generate(31, (index) => (index + 1).toString())
               : [],
-          isScrollable: filterType == 'day',
-          scrollController: _scrollController, // Pass the scroll controller here
+
           maxX: filterType == 'year'
               ? 12.0
               : filterType == 'month'
@@ -432,12 +465,12 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                 onChanged: (String? newValue) {
                   setState(() {
                     filterType = newValue!;
-                    filteredValues = _getFilterValues(controllerData['record']);
+                    filteredValues = _getFilterValues(deviceData['record']);
                     selectedFilterValue = filteredValues.isNotEmpty ? filteredValues.last : '';
-                    filteredRecords = _filterRecords(controllerData['record']);
-                    humidity = _calculateAverage(filteredRecords, 'air_humidity');
-                    temperature = _calculateAverage(filteredRecords, 'air_temperature');
-                    waterUsage = _calculateWaterUsage(controllerData['water_usage']);
+                    filteredRecords = _filterRecords(deviceData['record']);
+                    humidity = _calculateAverage(filteredRecords, 'humidity');
+                    temperature = _calculateAverage(filteredRecords, 'temperature');
+                    waterUsage = _calculateWaterUsage(deviceData['water_usage']);
                   });
                 },
                 items: ['day', 'month', 'year'].map((value) => DropdownMenuItem(
@@ -472,10 +505,10 @@ class _ControllerDashBoard extends State<ControllerDashBoard> {
                   setState(() {
                     if (newValue != null) {
                       selectedFilterValue = newValue;
-                      filteredRecords = _filterRecords(controllerData['record']);
-                      humidity = _calculateAverage(filteredRecords, 'air_humidity');
-                      temperature = _calculateAverage(filteredRecords, 'air_temperature');
-                      waterUsage = _calculateWaterUsage(controllerData['water_usage']);
+                      filteredRecords = _filterRecords(deviceData['record']);
+                      humidity = _calculateAverage(filteredRecords, 'humidity');
+                      temperature = _calculateAverage(filteredRecords, 'temperature');
+                      waterUsage = _calculateWaterUsage(deviceData['water_usage']);
                     }
                   });
                 },

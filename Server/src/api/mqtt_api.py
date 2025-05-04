@@ -10,7 +10,7 @@ Handlers:
 
 Dependencies:
 - `paho.mqtt.client`: For MQTT functionality.
-- `src.service.mqtt_service`: Includes service methods for registering controllers, making predictions,
+- `src.service.mqtt_service`: Includes service methods for registering devices, making predictions,
 recording sensor data, and water usage.
 - `src.utils.extensions.mqtt`: MQTT utility extension.
 
@@ -19,7 +19,7 @@ Functionality:
   - `/record/sensor_data`: Record sensor data from devices.
   - `/predict`: Make predictions based on received data.
   - `/record/water_used`: Record water usage statistics.
-  - `register`: Register a new IoT device or controller.
+  - `register`: Register a new IoT device or device.
 
 Exceptions:
 - Handles and logs exceptions during message processing to avoid crashes.
@@ -27,7 +27,7 @@ Exceptions:
 
 import typing
 import paho.mqtt.client
-from src.service.mqtt_service import register_controller, predict, record_sensor_data, record_water_used
+from src.service.mqtt_service import register_device, predict, record_sensor_data, record_water_used
 from src.config.protocol import mqtt
 
 
@@ -62,7 +62,7 @@ def handle_mqtt_message(client: paho.mqtt.client.Client, userdata: typing.Any, m
         - '/record/sensor_data': Records sensor data.
         - '/predict': Triggers prediction logic.
         - '/record/water_used': Logs water usage.
-        - 'register': Registers a new IoT controller.
+        - 'register': Registers a new IoT device.
 
     Exceptions:
         Catches and logs errors during message processing to avoid interruption of service.
@@ -89,7 +89,7 @@ def handle_mqtt_message(client: paho.mqtt.client.Client, userdata: typing.Any, m
         record_water_used(payload, topic)
     elif topic == 'register':
         print('Processing registration')
-        register_controller(payload)
+        register_device(payload)
     else:
         # Log unsupported or unrecognized topics.
         print('Unknown topic received')

@@ -6,6 +6,9 @@ from src.model.oauth_manager import OAuthManager
 from src.utils.secrets import MQTT_BROKER, MQTT_PORT, HOST, PORT, SECRET_KEY
 from src.config.protocol import socketio, mqtt, oauth
 from src.api.auth_route import auth_blueprint
+from src.api.device_route import device_blueprint
+from src.middleware.error_handle import error_handle_blueprint
+from src.api.user_route import user_blueprint
 
 
 app = Flask(__name__)
@@ -22,7 +25,10 @@ app.config['MQTT_TLS_ENABLED'] = False
 oauth_manager = OAuthManager(app)
 app.oauth_manager = oauth_manager
 
+app.register_blueprint(error_handle_blueprint)
 app.register_blueprint(auth_blueprint)
+app.register_blueprint(device_blueprint)
+app.register_blueprint(user_blueprint)
 
 # Bind socketio to the app
 socketio.init_app(app)

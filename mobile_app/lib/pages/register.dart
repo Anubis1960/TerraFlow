@@ -150,35 +150,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       url += Server.REGISTER_REST_URL;
 
-                      var res = await http.post(
+                      await http.post(
                         Uri.parse(url),
                         headers: <String, String>{
                           'Content-Type': 'application/json; charset=UTF-8',
                         },
                         body: jsonEncode(registerJson),
+                      ).then(
+                        (res) {
+                          if (res.statusCode == 200) {
+                            var data = jsonDecode(res.body);
+                            if (data['token'] != null && data['token'].isNotEmpty) {
+                              BaseStorage.getStorageFactory().saveData('token', data['token']);
+                              context.go(Routes.HOME);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(data['error_msg'] ?? 'Invalid email or password.'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Failed to register.'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
+                        },
                       );
-
-                      if (res.statusCode == 200) {
-                        var data = jsonDecode(res.body);
-                        if (data['token'] != null && data['token'].isNotEmpty) {
-                          BaseStorage.getStorageFactory().saveData('token', data['token']);
-                          context.go(Routes.HOME);
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(data['error_msg'] ?? 'Invalid email or password.'),
-                              backgroundColor: Colors.redAccent,
-                            ),
-                          );
-                        }
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Failed to register.'),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                      }
                     },
                     child: Text(
                       'Register',

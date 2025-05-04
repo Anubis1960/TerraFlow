@@ -1,20 +1,41 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_app/util/constants.dart';
-import 'package:mobile_app/util/socket_service.dart';
 import 'package:mobile_app/util/storage/base_storage.dart';
 import 'package:mobile_app/util/google/sign_in.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class TopBar{
 
   static void _handle_logout(BuildContext context) async {
     try {
       final String token = await BaseStorage.getStorageFactory().getToken();
-      final List<String> controllerIds = await BaseStorage.getStorageFactory().getControllerList();
+      final List<String> deviceIds = await BaseStorage.getStorageFactory().getDeviceList();
 
-      SocketService.socket.emit('logout', {
-        'token': token,
-        'controllerIds': controllerIds,
+      String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
+
+      url += '/logout';
+
+      await http.post(
+        Uri.parse(url),
+        headers: <String, String> {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(<String, List<String>>{
+          'device_ids': deviceIds,
+        }),
+      ).then((res) {
+        if (res.statusCode == 200) {
+          // Successfully logged out
+          print('Logout successful');
+        } else {
+          // Handle error response
+          print('Logout failed: ${res.body}');
+        }
       });
 
       // Clear user data from SharedPreferences

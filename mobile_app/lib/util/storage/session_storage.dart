@@ -20,29 +20,29 @@ class SessionStorage extends BaseStorage{
   }
 
   @override
-  Future<List<String>> getControllerList() async {
-    List<String> controllerIds = _sessionStorage['controller_ids']?.split(',') ?? [];
+  Future<List<String>> getDeviceList() async {
+    List<String> deviceIds = _sessionStorage['device_ids']?.split(',') ?? [];
 
-    controllerIds = controllerIds.where((id) => id.isNotEmpty).toList();
+    deviceIds = deviceIds.where((id) => id.isNotEmpty).toList();
 
-    print('Controller IDs: $controllerIds');
-    return controllerIds;
+    print('Device IDs: $deviceIds');
+    return deviceIds;
   }
 
 
   @override
   Future<void> saveData(String key, value) async{
-    if (key == 'controller_ids') {
+    if (key == 'device_ids') {
       if (value is List) {
-        List<String> controllerIds = [];
-        for (var controllerId in value) {
-          controllerIds.add(controllerId);
+        List<String> deviceIds = [];
+        for (var deviceId in value) {
+          deviceIds.add(deviceId);
         }
-        _sessionStorage['controller_ids'] = controllerIds.join(',');
+        _sessionStorage['device_ids'] = deviceIds.join(',');
       } else if (value is String) {
-        List<String> controllerIds = await getControllerList();
-        controllerIds.add(value);
-        _sessionStorage['controller_ids'] = controllerIds.join(',');
+        List<String> deviceIds = await getDeviceList();
+        deviceIds.add(value);
+        _sessionStorage['device_ids'] = deviceIds.join(',');
       }
     }
 

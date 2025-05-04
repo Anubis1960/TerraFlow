@@ -8,7 +8,7 @@ import 'package:mobile_app/components/schedule_dialog.dart';
 class BottomNavBar{
   static Widget buildBottomNavBar({
     required BuildContext context,
-    required String controllerId,
+    required String deviceId,
 }){
     return BottomAppBar(
       elevation: 0,
@@ -52,7 +52,7 @@ class BottomNavBar{
                 IconButton(
                   onPressed: () {
                     SocketService.socket.emit('trigger_irrigation', {
-                      'controller_id': controllerId,
+                      'device_id': deviceId,
                     });
                   },
                   icon: Icon(Icons.water_drop, color: Colors.deepPurpleAccent),
@@ -79,7 +79,7 @@ class BottomNavBar{
               children: [
                 IconButton(
                   onPressed: () {
-                    ScheduleDialog.showScheduleDialog(context: context, controllerId: controllerId);
+                    ScheduleDialog.showScheduleDialog(context: context, deviceId: deviceId);
                   },
                   icon: Icon(Icons.schedule, color: Colors.deepPurpleAccent),
                   tooltip: 'Schedule Irrigation',
@@ -106,7 +106,7 @@ class BottomNavBar{
                 IconButton(
                   onPressed: () {
                     SocketService.socket.emit('export', {
-                      'controller_id': controllerId,
+                      'device_id': deviceId,
                     });
                   },
                   icon: Icon(Icons.cloud_download, color: Colors.green),

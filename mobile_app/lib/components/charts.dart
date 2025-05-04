@@ -4,11 +4,12 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 class Charts {
   static Widget buildLineChart({
     required String title,
-    required List<ChartData> data,
-    required Color lineColor,
+    required List<List<ChartData>> data,
+    required List<Color> lineColors,
     required double minY,
     required double maxY,
     required List<String> xAxisLabels,
+    required List<String> headers,
     bool isScrollable = false,
     Color backgroundColor = Colors.white,
     bool showGrid = false,
@@ -57,15 +58,18 @@ class Charts {
                       child: isScrollable
                           ? Scrollbar(
                         controller: scrollController,
-                        thumbVisibility: true, // Makes scrollbar visible
+                        thumbVisibility: true,
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           controller: scrollController,
                           child: SizedBox(
-                            width: maxX != null ? maxX * 40.0 : xAxisLabels.length * 40.0,
+                            width: maxX != null
+                                ? maxX * 40.0
+                                : xAxisLabels.length * 40.0,
                             child: _buildLineChartContent(
                               data,
-                              lineColor,
+                              lineColors,
+                              headers,
                               minY,
                               maxY,
                               xAxisLabels,
@@ -77,7 +81,8 @@ class Charts {
                       )
                           : _buildLineChartContent(
                         data,
-                        lineColor,
+                        lineColors,
+                        headers,
                         minY,
                         maxY,
                         xAxisLabels,
@@ -96,32 +101,66 @@ class Charts {
   }
 
   static Widget _buildLineChartContent(
-      List<ChartData> data,
-      Color lineColor,
+      List<List<ChartData>> data,
+      List<Color> lineColors,
+      List<String> headers,
       double minY,
       double maxY,
       List<String> xAxisLabels,
-      bool showGrid, {
+      bool showGrid,{
         double? maxX,
       }) {
+    // Debugging: Print data to verify consistency
+    for (int i = 0; i < data.length; i++) {
+      for (int j = 0; j < data[i].length; j++) {
+        print('Data $i, Point $j: ${data[i][j].x}, ${data[i][j].y}');
+      }
+    }
 
+    // Tooltip Configuration
     TooltipBehavior tooltipBehavior = TooltipBehavior(
       enable: true,
       format: 'point.x : point.y',
       color: Colors.blue,
-      textStyle: const TextStyle(color: Colors.white, fontSize: 12),
-      header: '',
+      textStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+      ),
+      header: ' Time : Value',
     );
 
+    // Generate LineSeries for each dataset
+    final List<LineSeries<ChartData, String>> seriesList =
+    List.generate(data.length, (index) {
+
+      return LineSeries<ChartData, String>(
+        name: '${headers[index]}', // Assign a name to each series
+        dataSource: data[index],
+        xValueMapper: (ChartData data, _) => data.x,
+        yValueMapper: (ChartData data, _) => data.y,
+        color: lineColors[index % lineColors.length],
+        width: 3,
+        markerSettings: const MarkerSettings(isVisible: true),
+        dataLabelSettings: const DataLabelSettings(isVisible: false),
+        enableTooltip: true,
+      );
+    });
+
+    for (int i = 0; i < seriesList.length; i++) {
+      print('Series $i: ${seriesList[i].xValueMapper}, ${seriesList[i].yValueMapper}');
+    }
+
     return SfCartesianChart(
-      tooltipBehavior: tooltipBehavior, // Attach tooltip behavior
+      tooltipBehavior: tooltipBehavior,
+      enableAxisAnimation: true,
       primaryXAxis: CategoryAxis(
-        labelPlacement: LabelPlacement.onTicks,
+        labelPlacement: LabelPlacement.onTicks, // Align labels with ticks
         majorGridLines: MajorGridLines(width: showGrid ? 1 : 0, color: Colors.black),
         labelStyle: const TextStyle(fontSize: 10, color: Colors.black54),
-        maximum: maxX ?? (xAxisLabels.length - 1).toDouble(),
-        labelIntersectAction: AxisLabelIntersectAction.rotate45,
-        arrangeByIndex: true,
+        labelIntersectAction: AxisLabelIntersectAction.rotate45, // Rotate labels if overlapping
+        labelRotation: -45,
+        interval: 3, // Show every label
       ),
       primaryYAxis: NumericAxis(
         minimum: minY,
@@ -130,21 +169,15 @@ class Charts {
         majorGridLines: MajorGridLines(width: showGrid ? 1 : 0, color: Colors.black),
         labelStyle: const TextStyle(fontSize: 12, color: Colors.black54),
       ),
-      series: <LineSeries<ChartData, String>>[
-        LineSeries<ChartData, String>(
-          dataSource: data,
-          xValueMapper: (ChartData data, _) => data.x,
-          yValueMapper: (ChartData data, _) => data.y,
-          color: lineColor,
-          width: 3,
-          markerSettings: const MarkerSettings(isVisible: true), // Show markers on points
-          dataLabelSettings: const DataLabelSettings(isVisible: false),
-          enableTooltip: true, // Enable tooltip for this series
-        ),
-      ],
+      series: seriesList,
+      legend: Legend(
+        isVisible: true,
+        position: LegendPosition.auto,
+        alignment: ChartAlignment.center,
+        textStyle: const TextStyle(fontSize: 12, color: Colors.black54),
+      ),
     );
   }
-
 }
 
 class ChartData {

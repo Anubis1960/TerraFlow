@@ -39,9 +39,9 @@ class SocketService {
       _socket!.on('message', (data) {
       });
 
-      _socket!.on('controllers', (data) {
-        BaseStorage.getStorageFactory().deleteData('controller_ids');
-        BaseStorage.getStorageFactory().saveData('controller_ids', data['controllers']);
+      _socket!.on('devices', (data) {
+        BaseStorage.getStorageFactory().deleteData('device_ids');
+        BaseStorage.getStorageFactory().saveData('device_ids', data['devices']);
       });
 
       _socket!.connect();
