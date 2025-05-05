@@ -7,6 +7,7 @@ import 'file_downloader.dart';
 class WebFileDownloader extends FileDownloader {
   @override
   Future<void> downloadFile(BuildContext context, Uint8List fileData, String fileName) async {
+    print('WebFileDownloader: downloadFile called');
     // 🔹 Save the file
     final blob = html.Blob([fileData], 'application/octet-stream');
     final url = html.Url.createObjectUrlFromBlob(blob);

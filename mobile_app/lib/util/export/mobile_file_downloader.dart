@@ -15,7 +15,17 @@ class MobileFileDownloader extends FileDownloader {
       if (build.version.sdkInt >= 30) {
         var status = await Permission.manageExternalStorage.status;
         if (!status.isGranted) {
-          return;
+          var result = await Permission.manageExternalStorage.request();
+          if (result.isGranted) {
+            // Permission granted
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Storage permission denied'), backgroundColor: Colors.red),
+            );
+            return;
+          }
+        } else {
+          // Permission already granted
         }
       }
       else{

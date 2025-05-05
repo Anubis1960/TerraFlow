@@ -11,6 +11,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mobile_app/util/constants.dart';
 import 'package:http/http.dart' as http;
 
+import '../util/storage/base_storage.dart';
+
 class DeviceDashBoard extends StatefulWidget {
   final dynamic deviceId;
 
@@ -47,33 +49,15 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
 
     // Socket response listeners
     SocketService.socket.on('export_response', (data) async {
-      print('Received export response: $data');
       if (data.containsKey('file')) {
+        print('File data found in response');
         if (data['file'] is List<int>) {
           final fileData = Uint8List.fromList(data['file']);
+          print('File data received: ${fileData.length} bytes');
           await saveToStorage(context, fileData, "exported_data.xlsx");
         }
       }
     });
-
-    // SocketService.socket.on('device_data_response', (data) {
-    //   setState(() {
-    //     deviceData = data;
-    //     if (deviceData['record'] != null && deviceData['record'].isNotEmpty) {
-    //       selectedFilterValue = deviceData['record'].last['timestamp'].substring(0, 10);
-    //
-    //       filteredRecords = _filterRecords(deviceData['record']);
-    //       humidity = _calculateAverage(filteredRecords, 'humidity');
-    //       temperature = _calculateAverage(filteredRecords, 'temperature');
-    //       waterUsage = _calculateWaterUsage(deviceData['water_usage']);
-    //       filteredValues = _getFilterValues(deviceData['record']);
-    //
-    //       setState(() {
-    //         selectedFilterValue = selectedFilterValue; // This will update correctly now
-    //       });
-    //     }
-    //   });
-    // });
 
     // Fetch device data
     String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
@@ -96,7 +80,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
       } else {
       }
     });
-
 
 
     SocketService.socket.on('record', (data) {
@@ -124,11 +107,18 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
       }
     });
 
-    // SocketService.socket.emit('fetch_device_data', {
-    //   'device_id': deviceId,
-    // });
+    late Future<String> token = BaseStorage.getStorageFactory().getToken();
+    token.then((value) {
+      late Future<List<String>> deviceIds = BaseStorage.getStorageFactory().getDeviceList();
+      deviceIds.then((deviceIds) {
+        Map<String, dynamic> data = {
+          'token': value,
+          'devices': deviceIds, // ✅ Now it's a real List<String>
+        };
 
-
+        SocketService.socket.emit('init', data);
+      });
+    });
   }
 
   @override
@@ -145,6 +135,7 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
 
   Future<void> saveToStorage(BuildContext context, Uint8List fileData, String fileName) async {
     FileDownloader fileDownloader = FileDownloader.getFileDownloaderFactory();
+    print('FileDownloader: $fileDownloader');
     await fileDownloader.downloadFile(context, fileData, fileName);
   }
 
@@ -343,13 +334,7 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
 
     return Scaffold(
       appBar: TopBar.buildTopBar(context: context, title: 'Device Dashboard'),
-      body: selectedFilterValue.isEmpty || filteredRecords.isEmpty || deviceData.isEmpty
-          ? Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurpleAccent),
-        ),
-      )
-          : SingleChildScrollView(
+      body:  SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(screenWidth * 0.02), // 2% of screen width
           child: Column(
@@ -430,7 +415,7 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
   }
 
 
-  Widget _buildDatePicker(){
+  Widget _buildDatePicker() {
     return Card(
       color: Colors.white,
       elevation: 0,
@@ -438,7 +423,7 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
         borderRadius: BorderRadius.circular(15),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(0.0),
+        padding: const EdgeInsets.all(8.0),
         child: Row(
           children: [
             Expanded(
@@ -457,68 +442,95 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
                 },
                 items: ['day', 'month', 'year'].map((value) => DropdownMenuItem(
                   value: value,
-                  child: Center(  // Center the text inside the DropdownMenuItem
+                  child: Center(
                     child: Text(
                       value,
-                      textAlign: TextAlign.center,  // Ensures the text is centered inside the child widget
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 )).toList(),
-
                 isExpanded: true,
                 style: TextStyle(
                   color: Colors.deepPurpleAccent,
                   fontWeight: FontWeight.bold,
                 ),
                 dropdownColor: Colors.white,
-
                 icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
               ),
             ),
             const SizedBox(width: 10),
-            Expanded(
-              child: DropdownButton<String>(
-                value: selectedFilterValue.isNotEmpty && filteredValues.contains(selectedFilterValue)
-                    ? selectedFilterValue
-                    : filteredValues.isNotEmpty
-                    ? filteredValues.first
-                    : '',  // Use an empty string or a fallback value
-                onChanged: (String? newValue) {
-                  setState(() {
-                    if (newValue != null) {
-                      selectedFilterValue = newValue;
-                      filteredRecords = _filterRecords(deviceData['record']);
-                      humidity = _calculateAverage(filteredRecords, 'humidity');
-                      temperature = _calculateAverage(filteredRecords, 'temperature');
-                      waterUsage = _calculateWaterUsage(deviceData['water_usage']);
+            // Conditional rendering based on filterType
+            if (filterType == 'day')
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: () async {
+                    final pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now(),
+                    );
+                    if (pickedDate != null) {
+                      String formattedDate = "${pickedDate.year}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.day.toString().padLeft(2, '0')}";
+                      setState(() {
+                        selectedFilterValue = formattedDate;
+                        filteredRecords = _filterRecords(deviceData['record']);
+                        humidity = _calculateAverage(filteredRecords, 'humidity');
+                        temperature = _calculateAverage(filteredRecords, 'temperature');
+                        waterUsage = _calculateWaterUsage(deviceData['water_usage']);
+                      });
                     }
-                  });
-                },
-                items: filteredValues.isNotEmpty
-                    ? filteredValues.map((value) => DropdownMenuItem<String>(
+                  },
+                  icon: Icon(Icons.calendar_today, size: 16),
+                  label: Text(
+                    selectedFilterValue.isEmpty ? "Select Date" : selectedFilterValue,
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: DropdownButton<String>(
+                  value: selectedFilterValue.isNotEmpty && filteredValues.contains(selectedFilterValue)
+                      ? selectedFilterValue
+                      : filteredValues.isNotEmpty
+                      ? filteredValues.first
+                      : '',
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      if (newValue != null) {
+                        selectedFilterValue = newValue;
+                        filteredRecords = _filterRecords(deviceData['record']);
+                        humidity = _calculateAverage(filteredRecords, 'humidity');
+                        temperature = _calculateAverage(filteredRecords, 'temperature');
+                        waterUsage = _calculateWaterUsage(deviceData['water_usage']);
+                      }
+                    });
+                  },
+                  items: filteredValues.isNotEmpty
+                      ? filteredValues.map((value) => DropdownMenuItem<String>(
                     value: value,
                     child: Center(
-                    child: Text(
-                    value,
-                  textAlign: TextAlign.center,
-                )))).toList()
-                    : [],
-                isExpanded: true,
-                style: TextStyle(
-                  color: Colors.deepPurpleAccent,
-                  fontWeight: FontWeight.bold,
-
+                      child: Text(
+                        value,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  )).toList()
+                      : [],
+                  isExpanded: true,
+                  style: TextStyle(
+                    color: Colors.deepPurpleAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  dropdownColor: Colors.white,
+                  icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurpleAccent),
                 ),
-                dropdownColor: Colors.white,
-                icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurpleAccent),
               ),
-            )
-
           ],
         ),
       ),
     );
   }
-
 
 }
