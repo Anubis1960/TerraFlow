@@ -15,6 +15,6 @@ def predict_water(data: pd.DataFrame) -> list[int]:
     """
     Predict the output using the model.
     """
-    model = load_model('model/random_forest.pkl')
+    model = load_model('src/utils/model/random_forest.pkl')
     prediction = model.predict(data)
     return prediction

@@ -35,6 +35,7 @@ MongoDB Collection:
 """
 
 import json
+from datetime import datetime
 
 import pandas as pd
 from bson.objectid import ObjectId
@@ -136,9 +137,13 @@ def predict(payload: str, topic: str) -> None:
         None
     """
     json_data = json.loads(payload)
-    moisture = json_data.get('moisture')
-    temperature = json_data.get('temperature')
-    humidity = json_data.get('humidity')
+    sensor_data = json_data.get('sensor_data')
+    moisture = sensor_data['moisture']
+    temperature = sensor_data['temperature']
+    humidity = sensor_data['humidity']
+    if not all([moisture, temperature, humidity]):
+        print('Invalid sensor data:', sensor_data)
+        return
     df = pd.DataFrame({
         'Soil Moisture': [moisture],
         'Temperature': [temperature],
@@ -150,7 +155,9 @@ def predict(payload: str, topic: str) -> None:
     print('device ID:', device_id)
     prediction = predict_water(df)
     print('Prediction:', prediction)
-    mqtt.publish(f'{device_id}/prediction', json.dumps({'prediction': prediction}))
+    verdict = 1 if prediction[0] == 1 else 0
+    print('Verdict:', verdict)
+    mqtt.publish(f'{device_id}/prediction', json.dumps({'prediction': verdict, 'timestamp': datetime.now().isoformat()}))
 
 
 def record_sensor_data(payload: str, topic: str) -> None:
@@ -207,11 +214,10 @@ def record_sensor_data(payload: str, topic: str) -> None:
         try:
             device_key = f"device:{device_id}"
             user_list = json.loads(r.get(device_key)) if r.exists(device_key) else []
-            print("User list:", user_list)
             for user in user_list:
                 user_key = f"user:{user}"
                 user_data = r.get(user_key) if r.exists(user_key) else ""
-                print("User data:", user_data)
+                print("\n\n SOCKET ID:", user_data, "\n\n")
                 socketio.emit('record', json_data, room=user_data)
         except ResponseError as redis_error:
             print(f"Redis ResponseError: {redis_error}")
@@ -274,7 +280,6 @@ def record_water_used(payload: str, topic: str) -> None:
 
         mongo_db[DEVICE_COLLECTION].update_one({'_id': ObjectId(device_id)},
                                                {'$set': {'water_usage': water_used}})
-        print(f"Updated water used data for device {device_id}")
 
     except Exception as e:
         print(f"Unexpected error: {e}")

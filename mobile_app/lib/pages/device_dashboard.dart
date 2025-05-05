@@ -47,6 +47,7 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
 
     // Socket response listeners
     SocketService.socket.on('export_response', (data) async {
+      print('Received export response: $data');
       if (data.containsKey('file')) {
         if (data['file'] is List<int>) {
           final fileData = Uint8List.fromList(data['file']);
@@ -99,6 +100,7 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
 
 
     SocketService.socket.on('record', (data) {
+      print('Received data: $data');
       deviceData['record'].add(data);
 
       if (data['timestamp'].startsWith(selectedFilterValue)) {
@@ -395,7 +397,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
 
 
   Widget _buildLineChart(){
-
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(

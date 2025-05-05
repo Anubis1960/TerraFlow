@@ -83,6 +83,7 @@ def init_event(data: dict) -> None:
     """
     print('Init:', data)
     socket_id = request.sid
+    print("\n\n SOCKET ID:", socket_id, "\n\n")
     if 'token' not in data or 'devices' not in data:
         print('User ID not found, found:', data)
         return

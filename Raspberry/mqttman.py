@@ -21,19 +21,46 @@ class MQTTManager:
         self.topics = topics
         self.schedule = {}
         self.schedule_updated_event = asyncio.Event()
+        self.current_water_used = 0
+        relay_off()
 
     def handle_irrigation_cmd(self):
         """
         Handles the irrigation command.
         """
+        relay_on()
+        sleep(5)
+        relay_off()
+        water_used = urandom.randint(0, 100)
         timestamp = localtime()
         year, month = timestamp[:2]
         water_data = {
-            'water_used': urandom.randint(0, 100),
+            'water_used': water_used,
             'date': "{:04d}/{:02d}".format(year, month)
         }
-        print("Publishing water data:", water_data)
         self.client.publish(self.topics['RECORD_WATER_USED_PUB'], json.dumps(water_data))
+    
+    def handle_prediction_cmd(self, json_data):
+        """
+        Handles the prediction command.
+        """
+        if json_data['prediction'] == 1: # 1 means ON
+            relay_on()
+            sleep(5)
+            self.current_water_used += 1
+            print("Current water used:", self.current_water_used)
+            self.send_for_prediction()
+        elif json_data['prediction'] == 0: # 0 means OFF
+            relay_off()
+            timestamp = localtime()
+            year, month = timestamp[:2]
+            water_data = {
+                'water_used': urandom.randint(0, 100),
+                'date': "{:04d}/{:02d}".format(year, month)
+            }
+            print("Publishing water data:", water_data)
+            self.client.publish(self.topics['RECORD_WATER_USED_PUB'], json.dumps(water_data))
+            self.current_water_used = 0
     
     def handle_schedule_cmd(self, msg):
         """
@@ -72,6 +99,10 @@ class MQTTManager:
         elif topic == self.topics['IRRIGATE_SUB']:
             print("Irrigation command received:", msg)
             self.handle_irrigation_cmd()
+        elif topic == self.topics['PREDICTION_SUB']:
+            print("Prediction command received:", msg)
+            json_data = json.loads(msg)
+            self.handle_prediction_cmd(json_data)
 
     async def listen(self, period_s: int = 10):
         """
@@ -101,7 +132,6 @@ class MQTTManager:
             time_str = "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(year, month, day, hour, minute, second)
 
             try:
-                DHT.measure()
                 moisture = read_moisture()
                 temperature, humidity = read_dht()
                 rain = read_rain()
@@ -120,20 +150,15 @@ class MQTTManager:
                 },
                 'timestamp': time_str
             }
-            print("Publishing sensor data:", sensor_data)
             self.client.publish(self.topics['RECORD_SENSOR_DATA_PUB'], json.dumps(sensor_data))
 
             await asyncio.sleep(period_s)
     
-    async def check_irrigation(self, period_s: int = 3):
+    async def check_irrigation(self, period_s: int = 86400):
         """
         If a schedule is set, it follows the schedule.
         """
         while True:
-            # relay_on()
-            # sleep(5)
-            # relay_off()
-            # sleep(5)
             if self.schedule:
                 schedule_type = self.schedule.get("type")
                 schedule_time = self.schedule.get("time")
@@ -172,14 +197,41 @@ class MQTTManager:
                 except asyncio.TimeoutError:
                     time_until_irrigation -= delay
             
-            moisture_level = read_moisture()
-            print("Moisture level:", moisture_level)
             rain_level = read_rain()
             print("Rain level:", rain_level)
-            temperature, humidity = read_dht()
-            print("Temperature:", temperature)
-            print("Humidity:", humidity)
-            self.handle_irrigation_cmd()
+
+            while rain_level > 50:
+                print("Rain detected, irrigation skipped.")
+                relay_off()
+                await asyncio.sleep(3600)
+                rain_level = read_rain()
+            
+            if time_until_irrigation <= 0:
+                self.send_for_prediction()
+    
+    def send_for_prediction(self):
+        moisture_level = read_moisture()
+        print("Moisture level:", moisture_level)
+        temperature, humidity = read_dht()
+        print("Temperature:", temperature)
+        print("Humidity:", humidity)
+        self.client.publish(self.topics['PREDICT_PUB'], json.dumps({
+            'sensor_data': {
+                "temperature": temperature,
+                "humidity": humidity,
+                "moisture": moisture_level
+            },
+            'timestamp': "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(*localtime())
+        }))
+
+def get_relay_state():
+    """
+    Returns the current state of the relay.
+
+    Returns:
+        bool: True if the relay is on, False if it is off.
+    """
+    return relay.value() == 0  # 0 means ON, 1 means OFF
 
 def relay_on():
     print("relay is ON")

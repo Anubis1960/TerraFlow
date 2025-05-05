@@ -36,42 +36,48 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
 
-    token.then((onUser) {
-      deviceIds.then((onDevice) async {
-        if (onDevice.isEmpty) {
-          String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
-          url += '${Server.USER_REST_URL}/devices';
-          var res = await http.get(
-            Uri.parse(url),
-            headers: <String, String>{
-              'Content-Type': 'application/json; charset=UTF-8',
-              'Authorization': 'Bearer $onUser',
-            },
-          );
-          if (res.statusCode == 200) {
-            var devices = jsonDecode(res.body);
-            if (devices.isNotEmpty) {
-              BaseStorage.getStorageFactory().saveData('device_ids', devices);
-              setState(() {
-                deviceIds = _loadDeviceIds();
-              });
-            }
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to load devices.'),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
-          }
-        }
-        Map<String, dynamic> data = {
-          'token': onUser,
-          'devices': BaseStorage.getStorageFactory().getDeviceList(),
-        };
-        SocketService.socket.emit('init', data);
-      });
+    token.then((onUser) async {
+      final List<String> onDevice = await deviceIds; // ✅ Wait for the result
 
+      if (onDevice.isEmpty) {
+        String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
+        url += '${Server.USER_REST_URL}/devices';
+
+        var res = await http.get(
+          Uri.parse(url),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $onUser',
+          },
+        );
+
+        if (res.statusCode == 200) {
+          var devices = jsonDecode(res.body);
+          if (devices.isNotEmpty) {
+            BaseStorage.getStorageFactory().saveData('device_ids', devices);
+            setState(() {
+              deviceIds = _loadDeviceIds(); // reload future
+            });
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to load devices.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      }
+
+      final List<String> updatedDeviceIds = await deviceIds; // ✅ Again await to get latest value
+
+      Map<String, dynamic> data = {
+        'token': onUser,
+        'devices': updatedDeviceIds, // ✅ Now it's a real List<String>
+      };
+
+      print('Socket data: $data');
+      SocketService.socket.emit('init', data);
     });
   }
 

@@ -22,11 +22,24 @@ class Charts {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController != null && scrollController.hasClients) {
-        scrollController.animateTo(
-          targetPosition,
-          duration: const Duration(milliseconds: 800),
-          curve: Curves.linear,
-        );
+        final ScrollPosition position = scrollController.position;
+        final double currentOffset = position.pixels;
+        final double maxOffset = position.maxScrollExtent;
+
+        print('Current Offset: $currentOffset');
+        print('Target Position: $targetPosition');
+        print('Max Offset: ${position.maxScrollExtent}');
+
+        // Auto-scroll only if:
+        // - User wasn't dragging
+        // - Was already at/near the end OR it's the initial load
+        if ((currentOffset >= maxOffset - 200)) {
+          scrollController.animateTo(
+            targetPosition,
+            duration: const Duration(milliseconds: 2000),
+            curve: Curves.easeInOut,
+          );
+        }
       }
     });
 
@@ -64,8 +77,8 @@ class Charts {
                           controller: scrollController,
                           child: SizedBox(
                             width: maxX != null
-                                ? maxX * 40.0
-                                : xAxisLabels.length * 40.0,
+                                ? (maxX + 5.0) * 40.0 // Add buffer of 5 extra points width
+                                : (xAxisLabels.length + 5.0) * 40.0,
                             child: _buildLineChartContent(
                               data,
                               lineColors,
@@ -107,15 +120,9 @@ class Charts {
       double minY,
       double maxY,
       List<String> xAxisLabels,
-      bool showGrid,{
+      bool showGrid, {
         double? maxX,
       }) {
-    // Debugging: Print data to verify consistency
-    for (int i = 0; i < data.length; i++) {
-      for (int j = 0; j < data[i].length; j++) {
-      }
-    }
-
     // Tooltip Configuration
     TooltipBehavior tooltipBehavior = TooltipBehavior(
       enable: true,
@@ -126,7 +133,7 @@ class Charts {
         fontSize: 12,
         fontWeight: FontWeight.bold,
       ),
-      header: ' Time : Value',
+      header: 'Time : Value',
     );
 
     const shapes = [
@@ -137,42 +144,33 @@ class Charts {
       DataMarkerType.invertedTriangle,
     ];
 
-    // Generate LineSeries for each dataset
     final List<LineSeries<ChartData, String>> seriesList =
     List.generate(data.length, (index) {
-
       return LineSeries<ChartData, String>(
-        name: headers[index], // Assign a name to each series
+        name: headers[index],
         dataSource: data[index],
         xValueMapper: (ChartData data, _) => data.x,
         yValueMapper: (ChartData data, _) => data.y,
         color: lineColors[index % lineColors.length],
         width: 3,
         markerSettings: MarkerSettings(
-            isVisible: true,
-            shape: shapes[index % shapes.length], // Cycle through shapes
+          isVisible: true,
+          shape: shapes[index % shapes.length],
         ),
-        dataLabelSettings: const DataLabelSettings(
-            isVisible: false,
-
-        ),
+        dataLabelSettings: const DataLabelSettings(isVisible: false),
         enableTooltip: true,
       );
     });
 
-    for (int i = 0; i < seriesList.length; i++) {
-    }
-
     return SfCartesianChart(
       tooltipBehavior: tooltipBehavior,
-      enableAxisAnimation: true,
       primaryXAxis: CategoryAxis(
-        labelPlacement: LabelPlacement.onTicks, // Align labels with ticks
+        labelPlacement: LabelPlacement.onTicks,
         majorGridLines: MajorGridLines(width: showGrid ? 1 : 0, color: Colors.black),
         labelStyle: const TextStyle(fontSize: 10, color: Colors.black54),
-        labelIntersectAction: AxisLabelIntersectAction.rotate45, // Rotate labels if overlapping
+        labelIntersectAction: AxisLabelIntersectAction.rotate45,
         labelRotation: -45,
-        interval: 3, // Show every label
+        interval: 3,
       ),
       primaryYAxis: NumericAxis(
         minimum: minY,

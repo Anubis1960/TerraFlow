@@ -110,6 +110,8 @@ def remap_redis(device_id: str, user_id: str, socket_id: str) -> None:
                 r.delete(device_id)
 
             user_key = f"user:{user_id}"
+            print('user_key:', user_key)
+            print('socket_id:', socket_id)
             r.set(user_key, socket_id)
         else:
             print('device not found')
@@ -130,6 +132,7 @@ def handle_export(device_id: str, socket_id: str) -> None:
     """
     try:
         res = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
+        print('res:', res)
         if not res:
             print(f"device with ID {device_id} not found.")
             return
