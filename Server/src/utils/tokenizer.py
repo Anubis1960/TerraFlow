@@ -22,10 +22,3 @@ def decode_token(token: str) -> dict:
         return {'error': 'Token expired. Please log in again.'}
     except jwt.InvalidTokenError:
         return {'error': 'Invalid token. Please log in again.'}
-
-
-if __name__ == '__main__':
-    token = generate_token("1@1.1", "681785b2abcafa0ae18c75f9")
-    print(token)
-    decoded = decode_token(token)
-    print(decoded)

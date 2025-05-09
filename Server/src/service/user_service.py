@@ -4,7 +4,6 @@ from bson import ObjectId
 
 from src.config.mongo import mongo_db, DEVICE_COLLECTION, USER_COLLECTION
 from src.config.redis import r
-from src.config.protocol import mqtt
 
 
 def handle_get_user_devices(user_id: str):
@@ -91,4 +90,3 @@ def handle_delete_device(device_id: str, user_id: str):
             r.set(device_key, json.dumps(user_list))
 
     return True
-

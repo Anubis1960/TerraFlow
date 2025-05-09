@@ -20,10 +20,10 @@ import json
 import bson.errors
 import regex as re
 from bson.objectid import ObjectId
-from redis.exceptions import ResponseError
-from src.config.mongo import mongo_db, DEVICE_COLLECTION, USER_COLLECTION
-from src.config.redis import r
+
+from src.config.mongo import mongo_db, DEVICE_COLLECTION
 from src.config.protocol import mqtt, socketio
+from src.config.redis import r
 from src.utils.excel_manager import export_to_excel
 
 email_regex = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
@@ -73,7 +73,7 @@ def handle_irrigate(device_id: str) -> None:
 
 def handle_schedule_irrigation(device_id: str, schedule: dict) -> None:
     """
-    Schedules irrigation for a specific device.
+    schedules irrigation for a specific device.
 
     Args:
         device_id (str): The unique identifier of the device.
@@ -121,7 +121,7 @@ def remap_redis(device_id: str, user_id: str, socket_id: str) -> None:
 
 def handle_export(device_id: str, socket_id: str) -> None:
     """
-    Exports data from the device to a file.
+    exports data from the device to a file.
 
     Args:
         device_id (str): The unique identifier of the device.

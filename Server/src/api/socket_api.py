@@ -180,7 +180,7 @@ def schedule_irrigation_event(data: dict) -> None:
         data (dict): JSON payload with keys:
             - 'device_id': ID of the device.
             - 'schedule_type': Type of schedule ('DAILY', 'WEEKLY', 'MONTHLY').
-            - 'schedule_time': Time for the schedule.
+            - 'Schedule_time': Time for the schedule.
 
     Returns:
         None

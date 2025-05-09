@@ -1,4 +1,6 @@
 import json
+from google.auth.transport import (requests as google_requests, Request)
+from src.utils.secrets import GOOGLE_CLIENT_ID
 
 import regex as re
 
@@ -60,6 +62,31 @@ def handle_token_login(email: str) -> dict:
     else:
         user_id = mongo_db[USER_COLLECTION].insert_one({'email': email}).inserted_id
         return {'token': generate_token(email, str(user_id))}
+
+
+def google_auth(request: Request) -> dict:
+    """
+    Authorizes the user using Google OAuth.
+
+    Args:
+        request: Request: The request object.
+
+    Returns:
+        dict: A dictionary containing the token and controllers associated with the user.
+
+    """
+    id_token_str = request.form.get('id_token')
+    if not id_token_str:
+        return {'error': 'No ID token provided'}
+    try:
+        id_info = id_token_str.verify_oauth2_token(id_token_str, google_requests.Request(), GOOGLE_CLIENT_ID)
+        email = id_info['email']
+        res = handle_token_login(email)
+        return res
+    except ValueError:
+        return {'error': 'Invalid ID token'}
+    except Exception as e:
+        return {'error': f'An error occurred: {e}'}
 
 
 def handle_register(email: str, password: str) -> dict:

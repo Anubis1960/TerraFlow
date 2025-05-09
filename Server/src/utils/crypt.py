@@ -32,11 +32,11 @@ from src.utils.secrets import ENCRYPT_KEY as key  # Key imported from configurat
 
 def encrypt(source: str, encode=True) -> str:
     """
-    Encrypts the given plaintext using AES in CBC mode.
+    encrypts the given plaintext using AES in CBC mode.
 
     Args:
-        source (str or bytes): The plaintext data to encrypt. If a string, it will be encoded to bytes.
-        encode (bool): Whether to encode the output in Base64. Defaults to True.
+        source (str or bytes): The plaintext data to encrypt. if a string, it will be encoded to bytes.
+        encode (bool): Whether to encode the output in Base64. defaults to True.
 
     Returns:
         str or bytes: The encrypted data, encoded in Base64 if `encode=True`.
@@ -71,11 +71,11 @@ def encrypt(source: str, encode=True) -> str:
 
 def decrypt(source: str, decode=True) -> str:
     """
-    Decrypts the given AES-CBC encrypted data.
+    decrypts the given AES-CBC encrypted data.
 
     Args:
-        source (str or bytes): The encrypted data to decrypt. If a string, it should be Base64-encoded.
-        decode (bool): Whether the input is Base64-encoded. Defaults to True.
+        source (str or bytes): The encrypted data to decrypt. if a string, it should be Base64-encoded.
+        decode (bool): Whether the input is Base64-encoded. defaults to True.
 
     Returns:
         str: The decrypted plaintext.

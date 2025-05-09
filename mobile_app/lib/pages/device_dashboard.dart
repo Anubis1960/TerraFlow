@@ -63,22 +63,31 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
     String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
     url += '${Server.DEVICE_REST_URL}/$deviceId/data';
 
-    http.get(Uri.parse(url)).then((response) {
-      if (response.statusCode == 200) {
-        var data = jsonDecode(response.body) as Map<String, dynamic>;
-        setState(() {
-          deviceData = data;
-          if (deviceData['record'] != null && deviceData['record'].isNotEmpty) {
-            selectedFilterValue = deviceData['record'].last['timestamp'].substring(0, 10);
-            filteredRecords = _filterRecords(deviceData['record']);
-            humidity = _calculateAverage(filteredRecords, 'humidity');
-            temperature = _calculateAverage(filteredRecords, 'temperature');
-            waterUsage = _calculateWaterUsage(deviceData['water_usage']);
-            filteredValues = _getFilterValues(deviceData['record']);
-          }
-        });
-      } else {
-      }
+    late Future<String> token = BaseStorage.getStorageFactory().getToken();
+
+    token.then((value) {
+      http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $value',
+        }
+      ).then((response) {
+        if (response.statusCode == 200) {
+          var data = jsonDecode(response.body) as Map<String, dynamic>;
+          setState(() {
+            deviceData = data;
+            if (deviceData['record'] != null && deviceData['record'].isNotEmpty) {
+              selectedFilterValue = deviceData['record'].last['timestamp'].substring(0, 10);
+              filteredRecords = _filterRecords(deviceData['record']);
+              humidity = _calculateAverage(filteredRecords, 'humidity');
+              temperature = _calculateAverage(filteredRecords, 'temperature');
+              waterUsage = _calculateWaterUsage(deviceData['water_usage']);
+              filteredValues = _getFilterValues(deviceData['record']);
+            }
+          });
+        } else {
+        }
+      });
     });
 
 
@@ -106,8 +115,6 @@ class _DeviceDashBoard extends State<DeviceDashBoard> {
         });
       }
     });
-
-    late Future<String> token = BaseStorage.getStorageFactory().getToken();
     token.then((value) {
       late Future<List<String>> deviceIds = BaseStorage.getStorageFactory().getDeviceList();
       deviceIds.then((deviceIds) {

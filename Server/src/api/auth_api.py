@@ -20,7 +20,7 @@ def login():
     Logs in the user using the provided credentials or access token.
 
     Returns:
-        A JSON response with the user's token and devices if successful, an error message otherwise.
+        A JSON response with the user's token and controllers if successful, an error message otherwise.
     """
     print("Logging in...")
     if request.method == 'POST':
@@ -29,7 +29,6 @@ def login():
             password = data['password']
             email = data['email']
             res = handle_form_login(email, password)
-            print(f"Response: {res}")
             if 'error' in res:
                 return jsonify(res), HTTPStatus.BAD_REQUEST
             else:
@@ -65,11 +64,15 @@ def authorize():
     print("Authorizing...")
     google = current_app.oauth_manager.get_provider('google')
     try:
+        token = google.authorize_access_token()
+        # Retrieve the access token
+        access_token = token['access_token']
         resp = google.get('userinfo')
 
         # Retrieve user data
         user_info = resp.json()
         user_email = user_info['email']
+        user_name = user_info['name']
 
         res = handle_token_login(user_email)
 
@@ -112,7 +115,7 @@ def logout():
         device_ids = data['deviceIds']
         decoded_token = decode_token(token)
         if 'error' in decoded_token:
-            return
+            return jsonify({"error": decoded_token['error']}), HTTPStatus.UNAUTHORIZED
         user_id = decoded_token['user_id']
         res = handle_logout(user_id, device_ids)
         if 'error' in res:

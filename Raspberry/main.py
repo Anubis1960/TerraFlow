@@ -30,7 +30,7 @@ import ujson as json
 from constants import SSID, PASSWORD, MQTT_BROKER, MQTT_CLIENT_ID, get_mqtt_topics
 from generate_id import generate_object_id
 from mqttman import MQTTManager
-
+import requests
 
 def init():
     """
@@ -74,6 +74,20 @@ def connect_wifi(ssid: str, password: str):
         print(".", end="")
     print("Connected to Wi-Fi:", wlan.ifconfig()[0])
 
+def get_location():
+    response = requests.get('https://ipinfo.io/json ')
+    data = response.json()
+    city = data.get('city', 'Unknown')
+    region = data.get('region', 'Unknown')
+    country = data.get('country', 'Unknown')
+    loc = data.get('loc', 'Unknown')
+    return {
+        'city': city,
+        'region': region,
+        'country': country,
+        'coordinates': loc,
+    }
+
 async def main():
     """
     Main entry point for the IoT application. Handles:
@@ -89,8 +103,12 @@ async def main():
     # Get MQTT topics
     topics = get_mqtt_topics(_device_id)
 
+    # Get location data
+    location_data = get_location()
+    print("Location data:", location_data)
+
     client = MQTTClient(MQTT_CLIENT_ID, MQTT_BROKER)
-    mqtt_mng = MQTTManager(client, topics)
+    mqtt_mng = MQTTManager(client, topics, location_data)
     client.set_callback(mqtt_mng.mqtt_callback)
     client.connect()
     print("Connected to MQTT broker")

@@ -74,7 +74,7 @@ def register_device(payload: str) -> None:
         1. Parses the JSON payload to extract the device ID.
         2. Attempts to insert a new device record into MongoDB.
         3. Handles duplicate registration by skipping insertion.
-        4. Subscribes the device to its relevant MQTT topics.
+        4. Subscribe the device to its relevant MQTT topics.
 
     Exceptions:
         - Handles `KeyError` for missing keys in payload.
@@ -127,7 +127,7 @@ def register_device(payload: str) -> None:
 
 def predict(payload: str, topic: str) -> None:
     """
-    Handles prediction requests for a device.
+    handles prediction requests for a device.
 
     Args:
         payload (str): JSON string containing prediction data.
@@ -157,12 +157,13 @@ def predict(payload: str, topic: str) -> None:
     print('Prediction:', prediction)
     verdict = 1 if prediction[0] == 1 else 0
     print('Verdict:', verdict)
-    mqtt.publish(f'{device_id}/prediction', json.dumps({'prediction': verdict, 'timestamp': datetime.now().isoformat()}))
+    mqtt.publish(f'{device_id}/prediction',
+                 json.dumps({'prediction': verdict, 'timestamp': datetime.now().isoformat()}))
 
 
 def record_sensor_data(payload: str, topic: str) -> None:
     """
-    Records sensor data from MQTT messages.
+    records sensor data from MQTT messages.
 
     Args:
         payload (str): JSON string containing sensor data and timestamp.
@@ -171,16 +172,16 @@ def record_sensor_data(payload: str, topic: str) -> None:
     Returns:
         None
 
-    Workflow:
-        1. Parses the JSON payload to extract sensor data and timestamp.
-        2. Updates the device's `record` field in MongoDB.
-        3. Emits real-time updates via Socket.IO to connected users.
-        4. Handles Redis operations for tracking active users.
+    workflow:
+        1. parses the JSON payload to extract sensor data and timestamp.
+        2. updates the device's `record` field in MongoDB.
+        3. emits real-time updates via Socket.IO to connected users.
+        4. handles Redis operations for tracking active users.
 
-    Exceptions:
+    exceptions:
         - Handles invalid JSON payloads, invalid device IDs, and database errors.
 
-    Example JSON Payload:
+    example JSON Payload:
     {
         "sensor_data": {
             "temperature": 25,
@@ -230,7 +231,7 @@ def record_sensor_data(payload: str, topic: str) -> None:
 
 def record_water_used(payload: str, topic: str) -> None:
     """
-    Records water usage data from MQTT messages.
+    records water usage data from MQTT messages.
 
     Args:
         payload (str): JSON string containing water usage data and timestamp.
@@ -239,14 +240,14 @@ def record_water_used(payload: str, topic: str) -> None:
     Returns:
         None
 
-    Workflow:
-        1. Parses the JSON payload to extract water usage and timestamp.
-        2. Updates the device's `water_usage` field in MongoDB.
+    workflow:
+        1. parses the JSON payload to extract water usage and timestamp.
+        2. updates the device's `water_usage` field in MongoDB.
 
-    Exceptions:
+    exceptions:
         - Handles invalid JSON payloads, invalid device IDs, and database errors.
 
-    Example JSON Payload:
+    example JSON Payload:
     {
         "water_used": 50,
         "date": "2025-01"

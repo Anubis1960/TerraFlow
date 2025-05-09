@@ -1,4 +1,3 @@
-from bson.objectid import ObjectId
 from pymongoose.mongo_types import Types, Schema
 
 

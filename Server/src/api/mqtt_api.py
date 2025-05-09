@@ -34,7 +34,7 @@ from src.config.protocol import mqtt
 @mqtt.on_connect()
 def handle_connect(client: paho.mqtt.client.Client, userdata: typing.Any, flags: dict, rc: int):
     """
-    Handle MQTT connection events.
+    handle MQTT connection events.
 
     Args:
         client (paho.mqtt.client.Client): The MQTT client instance for this callback.
@@ -42,7 +42,7 @@ def handle_connect(client: paho.mqtt.client.Client, userdata: typing.Any, flags:
         flags (dict): Response flags sent by the broker.
         rc (int): The connection result. 0 indicates success.
 
-    Logs the connection result and associated client information.
+    log the connection result and associated client information.
     """
     print(f"Connected with result code {rc}, client: {client}")
 
@@ -50,15 +50,15 @@ def handle_connect(client: paho.mqtt.client.Client, userdata: typing.Any, flags:
 @mqtt.on_message()
 def handle_mqtt_message(client: paho.mqtt.client.Client, userdata: typing.Any, message: paho.mqtt.client.MQTTMessage):
     """
-    Handle incoming MQTT messages.
+    handle incoming MQTT messages.
 
     Args:
         client (paho.mqtt.client.Client): The MQTT client instance.
         userdata (typing.Any): The private user data provided to the client.
         message (paho.mqtt.client.MQTTMessage): The message object containing the topic, payload, and QoS.
 
-    Processes messages based on their topic and forwards the payload to the appropriate handler.
-    Supported topics:
+    processes messages based on their topic and forwards the payload to the appropriate handler.
+    supported topics:
         - '/record/sensor_data': Records sensor data.
         - '/predict': Triggers prediction logic.
         - '/record/water_used': Logs water usage.

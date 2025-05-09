@@ -1,10 +1,9 @@
 import pymongo
-from pymongoose import Schema
 from pymongoose.methods import set_schemas
 
-from src.utils.secrets import MONGO_URI, MONGO_DB
-from src.model.user_model import User
 from src.model.device_model import Device
+from src.model.user_model import User
+from src.utils.secrets import MONGO_URI, MONGO_DB
 
 try:
     mongo_client = pymongo.MongoClient(MONGO_URI)
