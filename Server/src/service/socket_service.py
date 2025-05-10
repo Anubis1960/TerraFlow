@@ -105,9 +105,9 @@ def remap_redis(device_id: str, user_id: str, socket_id: str) -> None:
                 user_list.append(user_id)
             json_data = json.dumps(user_list)
             if json_data != '[]':
-                r.set(device_id, json_data)
+                r.set(device_key, json_data)
             else:
-                r.delete(device_id)
+                r.delete(device_key)
 
             user_key = f"user:{user_id}"
             print('user_key:', user_key)

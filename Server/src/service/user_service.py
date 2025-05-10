@@ -79,8 +79,6 @@ def handle_delete_device(device_id: str, user_id: str):
         devices.remove(device_id)
         mongo_db[USER_COLLECTION].update_one({"_id": ObjectId(user_id)}, {"$set": {"devices": devices}})
 
-    #  TODO Redis
-
     device_key = f"device:{device_id}"
 
     if r.exists(device_key):

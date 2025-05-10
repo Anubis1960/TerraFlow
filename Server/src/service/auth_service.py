@@ -110,7 +110,7 @@ def handle_register(email: str, password: str) -> dict:
         return {'error': 'An error occurred'}
 
 
-def handle_logout(user_id: str, deviceIds: str) -> dict:
+def handle_logout(user_id: str, deviceIds: list) -> dict:
 
     """
     Handle logout for a user.
