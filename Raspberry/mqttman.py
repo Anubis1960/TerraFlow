@@ -15,6 +15,7 @@ rain_upper = 65535
 rain_lower = 13000
 DHT = dht.DHT22(Pin(2))
 relay = Pin(16, Pin.OUT)
+water_used_per_second = 0.5  # Example value, adjust as needed
 # moisture_conversion_factor = 100 / (65535)
 
 class MQTTManager:
@@ -49,9 +50,11 @@ class MQTTManager:
         print("Watering duration:", end_water_timer[5] - self.start_water_timer[5], "seconds")
         print("Watering duration:", end_water_timer[6] - self.start_water_timer[6], "milliseconds")
 
+        water_used = water_used_per_second * (end_water_timer[4] - self.start_water_timer[4]) * 60
+        print("Water used:", water_used, "liters")
+
         self.start_water_timer = None
 
-        water_used = urandom.randint(0, 100)
         timestamp = localtime()
         year, month = timestamp[:2]
         water_data = {
@@ -80,11 +83,15 @@ class MQTTManager:
                 print("Watering duration:", end_water_timer[4] - self.start_water_timer[4], "minutes")
                 print("Watering duration:", end_water_timer[5] - self.start_water_timer[5], "seconds")
                 print("Watering duration:", end_water_timer[6] - self.start_water_timer[6], "milliseconds")
+
+                water_used = water_used_per_second * (end_water_timer[4] - self.start_water_timer[4]) * 60
+                print("Water used:", water_used, "liters")
+
                 self.start_water_timer = None
             timestamp = localtime()
             year, month = timestamp[:2]
             water_data = {
-                'water_used': urandom.randint(0, 100),
+                'water_used': water_used if self.start_water_timer != None else 0,
                 'date': "{:04d}/{:02d}".format(year, month)
             }
             self.client.publish(self.topics['RECORD_WATER_USED_PUB'], json.dumps(water_data))
@@ -160,14 +167,13 @@ class MQTTManager:
 
             moisture = read_moisture()
             temperature, humidity = read_dht()
-            rain = read_rain()
     
             # Sensor data
             sensor_data = {
                 'sensor_data': {
-                    "temperature": urandom.randint(0, 100),
-                    "humidity": urandom.randint(0, 100),
-                    "moisture": urandom.randint(0, 100)
+                    "temperature": temperature,
+                    "humidity": humidity,
+                    "moisture": moisture,
                 },
                 'timestamp': time_str
             }
