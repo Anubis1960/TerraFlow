@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 
-class SummaryCard{
-  static Widget buildSummaryCard({
-    required String title,
-    required double value,
-    required Color color,
-    required double screenWidth,
-    required double screenHeight}) {
+class SummaryCardWidget extends StatelessWidget {
+  final String title;
+  final double value;
+  final Color color;
+  final double screenWidth;
+  final double screenHeight;
+
+  const SummaryCardWidget({
+    Key? key,
+    required this.title,
+    required this.value,
+    required this.color,
+    required this.screenWidth,
+    required this.screenHeight,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       color: Colors.white,
       elevation: 4,

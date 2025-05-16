@@ -85,6 +85,25 @@ def handle_schedule_irrigation(device_id: str, schedule: dict) -> None:
     mqtt.publish(f'{device_id}/schedule', json.dumps(schedule))
 
 
+def handle_irrigation_type(device_id: str, irrigation_type: str, schedule: dict) -> None:
+    """
+    schedules irrigation for a specific device.
+
+    Args:
+        device_id (str): The unique identifier of the device.
+        irrigation_type (str): The type of irrigation to be scheduled.
+        schedule (dict): The schedule for irrigation containing the time.
+
+    Returns:
+        None
+    """
+    json_data = {
+        'irrigation_type': irrigation_type,
+        'schedule': schedule
+    }
+    mqtt.publish(f'{device_id}/irrigation_type', json.dumps(json_data))
+
+
 def remap_redis(device_id: str, user_id: str, socket_id: str) -> None:
     """
     Updates Redis with new user-device associations.

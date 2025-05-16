@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile_app/components/irrigation_type_dialog.dart';
 import 'package:mobile_app/util/constants.dart';
 import 'package:mobile_app/util/socket_service.dart';
 import 'package:mobile_app/components/schedule_dialog.dart';
@@ -79,14 +80,14 @@ class BottomNavBar{
               children: [
                 IconButton(
                   onPressed: () {
-                    ScheduleDialog.showScheduleDialog(context: context, deviceId: deviceId);
+                    IrrigationTypeDialog.showIrrigationTypeDialog(context: context, deviceId: deviceId);
                   },
-                  icon: Icon(Icons.schedule, color: Colors.deepPurpleAccent),
-                  tooltip: 'Schedule Irrigation',
+                  icon: Icon(Icons.account_tree, color: Colors.deepPurpleAccent),
+                  tooltip: 'Irrigation Type',
                 ),
                 Flexible(
                   child: Text(
-                    'Schedule',
+                    'Irrigation Type',
                     style: TextStyle(
                       color: Colors.deepPurpleAccent,
                       fontSize: 14, // Adjusted font size

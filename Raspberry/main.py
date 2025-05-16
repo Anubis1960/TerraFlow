@@ -66,12 +66,16 @@ def connect_wifi(ssid: str, password: str):
         password (str): The Wi-Fi password.
     """
     wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(ssid, password)
     print("Connecting to Wi-Fi...")
     while not wlan.isconnected():
-        sleep(0.1)
-        print(".", end="")
+        wlan.disconnect()
+        wlan.active(False)
+        sleep(1)
+        wlan.active(True)
+        wlan.config(pm = 0xa11140)
+        wlan.connect(ssid, password)
+        sleep(10)
+        print("Connecting to Wi-Fi...")
     print("Connected to Wi-Fi:", wlan.ifconfig()[0])
 
 def get_location():
@@ -118,6 +122,7 @@ async def main():
     client.subscribe(topics['IRRIGATE_SUB'])
     client.subscribe(topics['SCHEDULE_SUB'])
     client.subscribe(topics['PREDICTION_SUB'])
+    client.subscribe(topics['IRRIGATION_TYPE_SUB'])
 
     registration_data = {
         'device_id': _device_id
@@ -127,7 +132,7 @@ async def main():
     # Start tasks
     asyncio.create_task(mqtt_mng.listen())
     asyncio.create_task(mqtt_mng.send())
-    asyncio.create_task(mqtt_mng.check_irrigation())
+
 
 # Run the event loop
 loop = asyncio.get_event_loop()

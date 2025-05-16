@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from flask import Blueprint, jsonify, request
 
-from src.service.device_service import handle_get_device_data
+from src.service.device_service import handle_get_device_data, handle_update_watering_type
 from src.service.user_service import handle_get_user_devices
 from src.utils.tokenizer import decode_token
 
@@ -27,3 +27,20 @@ def get_device_data(device_id):
     if not device:
         return jsonify({"error": "Device not found"}), HTTPStatus.NOT_FOUND
     return jsonify(device), HTTPStatus.OK
+
+
+@device_blueprint.route('/<device_id>/watering_type', methods=['PUT'])
+def update_watering_type(device_id):
+    data = request.get_json()
+    if not data or 'watering_type' not in data:
+        return jsonify({"error": "Invalid input"}), HTTPStatus.BAD_REQUEST
+    watering_type = data['watering_type']
+    json_data = {
+        'watering_type': watering_type,
+        "schedule": data.get('schedule', None),
+    }
+    msg = handle_update_watering_type(device_id, json_data)
+
+    if 'error' in msg:
+        return jsonify(msg), HTTPStatus.BAD_REQUEST
+    return jsonify(msg), HTTPStatus.OK

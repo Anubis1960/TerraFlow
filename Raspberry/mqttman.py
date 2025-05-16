@@ -1,6 +1,5 @@
 from time import localtime, sleep
 import asyncio
-import urandom
 import ujson as json
 from machine import Pin, ADC
 import dht
@@ -14,7 +13,7 @@ dry_soil = 44300
 rain_upper = 65535
 rain_lower = 13000
 DHT = dht.DHT22(Pin(2))
-relay = Pin(16, Pin.OUT)
+# relay = Pin(16, Pin.OUT)
 water_used_per_second = 0.5  # Example value, adjust as needed
 # moisture_conversion_factor = 100 / (65535)
 
@@ -22,8 +21,13 @@ class MQTTManager:
     def __init__(self, client, topics, location_data):
         self.client = client
         self.topics = topics
-        self.schedule = {}
+        self.schedule = {
+            'type': "DAILY",
+            'time': "08:00"
+        }
         self.schedule_updated_event = asyncio.Event()
+        self.irrigation_task = asyncio.create_task(self.check_irrigation())
+        self.irrigation_type = "AUTOMATIC"
         self.location_data = location_data
         self.start_water_timer = None
         relay_off()
@@ -114,6 +118,47 @@ class MQTTManager:
             self.schedule['time'] = time
             self.schedule_updated_event.set()
 
+    
+    def handle_irrigation_type_cmd(self, msg: dict):
+        """
+        Handles the watering type command.
+        """
+        if 'irrigation_type' not in msg:
+            return
+
+        irrigation_type = msg['irrigation_type']
+        if irrigation_type not in ['AUTOMATIC', 'MANUAL', 'SCHEDULED']:
+            return
+
+        self.irrigation_task.cancel()
+
+        self.irrigation_type = irrigation_type
+
+        if self.irrigation_type == 'AUTOMATIC':
+            self.schedule = {
+                'type': "DAILY",
+                'time': "08:00"
+            }
+        elif self.irrigation_type == 'MANUAL':
+            self.schedule = {
+                'type': "MANUAL",
+                'time': "00:00"
+            }
+        elif self.irrigation_type == 'SCHEDULED':
+            if 'schedule' not in msg:
+                return
+            schedule = msg['schedule']
+            if 'type' not in schedule or 'time' not in schedule:
+                return
+            type = schedule['type']
+            time = schedule['time']
+            if type in ['DAILY', 'WEEKLY', 'MONTHLY']:
+                self.schedule['type'] = type
+                self.schedule['time'] = time
+            
+        self.irrigation_task = asyncio.create_task(self.check_irrigation())
+    
+
 
     def mqtt_callback(self, topic, msg):
         """
@@ -137,6 +182,11 @@ class MQTTManager:
             print("Prediction command received:", msg)
             json_data = json.loads(msg)
             self.handle_prediction_cmd(json_data)
+        elif topic == self.topics['IRRIGATION_TYPE_SUB']:
+            print("Irrigation type command received:", msg)
+            json_data = json.loads(msg)
+            self.handle_irrigation_type_cmd(json_data)
+
 
     async def listen(self, period_s: int = 10):
         """
@@ -180,71 +230,92 @@ class MQTTManager:
             self.client.publish(self.topics['RECORD_SENSOR_DATA_PUB'], json.dumps(sensor_data))
 
             await asyncio.sleep(period_s)
+        
     
-    async def check_irrigation(self, period_s: int = 10):
+    async def wait_for_schedule(self):
+        schedule_type = self.schedule.get("type")
+        schedule_time = self.schedule.get("time")
+
+        # Get current time
+        current_time = localtime()
+        current_hour, current_minute = current_time[3:5]
+
+        # Extract scheduled hour and minute
+        scheduled_hour, scheduled_minute = map(int, schedule_time.split(":"))
+
+        # Calculate seconds until next irrigation
+        now_seconds = current_hour * 3600 + current_minute * 60
+        schedule_seconds = scheduled_hour * 3600 + scheduled_minute * 60
+        time_until_irrigation = schedule_seconds - now_seconds
+
+        # If the time has already passed today, schedule for the next occurrence
+        if time_until_irrigation < 0:
+            if schedule_type == "DAILY":
+                time_until_irrigation += 86400  # 24 hours
+            elif schedule_type == "WEEKLY":
+                time_until_irrigation += 604800  # 7 days
+            elif schedule_type == "MONTHLY":
+                time_until_irrigation += 2592000  # 30 days
+
+        print(f"Next irrigation in {time_until_irrigation} seconds")
+        
+        while time_until_irrigation > 0:
+            delay = min(time_until_irrigation, 86400)  # Wait up to 24 hours at a time
+            try:
+                await asyncio.wait_for(self.schedule_updated_event.wait(), delay)
+                self.schedule_updated_event.clear()
+                break  # Exit if the schedule is updated
+            except asyncio.TimeoutError:
+                time_until_irrigation -= delay
+
+
+    async def handle_auto_irrigation(self):
+        await self.wait_for_schedule()
+        rain_level = read_rain()
+        print("Rain level:", rain_level)
+
+        weather_data = self.get_weather_data()
+        print("Weather data:", weather_data)
+
+        weather_rain = weather_data['current']['precip_mm']
+        print("Weather rain level:", weather_rain)
+
+        while rain_level > 50 and weather_rain > 5:
+            print("Rain detected, irrigation skipped.")
+            relay_off()
+            await asyncio.sleep(3600)
+            rain_level = read_rain()
+            weather_data = self.get_weather_data()
+            weather_rain = weather_data['current']['precip_mm']
+            print("Weather rain level:", weather_rain)
+        
+        self.send_for_prediction()
+    
+
+    async def handle_scheduled_irrigation(self):
+        await self.wait_for_schedule()
+        relay_on()
+        sleep(5)
+        relay_off()
+
+
+    async def check_irrigation(self):
         """
         If a schedule is set, it follows the schedule.
         """
+        print("Irrigation check started.")
         while True:
-            if self.schedule:
-                schedule_type = self.schedule.get("type")
-                schedule_time = self.schedule.get("time")
-
-                # Get current time
-                current_time = localtime()
-                current_hour, current_minute = current_time[3:5]
-
-                # Extract scheduled hour and minute
-                scheduled_hour, scheduled_minute = map(int, schedule_time.split(":"))
-
-                # Calculate seconds until next irrigation
-                now_seconds = current_hour * 3600 + current_minute * 60
-                schedule_seconds = scheduled_hour * 3600 + scheduled_minute * 60
-                time_until_irrigation = schedule_seconds - now_seconds
-
-                # If the time has already passed today, schedule for the next occurrence
-                if time_until_irrigation < 0:
-                    if schedule_type == "DAILY":
-                        time_until_irrigation += 86400  # 24 hours
-                    elif schedule_type == "WEEKLY":
-                        time_until_irrigation += 604800  # 7 days
-                    elif schedule_type == "MONTHLY":
-                        time_until_irrigation += 2592000  # 30 days
-
-                print(f"Next irrigation in {time_until_irrigation} seconds")
-            else:
-                time_until_irrigation = period_s
-            
-            while time_until_irrigation > 0:
-                delay = min(time_until_irrigation, 86400)  # Wait up to 24 hours at a time
-                try:
-                    await asyncio.wait_for(self.schedule_updated_event.wait(), delay)
-                    self.schedule_updated_event.clear()
-                    break  # Exit if the schedule is updated
-                except asyncio.TimeoutError:
-                    time_until_irrigation -= delay
-            
-            rain_level = read_rain()
-            print("Rain level:", rain_level)
-
-            weather_data = self.get_weather_data()
-            print("Weather data:", weather_data)
-
-            weather_rain = weather_data['current']['precip_mm']
-            print("Weather rain level:", weather_rain)
-
-            while rain_level > 50 and weather_rain > 5:
-                print("Rain detected, irrigation skipped.")
-                relay_off()
-                await asyncio.sleep(3600)
-                rain_level = read_rain()
-                weather_data = self.get_weather_data()
-                weather_rain = weather_data['current']['precip_mm']
-                print("Weather rain level:", weather_rain)
-            
-            if time_until_irrigation <= 0:
-                self.send_for_prediction()
+            if self.irrigation_type == "AUTO":
+                print("Auto mode, checking schedule.")
+                await self.handle_auto_irrigation()
+            elif self.irrigation_type == "MANUAL":
+                print("Manual mode, waiting for irrigation command.")
+                await asyncio.sleep(86400)  # Wait for 24 hours
+            elif self.irrigation_type == "SCHEDULED":
+                print("Scheduled mode, waiting for schedule.")
+                await self.handle_scheduled_irrigation()
     
+
     def send_for_prediction(self):
         moisture_level = read_moisture()
         print("Moisture level:", moisture_level)
@@ -271,16 +342,15 @@ class MQTTManager:
         response = requests.get(url)
         return response.json()
 
-def get_relay_state():
-    return relay.value() == 0  # 0 means ON, 1 means OFF
+
 
 def relay_on():
     print("relay is ON")
-    relay.value(0)
+    # relay.value(0)
 
 def relay_off():
     print("relay is OFF")
-    relay.value(1)
+    # relay.value(1)
 
 
 def read_dht():

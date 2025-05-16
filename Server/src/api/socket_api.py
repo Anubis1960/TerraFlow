@@ -31,7 +31,7 @@ and connected clients. The handlers process user requests, manage devices, and h
 
 from flask import request
 from src.service.socket_service import (
-    handle_connect, handle_disconnect, handle_irrigate,
+    handle_connect, handle_disconnect, handle_irrigate, handle_irrigation_type,
     handle_schedule_irrigation, remap_redis, handle_export,
 )
 from src.config.protocol import socketio
@@ -205,6 +205,34 @@ def schedule_irrigation_event(data: dict) -> None:
     }
     print('Schedule:', schedule)
     handle_schedule_irrigation(device_id, schedule)
+
+
+@socketio.on('irrigation_type')
+def irrigation_type_event(data: dict) -> None:
+    """
+    Sets the irrigation type for a device.
+
+    Args:
+        data (dict): JSON payload with keys 'device_id' and 'irrigation_type'.
+
+    Returns:
+        None
+
+    Actions:
+        - Validates presence of required keys.
+        - Calls `handle_irrigation_type` with the device ID and irrigation type.
+
+    Logs:
+        - Errors if required keys are missing.
+    """
+    if 'device_id' not in data or 'irrigation_type' not in data:
+        print('device ID or irrigation type not found, found:', data)
+        return
+    device_id = data['device_id']
+    irrigation_type = data['irrigation_type']
+    schedule = data.get('schedule', {})
+    print('Irrigation Type:', irrigation_type)
+    handle_irrigation_type(device_id, irrigation_type, schedule)
 
 
 @socketio.on('remove_schedule')
