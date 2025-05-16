@@ -25,5 +25,6 @@ def get_mqtt_topics(device_id):
         "PREDICT_PUB": f"{device_id}/predict",
         "SCHEDULE_SUB": f"{device_id}/schedule",
         "IRRIGATE_SUB": f"{device_id}/irrigate",
-        "PREDICTION_SUB": f"{device_id}/prediction"
+        "PREDICTION_SUB": f"{device_id}/prediction",
+        "UPDATE_WATERING_TYPE_SUB": f"{device_id}/watering_type",
     }

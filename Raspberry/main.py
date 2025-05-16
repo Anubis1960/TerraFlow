@@ -70,11 +70,12 @@ def connect_wifi(ssid: str, password: str):
     wlan.connect(ssid, password)
     print("Connecting to Wi-Fi...")
     while not wlan.isconnected():
-        sleep(1)
+        sleep(0.1)
         print(".", end="")
     print("Connected to Wi-Fi:", wlan.ifconfig()[0])
 
 def get_location():
+    print("Fetching location data...")
     response = requests.get('https://ipinfo.io/json ')
     data = response.json()
     city = data.get('city', 'Unknown')
