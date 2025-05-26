@@ -1,20 +1,19 @@
 import json
 import unittest
 from unittest.mock import patch, MagicMock
+
 from bson import ObjectId
 
+from src.config.mongo import USER_COLLECTION
 from src.service.auth_service import (
     handle_form_login,
     handle_token_login,
     handle_register,
     handle_logout,
 )
-
-from src.config.mongo import mongo_db, USER_COLLECTION
-from src.config.redis import r
-
-from src.utils.crypt import encrypt, decrypt
+from src.utils.crypt import encrypt
 from src.utils.tokenizer import generate_token
+
 
 class TestAuthService(unittest.TestCase):
     def setUp(self):

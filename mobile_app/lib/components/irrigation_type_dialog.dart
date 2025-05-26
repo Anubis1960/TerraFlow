@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../util/socket_service.dart';
+import '../service/socket_service.dart';
 
 class IrrigationTypeDialog {
   static void showIrrigationTypeDialog({

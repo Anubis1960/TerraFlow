@@ -1,9 +1,12 @@
 import json
 
+import numpy as np
 from bson import ObjectId
 
 from src.config.mongo import mongo_db, DEVICE_COLLECTION, USER_COLLECTION
 from src.config.redis import r
+from src.utils.predict import predict_disease
+import cv2
 
 
 def handle_get_user_devices(user_id: str):
@@ -88,3 +91,20 @@ def handle_delete_device(device_id: str, user_id: str):
             r.set(device_key, json.dumps(user_list))
 
     return True
+
+
+def handle_predict_disease(image_file) -> dict[str, str]:
+    """
+    Predicts disease from an image file.
+
+    :param image_file: The path to the image file.
+    :return: A dictionary containing the prediction result.
+    """
+    file_bytes = image_file.read()
+    np_arr = np.frombuffer(file_bytes, np.uint8)
+    image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    if image is None:
+        return {"error": "Invalid image file"}
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
+    prediction = predict_disease(image)
+    return prediction

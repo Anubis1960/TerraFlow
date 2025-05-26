@@ -181,3 +181,9 @@ key.jks
 AmritpalKaur.csv
 
 ./Raspberry/.env
+
+/Raspberry/.env
+
+/Server/src/tests/imgs
+
+*/imgs/

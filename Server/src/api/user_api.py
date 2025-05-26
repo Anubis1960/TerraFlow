@@ -2,7 +2,8 @@ from http import HTTPStatus
 
 from flask import Blueprint, request, jsonify
 
-from src.service.user_service import handle_get_user_devices, handle_add_device, handle_delete_device
+from src.service.user_service import (handle_get_user_devices, handle_add_device, handle_delete_device,
+                                      handle_predict_disease)
 from src.utils.tokenizer import decode_token
 
 user_blueprint = Blueprint('user', __name__, url_prefix='/user')
@@ -72,3 +73,24 @@ def delete_device(device_id):
         return jsonify({"error": "Failed to delete device"}), HTTPStatus.NOT_FOUND
 
     return jsonify({"device_id": device_id}), HTTPStatus.OK
+
+
+@user_blueprint.route('/predict-disease', methods=['POST'])
+def predict_disease():
+    """
+    Endpoint to predict disease from an image.
+    The image should be sent as a file in the request.
+    """
+    if 'image' not in request.files:
+        return jsonify({"error": "No image file provided"}), HTTPStatus.BAD_REQUEST
+
+    image_file = request.files['image']
+    if not image_file:
+        return jsonify({"error": "Invalid image file"}), HTTPStatus.BAD_REQUEST
+
+    try:
+        prediction = handle_predict_disease(image_file)
+        return jsonify(prediction), HTTPStatus.OK
+    except Exception as e:
+        print(f"Error during prediction: {e}")
+        return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR

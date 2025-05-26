@@ -158,7 +158,7 @@ def predict(payload: str, topic: str) -> None:
     verdict = 1 if prediction[0] == 1 else 0
     print('Verdict:', verdict)
     mqtt.publish(f'{device_id}/prediction',
-                 json.dumps({'prediction': verdict, 'timestamp': datetime.now().isoformat()}))
+                 json.dumps({'prediction': verdict}))
 
 
 def record_sensor_data(payload: str, topic: str) -> None:
@@ -220,6 +220,7 @@ def record_sensor_data(payload: str, topic: str) -> None:
                 user_data = r.get(user_key) if r.exists(user_key) else ""
                 print("\n\n SOCKET ID:", user_data, "\n\n")
                 socketio.emit('record', json_data, room=user_data)
+                print(f"Emitted data to user {user} with socket ID {user_data}")
         except ResponseError as redis_error:
             print(f"Redis ResponseError: {redis_error}")
         finally:

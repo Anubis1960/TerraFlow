@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import patch, MagicMock
 from bson import ObjectId
@@ -5,6 +6,7 @@ from src.service.user_service import (
     handle_get_user_devices,
     handle_add_device,
     handle_delete_device,
+    handle_predict_disease
 )
 from src.config.mongo import USER_COLLECTION, DEVICE_COLLECTION
 
@@ -166,3 +168,17 @@ class TestUserManagement(unittest.TestCase):
 
         # Assert that the function returned False
         self.assertFalse(result)
+
+    def test_handle_predict_disease(self):
+        dir = "./imgs"
+
+        for file in os.listdir(dir):
+            if file.endswith(".jpg") or file.endswith(".png"):
+                image_path = os.path.join(dir, file)
+                print(f"Testing image: {image_path}")
+                with open(image_path, 'rb') as img_file:
+                    result = handle_predict_disease(img_file)
+
+                # Assert that the result is a tuple with a dictionary and an integer
+                self.assertIsInstance(result, dict)
+                self.assertIn('prediction', result)

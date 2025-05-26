@@ -7,13 +7,13 @@ import '../service/filter_service.dart';
 import '../components/date_filter_picker.dart';
 import '../components/summary_card.dart';
 import '../components/charts.dart';
-import '../util/socket_service.dart';
+import '../service/socket_service.dart';
 import '../util/constants.dart';
 import '../util/storage/base_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:typed_data';
 import '../util/export/file_downloader.dart';
+import '../components/top_bar.dart';
 
 class DeviceDashBoard extends StatefulWidget {
   final dynamic deviceId;
@@ -91,10 +91,12 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
       }
     });
 
-    BaseStorage.getStorageFactory().getDeviceList().then((deviceIds) {
-      SocketService.socket.emit('init', {
-        'token': BaseStorage.getStorageFactory(),
-        'devices': deviceIds,
+    BaseStorage.getStorageFactory().getToken().then((token) {
+      BaseStorage.getStorageFactory().getDeviceList().then((deviceIds) {
+        SocketService.socket.emit('init', {
+          'token': token,         // <-- now it's a String
+          'devices': deviceIds,   // <-- should be a List<String> or similar
+        });
       });
     });
   }
@@ -160,7 +162,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Device Dashboard')),
+      appBar: TopBar.buildTopBar(title: 'Device Dashboard', context: context),
       body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(screenWidth * 0.02),
@@ -174,7 +176,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
                 onDatePick: _onDatePick,
                 onFilterValueChanged: _onFilterValueChange,
               ),
-              SizedBox(height: screenHeight * 0.02),
+              SizedBox(height: screenHeight * 0.01),
               _buildLineChart(screenWidth, screenHeight),
               SizedBox(height: screenHeight * 0.01),
               Row(
@@ -208,7 +210,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
         ),
       ),
       bottomNavigationBar: SizedBox(
-        height: screenHeight * 0.15,
+        height: screenHeight * 0.135,
         child: BottomNavBar.buildBottomNavBar(context: context, deviceId: deviceId),
       ),
     );

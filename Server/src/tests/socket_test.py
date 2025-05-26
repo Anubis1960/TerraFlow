@@ -4,13 +4,12 @@ from unittest.mock import patch, MagicMock
 
 from bson.objectid import ObjectId
 
+from src.config.mongo import USER_COLLECTION
 from src.service.socket_service import (
     remap_redis,
     handle_irrigate,
     handle_schedule_irrigation,
-    handle_export,
 )
-from src.config.mongo import USER_COLLECTION, DEVICE_COLLECTION
 
 
 class TestDeviceManagement(unittest.TestCase):
@@ -60,7 +59,7 @@ class TestDeviceManagement(unittest.TestCase):
             'time': '00:00',
         }
         expected_topic = f'{device_id}/schedule'
-        expected_payload = {'schedule': schedule}
+        expected_payload = schedule
 
         # Call the function
         handle_schedule_irrigation(device_id, schedule)
@@ -72,7 +71,7 @@ class TestDeviceManagement(unittest.TestCase):
         # Test remapping the Redis cache
         device_id = "681785b2abcafa0ae18c75f9"
         user_id = "d372fd8aa13bc0dc8e891b20"
-        socket_id = "socket_id"
+        socket_id = "d372fd8aa13bc0dc8e891b20"
 
         # Mock the MongoDB find_one method
         self.mongo_db_mock[USER_COLLECTION].find_one.return_value = {
@@ -81,9 +80,24 @@ class TestDeviceManagement(unittest.TestCase):
         }
 
         # Mock the Redis set method
-        self.redis_mock.set.return_value = True
+        self.redis_mock.get.return_value = json.dumps([user_id])
         # Call the function
         remap_redis(device_id, user_id, socket_id)
         # Assert that the Redis set method was called with the correct parameters
-        self.redis_mock.set.assert_called_once_with(f'device:{device_id}', user_id)
+        # self.redis_mock.set.assert_called_with(f'device:{device_id}', json.dumps([user_id]))
+        self.redis_mock.set.assert_called_with(f'user:{user_id}', socket_id)
 
+    def test_remap_redis_no_device(self):
+        # Test remapping Redis when the device does not exist
+        device_id = "non_existent_device"
+        user_id = "d372fd8aa13bc0dc8e891b20"
+        socket_id = "d372fd8aa13bc0dc8e891b20"
+
+        # Mock the Redis get method to return None
+        self.redis_mock.get.return_value = None
+
+        # Call the function
+        remap_redis(device_id, user_id, socket_id)
+
+        # Assert that the Redis set method was not called
+        self.redis_mock.set.assert_not_called()

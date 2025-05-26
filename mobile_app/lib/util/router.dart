@@ -9,6 +9,8 @@ import 'package:mobile_app/pages/device_dashboard.dart';
 import 'package:mobile_app/util/constants.dart';
 import 'package:mobile_app/pages/callback.dart';
 
+import '../pages/disease_check.dart';
+
 final GoRouter router = GoRouter(
   initialLocation: Routes.LOGIN,
   redirect: (context, state) async {
@@ -71,6 +73,11 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const Scaffold(
         body: Center(child: Text('Page not found')),
       ),
+    ),
+    GoRoute(
+      path: Routes.DISEASE_CHECK,
+      name: 'disease-check',
+      builder: (context, state) => const DiseaseCheckScreen(),
     ),
   ],
 );

@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_app/components/irrigation_type_dialog.dart';
 import 'package:mobile_app/util/constants.dart';
-import 'package:mobile_app/util/socket_service.dart';
-import 'package:mobile_app/components/schedule_dialog.dart';
+import 'package:mobile_app/service/socket_service.dart';
 
 class BottomNavBar{
   static Widget buildBottomNavBar({
@@ -61,7 +60,7 @@ class BottomNavBar{
                 ),
                 Flexible(
                   child: Text(
-                    'Irrigation',
+                    'Irrigate',
                     style: TextStyle(
                       color: Colors.deepPurpleAccent,
                       fontSize: 14, // Adjusted font size
@@ -82,12 +81,12 @@ class BottomNavBar{
                   onPressed: () {
                     IrrigationTypeDialog.showIrrigationTypeDialog(context: context, deviceId: deviceId);
                   },
-                  icon: Icon(Icons.account_tree, color: Colors.deepPurpleAccent),
-                  tooltip: 'Irrigation Type',
+                  icon: Icon(Icons.settings, color: Colors.deepPurpleAccent),
+                  tooltip: 'Irrigation Settings',
                 ),
                 Flexible(
                   child: Text(
-                    'Irrigation Type',
+                    'Settings',
                     style: TextStyle(
                       color: Colors.deepPurpleAccent,
                       fontSize: 14, // Adjusted font size
@@ -111,7 +110,7 @@ class BottomNavBar{
                     });
                   },
                   icon: Icon(Icons.cloud_download, color: Colors.green),
-                  tooltip: 'Export Data',
+                  tooltip: 'Export Excel',
                 ),
                 Flexible(
                   child: Text(

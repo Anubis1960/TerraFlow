@@ -26,10 +26,6 @@ class Charts {
         final double currentOffset = position.pixels;
         final double maxOffset = position.maxScrollExtent;
 
-        print('Current Offset: $currentOffset');
-        print('Target Position: $targetPosition');
-        print('Max Offset: ${position.maxScrollExtent}');
-
         // Auto-scroll only if:
         // - User wasn't dragging
         // - Was already at/near the end OR it's the initial load

@@ -1,12 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_app/util/storage/base_storage.dart';
 import 'package:mobile_app/util/constants.dart';
-import 'package:mobile_app/util/google/sign_in.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart' show kIsWeb;
-
+import 'package:mobile_app/service/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,173 +26,220 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-
-  Future<void> _loginWithGoogle(BuildContext context) async {
-    var googleSignIn = GoogleSignInUtil.getGoogleSignInFactory();
-    await googleSignIn.signIn(context);
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Get the screen size
-    final screenWidth = MediaQuery
-        .of(context)
-        .size
-        .width;
-    final screenHeight = MediaQuery
-        .of(context)
-        .size
-        .height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.08, // 8% of screen width
-              vertical: screenHeight * 0.02, // 2% of screen height
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.lock_outline, size: 100, color: Colors.blue),
-                SizedBox(height: screenHeight * 0.02),
-                const Text(
-                  'Welcome Back',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: screenHeight * 0.01),
-                const Text(
-                  'Login to continue',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-                SizedBox(height: screenHeight * 0.03),
-                TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: const Icon(Icons.email),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    hintText: 'Enter your email',
-                    fillColor: Colors.white,
-                    filled: true,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF4e54c8), Color(0xFF8f94fb)],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
                   ),
-                ),
-                SizedBox(
-                    height: screenHeight * 0.02,
-                ),
-                TextField(
-                  obscureText: true,
-                  controller: passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                ],
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: screenWidth * 0.08,
+                vertical: screenHeight * 0.05,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo Section
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF4e54c8).withOpacity(0.1),
                     ),
-                    hintText: 'Enter your password',
-                    fillColor: Colors.white,
-                    filled: true,
+                    child: Icon(
+                      Icons.lock_outline,
+                      size: 80,
+                      color: const Color(0xFF4e54c8),
+                    ),
                   ),
-                ),
-                SizedBox(height: screenHeight * 0.03),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
+                  SizedBox(height: screenHeight * 0.02),
+
+                  // Welcome Text
+                  Text(
+                    'Welcome Back',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF4e54c8),
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.01),
+
+                  // Subtitle
+                  const Text(
+                    'Login to continue',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  SizedBox(height: screenHeight * 0.03),
+
+                  // Email Field
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      prefixIcon: Icon(Icons.email, color: const Color(0xFF4e54c8)),
+                      border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: Colors
-                            .grey), // Add border
+                        borderSide: BorderSide(color: Colors.grey[300]!),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF4e54c8)),
+                      ),
+                      hintText: 'Enter your email',
+                      fillColor: Colors.white,
+                      filled: true,
                     ),
-                    onPressed: () async {
-                      if (emailController.text.isEmpty ||
-                          passwordController.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please fill in all fields.'),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                        return;
-                      }
-                      Map<String, String> loginJson = {
-                        'email': emailController.text,
-                        'password': passwordController.text,
-                      };
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
 
-                      String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
+                  // Password Field
+                  TextField(
+                    obscureText: true,
+                    controller: passwordController,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      prefixIcon: Icon(Icons.lock, color: const Color(0xFF4e54c8)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF4e54c8)),
+                      ),
+                      hintText: 'Enter your password',
+                      fillColor: Colors.white,
+                      filled: true,
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.03),
 
-                      url += Server.LOGIN_REST_URL;
+                  // Login Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4e54c8),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () async {
+                        if (emailController.text.isEmpty ||
+                            passwordController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please fill in all fields.'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
 
-                      var res = await http.post(
-                        Uri.parse(url),
-                        headers: <String, String>{
-                          'Content-Type': 'application/json; charset=UTF-8',
-                        },
-                        body: jsonEncode(loginJson),
-                      );
+                        String email = emailController.text;
+                        String password = passwordController.text;
 
-                      if (res.statusCode == 200) {
-                        var data = jsonDecode(res.body);
-                        BaseStorage.getStorageFactory().saveData('token', data['token']);
-                        BaseStorage.getStorageFactory().saveData('controller_ids', data['controllers']);
-                        context.go(Routes.HOME);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Invalid email or password.'),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                      }
+                        AuthService authService = AuthService();
+
+                        bool res = await authService.login(email, password);
+                        if (res) {
+                          context.go(Routes.HOME);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Login failed. Please try again.'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        }
+                      },
+                      child: const Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
+
+                  // Divider with OR
+                  Row(
+                    children: const [
+                      Expanded(child: Divider(color: Colors.grey)),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text('OR', style: TextStyle(color: Colors.grey)),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey)),
+                    ],
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
+
+                  // Google Sign-In Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey[300]!),
+                        ),
+                      ),
+                      onPressed: () async {
+                        AuthService authService = AuthService();
+                        await authService.loginWithGoogle(context);
+                      },
+                      icon: Image.asset(
+                        'assets/images/google_logo.png',
+                        height: 24,
+                      ),
+                      label: const Text('Sign in with Google', style: TextStyle(fontSize: 16)),
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
+
+                  // Registration Link
+                  TextButton(
+                    onPressed: () {
+                      context.go(Routes.REGISTER);
                     },
-                    child: const Text('Login', style: TextStyle(fontSize: 16)),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-
-                // 🔹 Google Sign-In Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      // White background like Google's button
-                      foregroundColor: Colors.black,
-                      // Text color
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: Colors
-                            .grey), // Add border
+                    child: Text(
+                      'Don’t have an account? Register',
+                      style: TextStyle(
+                        color: const Color(0xFF4e54c8),
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    onPressed: () => _loginWithGoogle(context),
-                    icon: Image.asset(
-                      'assets/images/google_logo.png',
-                      // Add a Google logo image in assets
-                      height: 24,
-                    ),
-                    label: const Text(
-                        'Sign in with Google', style: TextStyle(fontSize: 16)),
                   ),
-                ),
-
-                SizedBox(height: screenHeight * 0.02),
-                TextButton(
-                  onPressed: () {
-                    context.go(Routes.REGISTER);
-                  },
-                  child: const Text('Don’t have an account? Register'),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

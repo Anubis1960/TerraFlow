@@ -32,6 +32,45 @@ class MQTTManager:
         self.start_water_timer = None
         relay_off()
 
+    async def listen(self, period_s: int = 10):
+        """
+        Listens for incoming MQTT messages.
+
+        Args:
+            period_ms (int): The interval between checks in seconds.
+        """
+        print("Listening for MQTT messages...")
+        while True:
+            self.client.check_msg()
+            await asyncio.sleep(period_s)
+
+    def mqtt_callback(self, topic, msg):
+        """
+        Handles incoming MQTT messages.
+
+        Args:
+            topic (bytes): The topic of the received message.
+            msg (bytes): The payload of the received message.
+        """
+        topic = topic.decode()
+        msg = msg.decode()
+        
+        if topic == self.topics['SCHEDULE_SUB']:
+            print("Schedule command received:", msg)
+            json_data = json.loads(msg)
+            self.handle_schedule_cmd(json_data)
+        elif topic == self.topics['IRRIGATE_SUB']:
+            print("Irrigation command received:", msg)
+            self.handle_irrigation_cmd()
+        elif topic == self.topics['PREDICTION_SUB']:
+            print("Prediction command received:", msg)
+            json_data = json.loads(msg)
+            self.handle_prediction_cmd(json_data)
+        elif topic == self.topics['IRRIGATION_TYPE_SUB']:
+            print("Irrigation type command received:", msg)
+            json_data = json.loads(msg)
+            self.handle_irrigation_type_cmd(json_data)
+
     def handle_irrigation_cmd(self):
         """
         Handles the irrigation command.
@@ -157,48 +196,6 @@ class MQTTManager:
                 self.schedule['time'] = time
             
         self.irrigation_task = asyncio.create_task(self.check_irrigation())
-    
-
-
-    def mqtt_callback(self, topic, msg):
-        """
-        Handles incoming MQTT messages.
-
-        Args:
-            topic (bytes): The topic of the received message.
-            msg (bytes): The payload of the received message.
-        """
-        topic = topic.decode()
-        msg = msg.decode()
-        
-        if topic == self.topics['SCHEDULE_SUB']:
-            print("Schedule command received:", msg)
-            json_data = json.loads(msg)
-            self.handle_schedule_cmd(json_data)
-        elif topic == self.topics['IRRIGATE_SUB']:
-            print("Irrigation command received:", msg)
-            self.handle_irrigation_cmd()
-        elif topic == self.topics['PREDICTION_SUB']:
-            print("Prediction command received:", msg)
-            json_data = json.loads(msg)
-            self.handle_prediction_cmd(json_data)
-        elif topic == self.topics['IRRIGATION_TYPE_SUB']:
-            print("Irrigation type command received:", msg)
-            json_data = json.loads(msg)
-            self.handle_irrigation_type_cmd(json_data)
-
-
-    async def listen(self, period_s: int = 10):
-        """
-        Listens for incoming MQTT messages.
-
-        Args:
-            period_ms (int): The interval between checks in seconds.
-        """
-        print("Listening for MQTT messages...")
-        while True:
-            self.client.check_msg()
-            await asyncio.sleep(period_s)
     
     async def send(self,period_s: int = 6):
         """

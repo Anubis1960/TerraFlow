@@ -1,7 +1,7 @@
 import unittest
-import pytest
-from src.utils.secrets import ENCRYPT_KEY as key
+
 from src.utils.crypt import encrypt, decrypt
+from src.utils.secrets import ENCRYPT_KEY as key
 
 
 class TestEncryption(unittest.TestCase):

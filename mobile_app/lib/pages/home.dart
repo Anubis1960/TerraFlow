@@ -3,9 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_app/util/socket_service.dart';
+import 'package:mobile_app/service/socket_service.dart';
 import 'package:mobile_app/util/storage/base_storage.dart';
-import 'package:mobile_app/components/top_navbar.dart';
+import 'package:mobile_app/components/top_bar.dart';
 import 'package:mobile_app/util/constants.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,6 +18,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late Future<String> token;
   late Future<List<String>> deviceIds;
+  final Set<String> _selectedDeviceIds = {};
 
   @override
   void initState() {
@@ -59,13 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
               deviceIds = _loadDeviceIds(); // reload future
             });
           }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to load devices.'),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
         }
       }
 
@@ -76,9 +70,22 @@ class _HomeScreenState extends State<HomeScreen> {
         'devices': updatedDeviceIds, // ✅ Now it's a real List<String>
       };
 
-      print('Socket data: $data');
       SocketService.socket.emit('init', data);
     });
+  }
+
+
+
+
+  Future<List<String>> _loadDeviceIds() async {
+    return await BaseStorage.getStorageFactory().getDeviceList();
+  }
+
+  @override
+  void dispose() {
+    SocketService.socket.off('error');
+    // SocketService.socket.off('devices');
+    super.dispose();
   }
 
   void _deleteDevice(String deviceId) async {
@@ -116,80 +123,98 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _deleteSelectedDevices() async {
+    if (_selectedDeviceIds.isEmpty) return;
 
-  Future<List<String>> _loadDeviceIds() async {
-    return await BaseStorage.getStorageFactory().getDeviceList();
-  }
+    // Confirm deletion
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Devices'),
+        content: Text('Are you sure you want to delete ${_selectedDeviceIds.length} device(s)?'),
+        actions: [
+          TextButton(onPressed: Navigator.of(context).pop, child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(true);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
 
-  @override
-  void dispose() {
-    SocketService.socket.off('error');
-    // SocketService.socket.off('devices');
-    super.dispose();
+    if (shouldDelete == true) {
+      for (var deviceId in _selectedDeviceIds) {
+        _deleteDevice(deviceId);
+      }
+      setState(() {
+        _selectedDeviceIds.clear();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get the screen size
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       appBar: TopBar.buildTopBar(title: 'Devices', context: context),
-      body: FutureBuilder<List<String>>(
-        future: deviceIds,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'No devices found.',
-                    style: TextStyle(
-                      fontSize: screenHeight * 0.025, // 2.5% of screen height
-                      fontWeight: FontWeight.w600,
+      body: Column(
+        children: [
+          Expanded(
+            child: FutureBuilder<List<String>>(
+              future: deviceIds,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'No devices found.',
+                          style: TextStyle(
+                            fontSize: screenHeight * 0.025,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  SizedBox(height: screenHeight * 0.02), // 2% of screen height
-                  FloatingActionButton(
-                    onPressed: () {
-                      _showAddDeviceDialog(context);
-                    },
-                    backgroundColor: Colors.deepPurpleAccent,
-                    child: const Icon(Icons.add),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            var deviceIds = snapshot.data!;
-            return Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
+                  );
+                } else {
+                  var deviceIds = snapshot.data!;
+
+                  return ListView.builder(
                     itemCount: deviceIds.length,
                     itemBuilder: (context, index) {
                       var deviceId = deviceIds[index];
+                      bool isSelected = _selectedDeviceIds.contains(deviceId);
+
                       return Padding(
-                        padding: EdgeInsets.all(screenWidth * 0.02), // 2% of screen width
+                        padding: EdgeInsets.all(screenWidth * 0.02),
                         child: Card(
-                          color: Colors.white,
+                          color: isSelected ? Colors.grey[300] : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                           elevation: 4,
                           child: ListTile(
-                            contentPadding: EdgeInsets.all(screenWidth * 0.04), // 4% of screen width
+                            contentPadding: EdgeInsets.all(screenWidth * 0.04),
+                            leading: Icon(
+                              Icons.devices,
+                              color: isSelected ? Colors.red : const Color(0xFF4e54c8),
+                            ),
                             title: Text(
                               'Device ID: $deviceId',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: screenHeight * 0.02, // 2% of screen height
+                                fontSize: screenHeight * 0.02,
                               ),
                             ),
                             trailing: Icon(
@@ -197,58 +222,77 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Colors.deepPurpleAccent,
                             ),
                             onTap: () {
-                              context.go('${Routes.DEVICE}/$deviceId');
+                              if (_selectedDeviceIds.isNotEmpty) {
+                                setState(() {
+                                  if (isSelected) {
+                                    _selectedDeviceIds.remove(deviceId);
+                                  } else {
+                                    _selectedDeviceIds.add(deviceId);
+                                  }
+                                });
+                              } else {
+                                context.go('${Routes.DEVICE}/$deviceId');
+                              }
                             },
                             onLongPress: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: const Text('Delete Device'),
-                                    content: Text('Are you sure you want to delete device ID: $deviceId?'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          context.pop();
-                                        },
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          _deleteDevice(deviceId);
-
-                                          context.pop();
-                                        },
-                                        child: const Text('Delete'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
+                              setState(() {
+                                if (isSelected) {
+                                  _selectedDeviceIds.remove(deviceId);
+                                } else {
+                                  _selectedDeviceIds.add(deviceId);
+                                }
+                              });
                             },
                           ),
                         ),
                       );
                     },
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(screenWidth * 0.04), // 4% of screen width
-                  child: FloatingActionButton(
-                    onPressed: () {
-                      _showAddDeviceDialog(context);
-                    },
-                    backgroundColor: Colors.deepPurpleAccent,
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                    ),
-                  ),
+                  );
+                }
+              },
+            ),
+          ),
+
+          // ✅ Bottom Menu Bar - Always Visible
+          Container(
+            height: screenHeight * 0.08,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
                 ),
               ],
-            );
-          }
-        },
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.add_a_photo, size: 30, color: Colors.deepPurpleAccent),
+                  onPressed: () {
+                    context.go(Routes.DISEASE_CHECK);
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add, size: 30, color: Colors.deepPurpleAccent),
+                  onPressed: () {
+                    _showAddDeviceDialog(context);
+                  },
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.delete,
+                    size: 30,
+                    color: _selectedDeviceIds.isNotEmpty ? Colors.red : Colors.grey,
+                  ),
+                  onPressed: _selectedDeviceIds.isNotEmpty ? _deleteSelectedDevices : null,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -278,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: const Text('Cancel'),
             ),
-            ElevatedButton(
+            TextButton(
               onPressed: () {
                 final newDeviceId = deviceIdController.text.trim();
                 if (newDeviceId.isNotEmpty) {

@@ -118,22 +118,28 @@ def remap_redis(device_id: str, user_id: str, socket_id: str) -> None:
     """
     try:
         device_key = f"device:{device_id}"
-        if r.exists(device_key):
-            user_list = json.loads(r.get(device_key))
-            if user_id not in user_list:
-                user_list.append(user_id)
-            json_data = json.dumps(user_list)
-            if json_data != '[]':
-                r.set(device_key, json_data)
-            else:
-                r.delete(device_key)
+        raw_data = r.get(device_key)
 
-            user_key = f"user:{user_id}"
-            print('user_key:', user_key)
-            print('socket_id:', socket_id)
-            r.set(user_key, socket_id)
+        if raw_data is None:
+            print('device key not found')
+            return
+
+        user_list = json.loads(raw_data)
+        if user_id not in user_list:
+            user_list.append(user_id)
+
+        json_data = json.dumps(user_list)
+        if json_data != '[]':
+            r.set(device_key, json_data)
         else:
-            print('device not found')
+            r.delete(device_key)
+
+        user_key = f"user:{user_id}"
+        r.set(user_key, socket_id)
+
+        print(f"Redis value for {device_key}: {r.get(device_key)}")
+        print(f"Redis value for {user_key}: {r.get(user_key)}")
+
     except Exception as e:
         print(f"Unexpected error: {e}")
 

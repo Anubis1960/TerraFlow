@@ -6,6 +6,7 @@ class Routes {
   static const String DEVICE = '/device';
   static const String OTHER = '*';
   static const String CALLBACK = '/auth/callback';
+  static const String DISEASE_CHECK = '/home/disease-check';
 }
 
 class Server {
