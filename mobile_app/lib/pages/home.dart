@@ -74,9 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-
-
-
   Future<List<String>> _loadDeviceIds() async {
     return await BaseStorage.getStorageFactory().getDeviceList();
   }
@@ -84,7 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     SocketService.socket.off('error');
-    // SocketService.socket.off('devices');
     super.dispose();
   }
 
@@ -162,137 +158,143 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: TopBar.buildTopBar(title: 'Devices', context: context),
-      body: Column(
-        children: [
-          Expanded(
-            child: FutureBuilder<List<String>>(
-              future: deviceIds,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'No devices found.',
-                          style: TextStyle(
-                            fontSize: screenHeight * 0.025,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  var deviceIds = snapshot.data!;
-
-                  return ListView.builder(
-                    itemCount: deviceIds.length,
-                    itemBuilder: (context, index) {
-                      var deviceId = deviceIds[index];
-                      bool isSelected = _selectedDeviceIds.contains(deviceId);
-
-                      return Padding(
-                        padding: EdgeInsets.all(screenWidth * 0.02),
-                        child: Card(
-                          color: isSelected ? Colors.grey[300] : Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 4,
-                          child: ListTile(
-                            contentPadding: EdgeInsets.all(screenWidth * 0.04),
-                            leading: Icon(
-                              Icons.devices,
-                              color: isSelected ? Colors.red : const Color(0xFF4e54c8),
-                            ),
-                            title: Text(
-                              'Device ID: $deviceId',
+      // Wrap body in ScaffoldMessenger to control where SnackBar appears
+      body: ScaffoldMessenger(
+        child: Builder(
+          builder: (context) => Column(
+            children: [
+              Expanded(
+                child: FutureBuilder<List<String>>(
+                  future: deviceIds,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'No devices found.',
                               style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: screenHeight * 0.02,
+                                fontSize: screenHeight * 0.025,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            trailing: Icon(
-                              Icons.arrow_forward_ios,
-                              color: Colors.deepPurpleAccent,
-                            ),
-                            onTap: () {
-                              if (_selectedDeviceIds.isNotEmpty) {
-                                setState(() {
-                                  if (isSelected) {
-                                    _selectedDeviceIds.remove(deviceId);
-                                  } else {
-                                    _selectedDeviceIds.add(deviceId);
-                                  }
-                                });
-                              } else {
-                                context.go('${Routes.DEVICE}/$deviceId');
-                              }
-                            },
-                            onLongPress: () {
-                              setState(() {
-                                if (isSelected) {
-                                  _selectedDeviceIds.remove(deviceId);
-                                } else {
-                                  _selectedDeviceIds.add(deviceId);
-                                }
-                              });
-                            },
-                          ),
+                          ],
                         ),
                       );
-                    },
-                  );
-                }
+                    } else {
+                      var deviceIds = snapshot.data!;
+                      return ListView.builder(
+                        itemCount: deviceIds.length,
+                        itemBuilder: (context, index) {
+                          var deviceId = deviceIds[index];
+                          bool isSelected = _selectedDeviceIds.contains(deviceId);
+                          return Padding(
+                            padding: EdgeInsets.all(screenWidth * 0.02),
+                            child: Card(
+                              color: isSelected ? Colors.grey[300] : Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 4,
+                              child: ListTile(
+                                contentPadding:
+                                EdgeInsets.all(screenWidth * 0.04),
+                                leading: Icon(
+                                  Icons.devices,
+                                  color:
+                                  isSelected ? Colors.red : const Color(0xFF4e54c8),
+                                ),
+                                title: Text(
+                                  'Device ID: $deviceId',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: screenHeight * 0.02,
+                                  ),
+                                ),
+                                trailing: Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: Colors.deepPurpleAccent,
+                                ),
+                                onTap: () {
+                                  if (_selectedDeviceIds.isNotEmpty) {
+                                    setState(() {
+                                      if (isSelected) {
+                                        _selectedDeviceIds.remove(deviceId);
+                                      } else {
+                                        _selectedDeviceIds.add(deviceId);
+                                      }
+                                    });
+                                  } else {
+                                    context.go('${Routes.DEVICE}/$deviceId');
+                                  }
+                                },
+                                onLongPress: () {
+                                  setState(() {
+                                    if (isSelected) {
+                                      _selectedDeviceIds.remove(deviceId);
+                                    } else {
+                                      _selectedDeviceIds.add(deviceId);
+                                    }
+                                  });
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  },
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.08),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        height: screenHeight * 0.08,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.add_a_photo, size: 30, color: Colors.deepPurpleAccent),
+              onPressed: () {
+                context.go(Routes.DISEASE_CHECK);
               },
             ),
-          ),
-
-          // ✅ Bottom Menu Bar - Always Visible
-          Container(
-            height: screenHeight * 0.08,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
+            IconButton(
+              icon: const Icon(Icons.add, size: 30, color: Colors.deepPurpleAccent),
+              onPressed: () {
+                _showAddDeviceDialog(context);
+              },
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.add_a_photo, size: 30, color: Colors.deepPurpleAccent),
-                  onPressed: () {
-                    context.go(Routes.DISEASE_CHECK);
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add, size: 30, color: Colors.deepPurpleAccent),
-                  onPressed: () {
-                    _showAddDeviceDialog(context);
-                  },
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.delete,
-                    size: 30,
-                    color: _selectedDeviceIds.isNotEmpty ? Colors.red : Colors.grey,
-                  ),
-                  onPressed: _selectedDeviceIds.isNotEmpty ? _deleteSelectedDevices : null,
-                ),
-              ],
+            IconButton(
+              icon: Icon(
+                Icons.delete,
+                size: 30,
+                color: _selectedDeviceIds.isNotEmpty ? Colors.red : Colors.grey,
+              ),
+              onPressed: _selectedDeviceIds.isNotEmpty
+                  ? _deleteSelectedDevices
+                  : null,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
