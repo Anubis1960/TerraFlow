@@ -57,30 +57,9 @@ def init():
     
     return _device_id
 
-def connect_wifi(ssid: str, password: str):
-    """
-    Connects to a Wi-Fi network.
-
-    Args:
-        ssid (str): The Wi-Fi SSID.
-        password (str): The Wi-Fi password.
-    """
-    wlan = network.WLAN(network.STA_IF)
-    print("Connecting to Wi-Fi...")
-    while not wlan.isconnected():
-        wlan.disconnect()
-        wlan.active(False)
-        sleep(1)
-        wlan.active(True)
-        wlan.config(pm = 0xa11140)
-        wlan.connect(ssid, password)
-        sleep(10)
-        print("Connecting to Wi-Fi...")
-    print("Connected to Wi-Fi:", wlan.ifconfig()[0])
-
 def get_location():
     print("Fetching location data...")
-    response = requests.get('https://ipinfo.io/json ')
+    response = requests.get('https://ipinfo.io/json')
     data = response.json()
     city = data.get('city', 'Unknown')
     region = data.get('region', 'Unknown')
@@ -100,7 +79,14 @@ async def main():
     - MQTT client setup and subscriptions.
     - Task scheduling for publishing and listening.
     """
-    connect_wifi(SSID, PASSWORD)
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(SSID, PASSWORD)
+    print("Connecting to Wi-Fi...")
+    while not wlan.isconnected():
+        sleep(1)
+        print(".", end="")
+    print("Connected to Wi-Fi:", wlan.ifconfig()[0])
 
     # Initialize device ID
     _device_id= init()

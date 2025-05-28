@@ -13,8 +13,8 @@ dry_soil = 44300
 rain_upper = 65535
 rain_lower = 13000
 DHT = dht.DHT22(Pin(2))
-# relay = Pin(16, Pin.OUT)
-water_used_per_second = 0.5  # Example value, adjust as needed
+relay = Pin(16, Pin.OUT)
+water_used_per_second = 23  # ml/second
 # moisture_conversion_factor = 100 / (65535)
 
 class MQTTManager:
@@ -32,45 +32,6 @@ class MQTTManager:
         self.start_water_timer = None
         relay_off()
 
-    async def listen(self, period_s: int = 10):
-        """
-        Listens for incoming MQTT messages.
-
-        Args:
-            period_ms (int): The interval between checks in seconds.
-        """
-        print("Listening for MQTT messages...")
-        while True:
-            self.client.check_msg()
-            await asyncio.sleep(period_s)
-
-    def mqtt_callback(self, topic, msg):
-        """
-        Handles incoming MQTT messages.
-
-        Args:
-            topic (bytes): The topic of the received message.
-            msg (bytes): The payload of the received message.
-        """
-        topic = topic.decode()
-        msg = msg.decode()
-        
-        if topic == self.topics['SCHEDULE_SUB']:
-            print("Schedule command received:", msg)
-            json_data = json.loads(msg)
-            self.handle_schedule_cmd(json_data)
-        elif topic == self.topics['IRRIGATE_SUB']:
-            print("Irrigation command received:", msg)
-            self.handle_irrigation_cmd()
-        elif topic == self.topics['PREDICTION_SUB']:
-            print("Prediction command received:", msg)
-            json_data = json.loads(msg)
-            self.handle_prediction_cmd(json_data)
-        elif topic == self.topics['IRRIGATION_TYPE_SUB']:
-            print("Irrigation type command received:", msg)
-            json_data = json.loads(msg)
-            self.handle_irrigation_type_cmd(json_data)
-
     def handle_irrigation_cmd(self):
         """
         Handles the irrigation command.
@@ -78,7 +39,7 @@ class MQTTManager:
         self.start_water_timer = localtime()
 
         relay_on()
-        sleep(5)
+        sleep(1)
         relay_off()
 
         if self.start_water_timer is None:
@@ -88,12 +49,9 @@ class MQTTManager:
         end_water_timer = localtime()
         print("Watering started at:", self.start_water_timer)
         print("Watering ended at:", end_water_timer)
-        print("Active time:", end_water_timer[3] - self.start_water_timer[3], "hours")
-        print("Watering duration:", end_water_timer[4] - self.start_water_timer[4], "minutes")
         print("Watering duration:", end_water_timer[5] - self.start_water_timer[5], "seconds")
-        print("Watering duration:", end_water_timer[6] - self.start_water_timer[6], "milliseconds")
 
-        water_used = water_used_per_second * (end_water_timer[4] - self.start_water_timer[4]) * 60
+        water_used = water_used_per_second * (end_water_timer[5] - self.start_water_timer[5])
         print("Water used:", water_used, "liters")
 
         self.start_water_timer = None
@@ -196,6 +154,48 @@ class MQTTManager:
                 self.schedule['time'] = time
             
         self.irrigation_task = asyncio.create_task(self.check_irrigation())
+    
+
+
+    def mqtt_callback(self, topic, msg):
+        """
+        Handles incoming MQTT messages.
+
+        Args:
+            topic (bytes): The topic of the received message.
+            msg (bytes): The payload of the received message.
+        """
+        topic = topic.decode()
+        msg = msg.decode()
+        
+        if topic == self.topics['SCHEDULE_SUB']:
+            print("Schedule command received:", msg)
+            json_data = json.loads(msg)
+            self.handle_schedule_cmd(json_data)
+        elif topic == self.topics['IRRIGATE_SUB']:
+            print("Irrigation command received:", msg)
+            self.handle_irrigation_cmd()
+        elif topic == self.topics['PREDICTION_SUB']:
+            print("Prediction command received:", msg)
+            json_data = json.loads(msg)
+            self.handle_prediction_cmd(json_data)
+        elif topic == self.topics['IRRIGATION_TYPE_SUB']:
+            print("Irrigation type command received:", msg)
+            json_data = json.loads(msg)
+            self.handle_irrigation_type_cmd(json_data)
+
+
+    async def listen(self, period_s: int = 10):
+        """
+        Listens for incoming MQTT messages.
+
+        Args:
+            period_ms (int): The interval between checks in seconds.
+        """
+        print("Listening for MQTT messages...")
+        while True:
+            self.client.check_msg()
+            await asyncio.sleep(period_s)
     
     async def send(self,period_s: int = 6):
         """
@@ -302,7 +302,7 @@ class MQTTManager:
         """
         print("Irrigation check started.")
         while True:
-            if self.irrigation_type == "AUTO":
+            if self.irrigation_type == "AUTOMATIC":
                 print("Auto mode, checking schedule.")
                 await self.handle_auto_irrigation()
             elif self.irrigation_type == "MANUAL":
@@ -343,11 +343,11 @@ class MQTTManager:
 
 def relay_on():
     print("relay is ON")
-    # relay.value(0)
+    relay.value(0)
 
 def relay_off():
     print("relay is OFF")
-    # relay.value(1)
+    relay.value(1)
 
 
 def read_dht():
