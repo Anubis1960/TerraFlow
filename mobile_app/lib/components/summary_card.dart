@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 class SummaryCardWidget extends StatelessWidget {
   final String title;
   final double value;
+  final String unit;
   final Color color;
   final double screenWidth;
   final double screenHeight;
@@ -16,6 +17,7 @@ class SummaryCardWidget extends StatelessWidget {
     required this.color,
     required this.screenWidth,
     required this.screenHeight,
+    required this.unit,
   }) : super(key: key);
 
   @override
@@ -70,7 +72,7 @@ class SummaryCardWidget extends StatelessWidget {
                 SizedBox(height: screenHeight * 0.008),
                 FittedBox(
                   child: Text(
-                    value.toStringAsFixed(2),
+                    '${value.toStringAsFixed(2)} $unit',
                     style: TextStyle(
                       fontSize: screenHeight * 0.024,
                       fontWeight: FontWeight.bold,

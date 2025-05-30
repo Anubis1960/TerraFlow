@@ -63,11 +63,11 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
 
-      final List<String> updatedDeviceIds = await deviceIds; // ✅ Again await to get latest value
+      final List<String> updatedDeviceIds = await deviceIds;
 
       Map<String, dynamic> data = {
         'token': onUser,
-        'devices': updatedDeviceIds, // ✅ Now it's a real List<String>
+        'devices': updatedDeviceIds,
       };
 
       SocketService.socket.emit('init', data);

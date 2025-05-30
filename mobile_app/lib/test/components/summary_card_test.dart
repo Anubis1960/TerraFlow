@@ -18,6 +18,7 @@ void main() {
             body: SummaryCardWidget(
               title: 'Test Title',
               value: 123.45,
+              unit: 'units',
               color: Colors.blue,
               screenWidth: screenWidth,
               screenHeight: screenHeight,

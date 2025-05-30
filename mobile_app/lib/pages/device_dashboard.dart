@@ -91,6 +91,20 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
       }
     });
 
+    SocketService.socket.on('water_usage', (data) {
+      for (var record in deviceData['water_usage']) {
+        if (record['date'] == data['date']) {
+          record['usage'] += data['water_usage'];
+          return;
+        }
+      }
+      if (data['date'].startsWith(selectedFilterValue)) {
+        setState(() {
+          waterUsage = FilterService.calculateWaterUsage(deviceData['water_usage'], selectedFilterValue);
+        });
+      }
+    });
+
     BaseStorage.getStorageFactory().getToken().then((token) {
       BaseStorage.getStorageFactory().getDeviceList().then((deviceIds) {
         SocketService.socket.emit('init', {
@@ -185,6 +199,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
                   SummaryCardWidget(
                     title: 'Humidity',
                     value: humidity,
+                    unit: '%',
                     color: Colors.blue,
                     screenWidth: screenWidth,
                     screenHeight: screenHeight,
@@ -192,6 +207,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
                   SummaryCardWidget(
                     title: 'Temperature',
                     value: temperature,
+                    unit: '°C',
                     color: Colors.red,
                     screenWidth: screenWidth,
                     screenHeight: screenHeight,
@@ -199,6 +215,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
                   SummaryCardWidget(
                     title: 'Water Usage',
                     value: waterUsage,
+                    unit: 'L',
                     color: Colors.green,
                     screenWidth: screenWidth,
                     screenHeight: screenHeight,

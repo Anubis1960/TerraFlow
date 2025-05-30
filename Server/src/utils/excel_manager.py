@@ -41,6 +41,20 @@ def create_line_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title:
 
 
 def export_to_excel(_data: dict) -> BytesIO:
+    """
+    Exports data to an Excel file with multiple sheets for sensor records and water usage.
+    """
+    wb = Workbook()
+    build_excel_sheet(wb, _data)
+
+    # Save workbook to BytesIO buffer
+    buff = BytesIO()
+    wb.save(buff)
+    buff.seek(0)
+    return buff
+
+
+def build_excel_sheet(wb: Workbook, data, prefix='') -> None:
     MONTH_MAP = {
         "01": "January", "02": "February", "03": "March", "04": "April",
         "05": "May", "06": "June", "07": "July", "08": "August",
@@ -49,25 +63,24 @@ def export_to_excel(_data: dict) -> BytesIO:
 
     # Convert records to DataFrame
     records_df = pd.DataFrame(
-        [{**record["sensor_data"], "Timestamp": record["timestamp"]} for record in _data["record"]]
+        [{**record["sensor_data"], "Timestamp": record["timestamp"]} for record in data["record"]]
     )
 
     # Convert water usage to DataFrame
-    water_usage_df = pd.DataFrame(_data["water_usage"])
+    water_usage_df = pd.DataFrame(data["water_usage"])
     water_usage_df["Year"] = water_usage_df["date"].str[:4]
     water_usage_df["Month"] = water_usage_df["date"].str[5:].map(MONTH_MAP)
 
     # Create Excel workbook
-    wb = Workbook()
     ws_records = wb.active
-    ws_records.title = "Sensor Records"
+    ws_records.title = f"{prefix} Sensor Records"
 
     # Write records data to Excel
     for row in dataframe_to_rows(records_df, index=False, header=True):
         ws_records.append(row)
 
     # Write water usage data to Excel
-    ws_water = wb.create_sheet("Water Usage")
+    ws_water = wb.create_sheet(f"{prefix} Water Usage")
     for row in dataframe_to_rows(water_usage_df.drop(columns=["Year"]), index=False, header=True):
         ws_water.append(row)
 
@@ -78,13 +91,14 @@ def export_to_excel(_data: dict) -> BytesIO:
         .fillna({"water_used": 0}))
 
     # Pivot data to get yearly structure
-    water_usage_pivot = water_usage_df.pivot(index="Month", columns="Year", values="water_used").fillna(0).reset_index()
+    water_usage_pivot = water_usage_df.pivot(index="Month", columns="Year", values="water_used").fillna(
+        0).reset_index()
     water_usage_pivot["MonthOrder"] = water_usage_pivot["Month"].map({v: k for k, v in MONTH_MAP.items()})
     water_usage_pivot = water_usage_pivot.sort_values("MonthOrder").drop(columns=["MonthOrder"])
 
     # Write yearly water usage data and create charts
     for year in water_usage_df["Year"].dropna().unique():
-        ws_year = wb.create_sheet(year)
+        ws_year = wb.create_sheet(f"{prefix} {year}")
         year_data = water_usage_pivot[["Month", year]].fillna(0)
 
         for row in dataframe_to_rows(year_data, index=False, header=True):
@@ -92,6 +106,17 @@ def export_to_excel(_data: dict) -> BytesIO:
 
         create_bar_chart(ws_year, f"Monthly Water Usage for {year}", "Water Used", "Month", "D", 2)
         create_line_chart(ws_year, f"Monthly Trend for {year}", "Water Used", "Month", "H", 2)
+
+
+def export_to_excel_devices(_data: list) -> BytesIO:
+    wb = Workbook()
+    for idx, device in enumerate(_data):
+        if 'record' not in device or 'water_usage' not in device:
+            continue
+        name = f'Device {idx + 1}'
+        if 'name' in device:
+            name = device['name']
+        build_excel_sheet(wb, device, prefix=name)
 
     # Save workbook to BytesIO buffer
     buff = BytesIO()

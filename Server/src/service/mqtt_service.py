@@ -98,6 +98,7 @@ def register_device(payload: str) -> None:
 
             ctrl_json = {
                 '_id': ObjectId(device_id),
+                'name': device_id,
                 'record': [],
                 'water_usage': []
             }
@@ -282,6 +283,20 @@ def record_water_used(payload: str, topic: str) -> None:
 
         mongo_db[DEVICE_COLLECTION].update_one({'_id': ObjectId(device_id)},
                                                {'$set': {'water_usage': water_used}})
+
+        try:
+            device_key = f"device:{device_id}"
+            user_list = json.loads(r.get(device_key)) if r.exists(device_key) else []
+            for user in user_list:
+                user_key = f"user:{user}"
+                user_data = r.get(user_key) if r.exists(user_key) else ""
+                print("\n\n SOCKET ID:", user_data, "\n\n")
+                socketio.emit('water_usage', json_data, room=user_data)
+                print(f"Emitted data to user {user} with socket ID {user_data}")
+        except ResponseError as redis_error:
+            print(f"Redis ResponseError: {redis_error}")
+        finally:
+            print(f"Redis value for {device_id}: {r.get(device_id)}")
 
     except Exception as e:
         print(f"Unexpected error: {e}")

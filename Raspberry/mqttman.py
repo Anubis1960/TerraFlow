@@ -5,6 +5,7 @@ from machine import Pin, ADC
 import dht
 import requests
 from constants import WEATHER_API_KEY
+from machine import RTC
 
 moisture_pin = ADC(Pin(26))
 rain_pin = ADC(Pin(27))
@@ -14,7 +15,7 @@ rain_upper = 65535
 rain_lower = 13000
 DHT = dht.DHT22(Pin(2))
 relay = Pin(16, Pin.OUT)
-water_used_per_second = 23  # ml/second
+water_used_per_second = 0.023  # l/second
 # moisture_conversion_factor = 100 / (65535)
 
 class MQTTManager:
@@ -39,7 +40,7 @@ class MQTTManager:
         self.start_water_timer = localtime()
 
         relay_on()
-        sleep(1)
+        sleep(5)
         relay_off()
 
         if self.start_water_timer is None:
@@ -154,6 +155,7 @@ class MQTTManager:
                 self.schedule['time'] = time
             
         self.irrigation_task = asyncio.create_task(self.check_irrigation())
+        relay_off()
     
 
 
@@ -207,6 +209,7 @@ class MQTTManager:
         """
         while True:
             # Generate timestamp
+            print(RTC().datetime())
             timestamp = localtime()
             year, month, day, hour, minute, second = timestamp[:6]
 
@@ -257,10 +260,11 @@ class MQTTManager:
         print(f"Next irrigation in {time_until_irrigation} seconds")
         
         while time_until_irrigation > 0:
+            print("Waiting 1")
             delay = min(time_until_irrigation, 86400)  # Wait up to 24 hours at a time
             try:
-                await asyncio.wait_for(self.schedule_updated_event.wait(), delay)
-                self.schedule_updated_event.clear()
+                await asyncio.sleep(delay)
+                print("Waiting 2")
                 break  # Exit if the schedule is updated
             except asyncio.TimeoutError:
                 time_until_irrigation -= delay

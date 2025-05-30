@@ -104,7 +104,7 @@ class DateFilterPicker extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 23),
+        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 23),
         side: BorderSide(
           color: Colors.deepPurpleAccent,
         ),

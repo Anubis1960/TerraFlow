@@ -4,7 +4,7 @@ class ChartDataProcessor {
   static List<ChartData> getSensorDataSpots(List<dynamic> records, String sensorKey, String filterType) {
     if (filterType == 'day') {
       return records.map((record) => ChartData(
-          record['timestamp'].substring(12, 19),
+          record['timestamp'].substring(11, 19),
           record['sensor_data'][sensorKey].toDouble()
       )).toList();
     } else if (filterType == 'month') {

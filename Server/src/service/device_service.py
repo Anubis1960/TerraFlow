@@ -23,3 +23,15 @@ def handle_update_watering_type(device_id: str, json_data: dict):
     return {
         'message': 'Watering type updated successfully',
     }
+
+
+def handle_update_device(device_id: str, device_name: str):
+    result = mongo_db[DEVICE_COLLECTION].update_one(
+        {"_id": ObjectId(device_id)},
+        {"$set": {"name": device_name}}
+    )
+
+    if result.modified_count == 0:
+        return {"error": "Device not found or name is the same"}
+
+    return {"message": f"Device {device_id} updated to {device_name}"}

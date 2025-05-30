@@ -178,8 +178,8 @@ class Charts {
       series: seriesList,
       legend: Legend(
         isVisible: true,
-        position: LegendPosition.auto,
-        alignment: ChartAlignment.center,
+        position: LegendPosition.top,
+        alignment: ChartAlignment.far,
         textStyle: const TextStyle(fontSize: 12, color: Colors.black54),
       ),
     );
