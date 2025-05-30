@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 
 from bson import ObjectId
 
-from src.config.mongo import USER_COLLECTION
+from src.config.mongo import USER_COLLECTION, DEVICE_COLLECTION
 from src.service.auth_service import (
     handle_form_login,
     handle_token_login,
@@ -18,7 +18,10 @@ from src.utils.tokenizer import generate_token
 class TestAuthService(unittest.TestCase):
     def setUp(self):
         # Mock MongoDB and Redis
-        self.mongo_db_mock = MagicMock()
+        self.mongo_db_mock = {
+            USER_COLLECTION: MagicMock(),
+            DEVICE_COLLECTION: MagicMock()
+        }
         self.redis_mock = MagicMock()
 
         # Patch the dependencies
@@ -42,17 +45,31 @@ class TestAuthService(unittest.TestCase):
             '_id': ObjectId(),
             'email': email,
             'password': encrypted_password,
-            'devices': ['device1', 'device2']
+            'devices': ['507f1f77bcf86cd799439011', '507f1f77bcf86cd79943901a']
         }
         self.mongo_db_mock[USER_COLLECTION].find.return_value = [user_data]
         self.mongo_db_mock[USER_COLLECTION].find_one.return_value = user_data
 
-        # Call the function
+        # Mock find_one for device collection with side effect
+        def device_find_side_effect(query):
+            device_id = query["_id"]
+            return {
+                '_id': device_id,
+                'name': f'Device {device_id}'
+            }
+
+        self.mongo_db_mock[DEVICE_COLLECTION].find_one.side_effect = device_find_side_effect
+
+        expected_device_data = [
+            {'id': '507f1f77bcf86cd799439011', 'name': 'Device 507f1f77bcf86cd799439011'},
+            {'id': '507f1f77bcf86cd79943901a', 'name': 'Device 507f1f77bcf86cd79943901a'}
+        ]
+
         result = handle_form_login(email, password)
-        # Assert that the result contains the expected token and devices
+
         self.assertIn('token', result)
         self.assertIn('devices', result)
-        self.assertEqual(result['devices'], user_data['devices'])
+        self.assertEqual(result['devices'], expected_device_data)
 
     def test_handle_form_login_invalid_email(self):
         # Test the handle_form_login function with invalid email
@@ -75,7 +92,7 @@ class TestAuthService(unittest.TestCase):
             '_id': ObjectId(),
             'email': email,
             'password': encrypted_password,
-            'devices': ['device1', 'device2']
+            'devices': ['507f1f77bcf86cd79943901a', '507f1f77bcf86cd799439011']
         }
         self.mongo_db_mock[USER_COLLECTION].find.return_value = [user_data]
 

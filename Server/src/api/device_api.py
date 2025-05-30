@@ -20,7 +20,7 @@ def get_device_data(device_id):
         return jsonify({"error": "Invalid token"}), HTTPStatus.UNAUTHORIZED
     user_id = payload['user_id']
     user_devices = handle_get_user_devices(user_id)
-    if device_id not in user_devices:
+    if device_id not in [user_device['id'] for user_device in user_devices]:
         return jsonify({"error": "Device not found"}), HTTPStatus.NOT_FOUND
     device = handle_get_device_data(device_id)
 
@@ -46,8 +46,15 @@ def update_watering_type(device_id):
     return jsonify(msg), HTTPStatus.OK
 
 
-@device_blueprint.route('/<device_id>/', methods=['PUT'])
+@device_blueprint.route('/<device_id>', methods=['PATCH'])
 def update_device(device_id):
+    token = request.headers.get('Authorization')
+    token = token.split(" ")[1] if token else None
+    payload = decode_token(token)
+    if 'error' in payload:
+        return jsonify({"error": payload['error']}), HTTPStatus.UNAUTHORIZED
+    if 'user_id' not in payload:
+        return jsonify({"error": "Invalid token"}), HTTPStatus.UNAUTHORIZED
     data = request.get_json()
     if not data or 'name' not in data:
         return jsonify({"error": "Invalid input"}), HTTPStatus.BAD_REQUEST

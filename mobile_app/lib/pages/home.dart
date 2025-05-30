@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile_app/entity/device.dart';
 import 'package:mobile_app/service/socket_service.dart';
 import 'package:mobile_app/util/storage/base_storage.dart';
 import 'package:mobile_app/components/top_bar.dart';
@@ -17,14 +18,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late Future<String> token;
-  late Future<List<String>> deviceIds;
-  final Set<String> _selectedDeviceIds = {};
+  late Future<List<Device>> devices;
+  final Set<Device> _selectedDeviceIds = {};
 
   @override
   void initState() {
     super.initState();
     token = BaseStorage.getStorageFactory().getToken();
-    deviceIds = _loadDeviceIds();
+    devices = _loadDeviceIds();
 
     SocketService.socket.on('error', (data) {
       if (data['error_msg'] != null && data['error_msg'].isNotEmpty) {
@@ -38,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     token.then((onUser) async {
-      final List<String> onDevice = await deviceIds; // ✅ Wait for the result
+      final List<Device> onDevice = await devices; // ✅ Wait for the result
 
       if (onDevice.isEmpty) {
         String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
@@ -53,29 +54,38 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
         if (res.statusCode == 200) {
-          var devices = jsonDecode(res.body);
-          if (devices.isNotEmpty) {
-            BaseStorage.getStorageFactory().saveData('device_ids', devices);
-            setState(() {
-              deviceIds = _loadDeviceIds(); // reload future
-            });
-          }
+          List<dynamic> responseBody = jsonDecode(res.body);
+
+          print('Response Body: $responseBody');
+
+          List<Device> deviceObjects = responseBody.map((item) {
+            return Device(
+              id: item['id'] ?? '',
+              name: item['name'] ?? '',
+            );
+          }).toList();
+
+          await BaseStorage.getStorageFactory().saveDevices(deviceObjects);
+
+          setState(() {
+            _loadDeviceIds(); // reload future
+          });
         }
       }
 
-      final List<String> updatedDeviceIds = await deviceIds;
+      final List<Device> updatedDevices = await devices;
 
       Map<String, dynamic> data = {
         'token': onUser,
-        'devices': updatedDeviceIds,
+        'devices': updatedDevices.map((device) => device.id).toList(),
       };
 
       SocketService.socket.emit('init', data);
     });
   }
 
-  Future<List<String>> _loadDeviceIds() async {
-    return await BaseStorage.getStorageFactory().getDeviceList();
+  Future<List<Device>> _loadDeviceIds() async {
+    return await BaseStorage.getStorageFactory().getDevices();
   }
 
   @override
@@ -84,11 +94,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _deleteDevice(String deviceId) async {
+  void _deleteDevice(Device device) async {
     final token = await BaseStorage.getStorageFactory().getToken();
 
     String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
-    url += '${Server.USER_REST_URL}/devices/$deviceId';
+    url += '${Server.USER_REST_URL}/devices/${device.id}';
     var res = await http.delete(
       Uri.parse(url),
       headers: <String, String>{
@@ -96,13 +106,19 @@ class _HomeScreenState extends State<HomeScreen> {
         'Authorization': 'Bearer $token',
       },
     );
+
     if (res.statusCode == 200) {
-      var deviceIds = await BaseStorage.getStorageFactory().getDeviceList();
-      deviceIds.remove(deviceId);
-      BaseStorage.getStorageFactory().saveData('device_ids', deviceIds);
+      var storedDevices = await BaseStorage.getStorageFactory().getDevices();
+
+      // Remove by ID instead of by object reference
+      storedDevices.removeWhere((d) => d.id == device.id);
+
+      await BaseStorage.getStorageFactory().saveDevices(storedDevices);
+
       setState(() {
-        this.deviceIds = _loadDeviceIds();
+        this.devices = _loadDeviceIds(); // Refresh UI
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Device deleted successfully.'),
@@ -142,8 +158,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (shouldDelete == true) {
-      for (var deviceId in _selectedDeviceIds) {
-        _deleteDevice(deviceId);
+      for (Device device in _selectedDeviceIds) {
+        _deleteDevice(device);
       }
       setState(() {
         _selectedDeviceIds.clear();
@@ -164,8 +180,8 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (context) => Column(
             children: [
               Expanded(
-                child: FutureBuilder<List<String>>(
-                  future: deviceIds,
+                child: FutureBuilder<List<Device>>(
+                  future: devices,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -187,12 +203,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     } else {
-                      var deviceIds = snapshot.data!;
+                      var devices = snapshot.data!;
                       return ListView.builder(
-                        itemCount: deviceIds.length,
+                        itemCount: devices.length,
                         itemBuilder: (context, index) {
-                          var deviceId = deviceIds[index];
-                          bool isSelected = _selectedDeviceIds.contains(deviceId);
+                          Device device = devices[index];
+                          bool isSelected = _selectedDeviceIds.contains(device);
                           return Padding(
                             padding: EdgeInsets.all(screenWidth * 0.02),
                             child: Card(
@@ -210,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   isSelected ? Colors.red : const Color(0xFF4e54c8),
                                 ),
                                 title: Text(
-                                  'Device ID: $deviceId',
+                                  'Name: ${device.name}',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: screenHeight * 0.02,
@@ -224,21 +240,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                   if (_selectedDeviceIds.isNotEmpty) {
                                     setState(() {
                                       if (isSelected) {
-                                        _selectedDeviceIds.remove(deviceId);
+                                        _selectedDeviceIds.remove(device);
                                       } else {
-                                        _selectedDeviceIds.add(deviceId);
+                                        _selectedDeviceIds.add(device);
                                       }
                                     });
                                   } else {
-                                    context.go('${Routes.DEVICE}/$deviceId');
+                                    context.go('${Routes.DEVICE}/${device.id}');
                                   }
                                 },
                                 onLongPress: () {
                                   setState(() {
                                     if (isSelected) {
-                                      _selectedDeviceIds.remove(deviceId);
+                                      _selectedDeviceIds.remove(device);
                                     } else {
-                                      _selectedDeviceIds.add(deviceId);
+                                      _selectedDeviceIds.add(device);
                                     }
                                   });
                                 },
@@ -285,6 +301,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             IconButton(
               icon: Icon(
+                Icons.edit,
+                size: 30,
+                color: _selectedDeviceIds.isNotEmpty && _selectedDeviceIds.length == 1
+                    ? Colors.blue
+                    : Colors.grey,
+              ),
+              onPressed: _selectedDeviceIds.isNotEmpty && _selectedDeviceIds.length == 1
+                  ? () => _editDeviceName(context, _selectedDeviceIds.first)
+                  : null,
+            ),
+            IconButton(
+              icon: Icon(
                 Icons.delete,
                 size: 30,
                 color: _selectedDeviceIds.isNotEmpty ? Colors.red : Colors.grey,
@@ -297,6 +325,77 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  void _editDeviceName(BuildContext context, Device device) async {
+    final TextEditingController nameController = TextEditingController(text: device.name);
+
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Device Name'),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Enter new name'),
+        ),
+        actions: [
+          TextButton(onPressed: Navigator.of(context).pop, child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              if (nameController.text.trim().isNotEmpty) {
+                Navigator.of(context).pop(nameController.text.trim());
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null && newName != device.name) {
+      try {
+        final token = await BaseStorage.getStorageFactory().getToken();
+        String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
+        url += '${Server.DEVICE_REST_URL}/${device.id}';
+
+        var res = await http.patch(
+          Uri.parse(url),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'name': newName}),
+        );
+
+        if (res.statusCode == 200) {
+          // Update local storage
+          List<Device> storedDevices = await BaseStorage.getStorageFactory().getDevices();
+          final index = storedDevices.indexWhere((d) => d.id == device.id);
+          if (index != -1) {
+            storedDevices[index] = Device(id: device.id, name: newName);
+            await BaseStorage.getStorageFactory().saveDevices(storedDevices);
+          }
+
+          setState(() {
+            devices = _loadDeviceIds(); // Refresh UI
+            _selectedDeviceIds.clear(); // Clear selection after edit
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Device name updated successfully.'), backgroundColor: Colors.green),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to update device name.'), backgroundColor: Colors.redAccent),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
   }
 
   void _showAddDeviceDialog(BuildContext context) {
@@ -325,78 +424,102 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 final newDeviceId = deviceIdController.text.trim();
-                if (newDeviceId.isNotEmpty) {
-                  if (newDeviceId.length != 24) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Device ID must be 24 characters long.'),
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
-                    return;
-                  }
-                  token.then((onValue) {
-
-                    String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
-                    url += '${Server.USER_REST_URL}/';
-                    var res = http.patch(
-                      Uri.parse(url),
-                      headers: <String, String>{
-                        'Content-Type': 'application/json; charset=UTF-8',
-                        'Authorization': 'Bearer $onValue',
-                      },
-                      body: jsonEncode(<String, String>{
-                        'device_id': newDeviceId,
-                      }),
-                    );
-                    res.then((response) {
-                      if (response.statusCode == 201) {
-                        var deviceIds = BaseStorage.getStorageFactory().getDeviceList();
-                        deviceIds.then((onDevice) {
-                          for (var device in onDevice) {
-                            if (device == newDeviceId) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Device already exists.'),
-                                  backgroundColor: Colors.redAccent,
-                                ),
-                              );
-                              return;
-                            }
-                          }
-                          onDevice.add(newDeviceId);
-                          BaseStorage.getStorageFactory().saveData('device_ids', onDevice);
-                          setState(() {
-                            this.deviceIds = _loadDeviceIds();
-                          });
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Device added successfully.'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Failed to add device.'),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                      }
-                    });
-                  });
-                } else {
+                if (newDeviceId.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Please enter a valid device ID.'),
                       backgroundColor: Colors.redAccent,
                     ),
                   );
+                  return;
                 }
-                context.pop();
+
+                if (newDeviceId.length != 24) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Device ID must be 24 characters long.'),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                  return;
+                }
+
+                // Close dialog immediately
+                Navigator.of(context).pop();
+
+                // Use a local variable to capture scaffold messenger early
+                final messenger = ScaffoldMessenger.of(context);
+
+                try {
+                  final onValue = await token;
+
+                  String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
+                  url += '${Server.USER_REST_URL}/';
+
+                  var res = await http.patch(
+                    Uri.parse(url),
+                    headers: <String, String>{
+                      'Content-Type': 'application/json; charset=UTF-8',
+                      'Authorization': 'Bearer $onValue',
+                    },
+                    body: jsonEncode(<String, String>{
+                      'device_id': newDeviceId,
+                    }),
+                  );
+
+                  if (res.statusCode == 201) {
+                    var responseBody = jsonDecode(res.body);
+                    Device newDevice = Device(
+                      id: responseBody['id'],
+                      name: responseBody['name'],
+                    );
+
+                    List<Device> devices = await BaseStorage.getStorageFactory().getDevices();
+
+                    for (var device in devices) {
+                      if (device.id == newDevice.id) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Device already exists.'),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                        return;
+                      }
+                    }
+
+                    print('Adding new device: ${newDevice.toMap()}');
+                    devices.add(newDevice);
+                    await BaseStorage.getStorageFactory().addDevice(newDevice);
+
+                    setState(() {
+                      this.devices = _loadDeviceIds();
+                    });
+
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('Device added successfully.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('Failed to add device.'),
+                        backgroundColor: Colors.redAccent,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $e'),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                }
               },
               child: const Text('Add'),
             ),

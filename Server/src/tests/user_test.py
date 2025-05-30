@@ -14,7 +14,10 @@ from src.config.mongo import USER_COLLECTION, DEVICE_COLLECTION
 class TestUserManagement(unittest.TestCase):
     def setUp(self):
         # Mock MongoDB and Redis
-        self.mongo_db_mock = MagicMock()
+        self.mongo_db_mock = {
+            USER_COLLECTION: MagicMock(),
+            DEVICE_COLLECTION: MagicMock()
+        }
         self.redis_mock = MagicMock()
 
         # Patch the dependencies
@@ -30,22 +33,31 @@ class TestUserManagement(unittest.TestCase):
         self.redis_patcher.stop()
 
     def test_handle_get_user_devices(self):
-        # Test fetching devices for a user
         user_id = "681785b2abcafa0ae18c75f9"
-        expected_devices = ["device1", "device2"]
-
-        # Mock the user data
-        self.mongo_db_mock[USER_COLLECTION].find_one.return_value = {
+        expected_devices = ["681785b2abcafa0ae18c75f1"]
+        email = ""
+        password = ""
+        user_data = {
             '_id': ObjectId(user_id),
+            'email': email,
+            'password': password,
             'devices': expected_devices
         }
 
+        self.mongo_db_mock[USER_COLLECTION].find_one.return_value = user_data
+
+        self.mongo_db_mock[DEVICE_COLLECTION].find_one.return_value = {
+            '_id': ObjectId(expected_devices[0]),
+            'name': f'Device {expected_devices[0]}'
+        }
+
+        expected_device_data = [
+            {'id': '681785b2abcafa0ae18c75f1', 'name': 'Device 681785b2abcafa0ae18c75f1'}
+        ]
+
         devices = handle_get_user_devices(user_id)
 
-        print('devices:', devices)
-
-        # Assert that the correct devices were returned
-        self.assertEqual(devices, expected_devices)
+        self.assertEqual(devices, expected_device_data)
 
     def test_handle_get_user_devices_user_not_found(self):
         # Test fetching devices for a user that does not exist
@@ -104,7 +116,7 @@ class TestUserManagement(unittest.TestCase):
         result = handle_add_device(device_id, user_id)
 
         # Assert that the function returned False
-        self.assertFalse(result)
+        self.assertEqual(result, {'error': 'User not found'})
 
     def test_handle_add_device_device_not_found(self):
         # Test adding a device that does not exist
@@ -123,7 +135,7 @@ class TestUserManagement(unittest.TestCase):
         result = handle_add_device(device_id, user_id)
 
         # Assert that the function returned False
-        self.assertFalse(result)
+        self.assertEqual(result, {'error': 'Device not found'})
 
     def test_handle_delete_device(self):
         # Test deleting a device from a user
@@ -167,7 +179,7 @@ class TestUserManagement(unittest.TestCase):
         result = handle_add_device(device_id, user_id)
 
         # Assert that the function returned False
-        self.assertFalse(result)
+        self.assertEqual(result, {'error': 'User not found'})
 
     def test_handle_predict_disease(self):
         dir = "./imgs"

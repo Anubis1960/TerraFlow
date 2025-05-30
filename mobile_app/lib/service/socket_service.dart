@@ -40,8 +40,8 @@ class SocketService {
       });
 
       _socket!.on('devices', (data) {
-        BaseStorage.getStorageFactory().deleteData('device_ids');
-        BaseStorage.getStorageFactory().saveData('device_ids', data['devices']);
+        BaseStorage.getStorageFactory().removeAllDevices();
+        BaseStorage.getStorageFactory().saveDevices(data['devices']);
       });
 
       _socket!.connect();

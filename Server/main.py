@@ -36,7 +36,7 @@ socketio.init_app(app)
 mqtt.init_app(app)
 
 mqtt.subscribe('register')
-start_scheduler()
+# start_scheduler()
 
 # Run the app
 if __name__ == '__main__':

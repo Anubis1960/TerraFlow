@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile_app/entity/device.dart';
 import '../util/constants.dart';
 import '../util/google/sign_in.dart';
 import '../util/storage/base_storage.dart';
@@ -30,8 +31,12 @@ class AuthService{
 
     if (res.statusCode == 200) {
       var data = jsonDecode(res.body);
-      BaseStorage.getStorageFactory().saveData('token', data['token']);
-      BaseStorage.getStorageFactory().saveData('controller_ids', data['controllers']);
+      BaseStorage.getStorageFactory().saveToken(data['token']);
+      print(data);
+      List<Device> devices = (data['devices'] as List)
+          .map((device) => Device.fromMap(device))
+          .toList();
+      BaseStorage.getStorageFactory().saveDevices(devices);
       return true;
     } else {
       return false;
@@ -67,7 +72,7 @@ class AuthService{
         if (res.statusCode == 200) {
           var data = jsonDecode(res.body);
           if (data['token'] != null && data['token'].isNotEmpty) {
-            BaseStorage.getStorageFactory().saveData('token', data['token']);
+            BaseStorage.getStorageFactory().saveToken(data['token']);
             return true;
           }
         }
@@ -86,9 +91,11 @@ class AuthService{
   Future<bool> logout() async {
     try {
       final String token = await BaseStorage.getStorageFactory().getToken();
-      final List<String> deviceIds = await BaseStorage.getStorageFactory().getDeviceList();
+      final List<Device> devices = await BaseStorage.getStorageFactory().getDevices();
 
       String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
+
+      List<String> deviceIds = devices.map((device) => device.id).toList();
 
       url += '/logout';
 

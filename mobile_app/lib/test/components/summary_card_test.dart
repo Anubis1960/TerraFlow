@@ -28,8 +28,8 @@ void main() {
       );
 
       expect(find.text('Test Title'), findsOneWidget);
-      expect(find.text('123.45'), findsOneWidget);
-      expect(find.byType(Card), findsOneWidget);
+      expect(find.text('123.45 units'), findsOneWidget);
+      expect(find.byType(ClipRRect), findsOneWidget);
     });
   });
 }

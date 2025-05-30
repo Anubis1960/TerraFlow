@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 
 from bson.objectid import ObjectId
 
-from src.config.mongo import DEVICE_COLLECTION
+from src.config.mongo import DEVICE_COLLECTION, USER_COLLECTION
 from src.service.mqtt_service import (
     extract_device_id,
     register_device,
@@ -18,7 +18,10 @@ class TestMqtt(unittest.TestCase):
 
     def setUp(self):
         # Mock MongoDB and Redis
-        self.mongo_db_mock = MagicMock()
+        self.mongo_db_mock = {
+            USER_COLLECTION: MagicMock(),
+            DEVICE_COLLECTION: MagicMock()
+        }
         self.redis_mock = MagicMock()
         self.mqtt_mock = MagicMock()
         self.socketio_mock = MagicMock()
@@ -93,7 +96,7 @@ class TestMqtt(unittest.TestCase):
     def test_record_sensor_data_success(self):
         # Test successful recording of sensor data
         payload = json.dumps({"sensor_data":  {"temperature": 10, "humidity": 10, "moisture": 10},
-                              "timestamp": "2023-10-01T00:00:00Z"})
+                              "timestamp": "2023-10-01 00:00:00"})
         topic = "507f1f77bcf86cd799439011/record/sensor_data"
 
         # Mock MongoDB find and update
@@ -109,7 +112,14 @@ class TestMqtt(unittest.TestCase):
         # Assert MongoDB update was called
         self.mongo_db_mock[DEVICE_COLLECTION].update_one.assert_called_once()
         # Assert Redis and Socket.IO interactions
-        self.socketio_mock.emit.assert_called_at_least_once("record", json.loads(payload), room="12345")
+        self.socketio_mock.emit.assert_called_with(
+            "record",
+            {
+                "sensor_data": {"temperature": 10, "humidity": 10, "moisture": 10},
+                "timestamp": "2023-10-01 00:00:00"
+            },
+            room='"12345"'
+        )
 
     def test_record_sensor_data_invalid_payload(self):
         # Test handling of invalid sensor data payload

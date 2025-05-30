@@ -9,7 +9,7 @@ class CallbackScreen extends StatelessWidget {
   const CallbackScreen({Key? key, required this.queryParams}) : super(key: key);
 
   Future<void> saveToken(String token) async {
-    await BaseStorage.getStorageFactory().saveData('token', token);
+    await BaseStorage.getStorageFactory().saveToken(token);
   }
 
   @override

@@ -6,27 +6,27 @@ import '../../service/chart_data_processor.dart';
 void main() {
   final sampleRecords = [
     {
-      'timestamp': '2024/01/01 T08:30:00Z',
+      'timestamp': '2024/01/01 08:30:00',
       'sensor_data': {'temperature': 22.5},
     },
     {
-      'timestamp': '2024/01/01 T09:30:00Z',
+      'timestamp': '2024/01/01 09:30:00',
       'sensor_data': {'temperature': 23.0},
     },
     {
-      'timestamp': '2024/01/02 T10:00:00Z',
+      'timestamp': '2024/01/02 10:00:00',
       'sensor_data': {'temperature': 21.5},
     },
     {
-      'timestamp': '2024/02/01 T14:00:00Z',
+      'timestamp': '2024/02/01 14:00:00',
       'sensor_data': {'temperature': 20.0},
     },
     {
-      'timestamp': '2024/02/01 T15:00:00Z',
+      'timestamp': '2024/02/01 15:00:00',
       'sensor_data': {'temperature': 20.4},
     },
     {
-      'timestamp': '2024/03/01 T12:00:00Z',
+      'timestamp': '2024/03/01 12:00:00',
       'sensor_data': {'temperature': 19.6},
     },
   ];
@@ -37,13 +37,13 @@ void main() {
 
       expect(result.length, 6); // All records are mapped individually
 
-      expect(result[0].x, '08:30:0');
+      expect(result[0].x, '08:30:00');
       expect(result[0].y, 22.5);
 
-      expect(result[1].x, '09:30:0');
+      expect(result[1].x, '09:30:00');
       expect(result[1].y, 23.0);
 
-      expect(result[2].x, '10:00:0');
+      expect(result[2].x, '10:00:00');
       expect(result[2].y, 21.5);
     });
 

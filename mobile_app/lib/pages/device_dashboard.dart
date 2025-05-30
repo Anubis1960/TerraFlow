@@ -1,4 +1,3 @@
-// device_dashboard.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../components/bottom_navbar.dart';
@@ -25,6 +24,7 @@ class DeviceDashBoard extends StatefulWidget {
 
 class _DeviceDashBoardState extends State<DeviceDashBoard> {
   final dynamic deviceId;
+  String deviceName = 'Device Dashboard';
   late ScrollController _scrollController;
 
   _DeviceDashBoardState(this.deviceId);
@@ -41,6 +41,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
   double humidity = 0;
   double temperature = 0;
   double waterUsage = 0;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -51,18 +52,14 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
   }
 
   void initSocketAndFetchData() {
-    SocketService.socket.on('export_response', (data) async {
-      if (data.containsKey('file')) {
-        final fileData = Uint8List.fromList(data['file']);
-        await saveToStorage(context, fileData, "exported_data.xlsx");
-      }
-    });
 
+    // Fetch initial data from server
     String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
     url += '${Server.DEVICE_REST_URL}/$deviceId/data';
 
     BaseStorage.getStorageFactory().getToken().then((token) {
       http.get(Uri.parse(url), headers: {'Authorization': 'Bearer $token'}).then((response) {
+        print('Response status: ${response.statusCode}');
         if (response.statusCode == 200) {
           var data = jsonDecode(response.body);
           setState(() {
@@ -77,7 +74,47 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
             }
           });
         }
+
+        // Load device name
+        BaseStorage.getStorageFactory().getDevices().then((deviceList) {
+          for (var d in deviceList) {
+            if (d.id == deviceId) {
+              setState(() {
+                deviceName = d.name;
+              });
+              break;
+            }
+          }
+
+          // Get token again for socket init
+          BaseStorage.getStorageFactory().getToken().then((token) {
+            List<String> deviceIds = deviceList.map((d) => d.id).toList();
+            SocketService.socket.emit('init', {
+              'token': token,
+              'devices': deviceIds,
+            });
+
+            setState(() {
+              _isLoading = false;
+            });
+          });
+        });
+      }).catchError((error) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load data: $error')),
+        );
       });
+    });
+
+    // Initialize socket events
+    SocketService.socket.on('export_response', (data) async {
+      if (data.containsKey('file')) {
+        final fileData = Uint8List.fromList(data['file']);
+        await saveToStorage(context, fileData, "exported_data.xlsx");
+      }
     });
 
     SocketService.socket.on('record', (data) {
@@ -103,15 +140,6 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
           waterUsage = FilterService.calculateWaterUsage(deviceData['water_usage'], selectedFilterValue);
         });
       }
-    });
-
-    BaseStorage.getStorageFactory().getToken().then((token) {
-      BaseStorage.getStorageFactory().getDeviceList().then((deviceIds) {
-        SocketService.socket.emit('init', {
-          'token': token,         // <-- now it's a String
-          'devices': deviceIds,   // <-- should be a List<String> or similar
-        });
-      });
     });
   }
 
@@ -176,8 +204,10 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: TopBar.buildTopBar(title: 'Device Dashboard', context: context),
-      body: SingleChildScrollView(
+      appBar: TopBar.buildTopBar(title: _isLoading ? "Loading..." : deviceName, context: context),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(screenWidth * 0.02),
           child: Column(

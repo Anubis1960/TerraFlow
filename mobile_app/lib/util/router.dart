@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:mobile_app/entity/device.dart';
 import 'package:mobile_app/pages/login.dart';
 import 'package:mobile_app/util/storage/base_storage.dart';
 import 'package:mobile_app/pages/home.dart';
@@ -29,10 +30,13 @@ final GoRouter router = GoRouter(
       // Check if the path is a device route with an ID
       if (state.uri.path.startsWith(Routes.DEVICE)) {
         final deviceId = state.uri.pathSegments.last;
-        List<String> devices = await BaseStorage.getStorageFactory().getDeviceList();
+        List<Device> devices = await BaseStorage.getStorageFactory().getDevices();
+
+        // Convert the list of devices to a set of IDs for quick lookup
+        final deviceIds = devices.map((device) => device.id).toSet();
 
         // Check if the device ID exists in the list of devices
-        if (devices.contains(deviceId)) {
+        if (deviceIds.contains(deviceId)) {
           return null;  // Valid device, no redirection needed
         } else {
           return Routes.HOME;  // Invalid device ID, redirect to home

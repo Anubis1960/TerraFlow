@@ -6,12 +6,17 @@ class Device(Schema):
 
     # Attributes
     id = None
+    name = None
     record = None
     water_usage = None
 
     def __init__(self, **kwargs):
         self.schema = {
             "record": [{
+                "name": {
+                    "type": Types.String,
+                    "default": "",
+                },
                 "sensor_data": {
                     "temperature": {
                         "type": Types.Number,

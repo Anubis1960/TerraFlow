@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 
 from bson.objectid import ObjectId
 
-from src.config.mongo import USER_COLLECTION
+from src.config.mongo import USER_COLLECTION, DEVICE_COLLECTION
 from src.service.socket_service import (
     remap_redis,
     handle_irrigate,
@@ -16,7 +16,10 @@ class TestDeviceManagement(unittest.TestCase):
 
     def setUp(self):
         # Mock MongoDB and Redis
-        self.mongo_db_mock = MagicMock()
+        self.mongo_db_mock = {
+            USER_COLLECTION: MagicMock(),
+            DEVICE_COLLECTION: MagicMock()
+        }
         self.redis_mock = MagicMock()
         self.socketio_mock = MagicMock()
         self.mqtt_mock = MagicMock()

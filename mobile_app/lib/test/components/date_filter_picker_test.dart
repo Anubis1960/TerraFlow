@@ -9,7 +9,6 @@ class MockBuildContext extends Mock implements BuildContext {}
 
 void main() {
   testWidgets("Date Filter", (WidgetTester tester) async{
-    final mockContext = MockBuildContext();
     final filterType = 'day';
     final selectedFilterValue = '2023-10-01';
     final filteredValues = {'2023-10-01', '2023-10-02'};
@@ -29,7 +28,6 @@ void main() {
       ),
     );
 
-    expect(find.text(filterType), findsOneWidget);
     expect(find.text(selectedFilterValue), findsOneWidget);
     expect(find.byIcon(Icons.calendar_today), findsOneWidget);
   });

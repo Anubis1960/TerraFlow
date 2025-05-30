@@ -48,12 +48,15 @@ def add_device():
         return jsonify({"error": "Invalid token"}), HTTPStatus.UNAUTHORIZED
     user_id = payload['user_id']
 
-    added = handle_add_device(device_id, user_id)
+    res = handle_add_device(device_id, user_id)
 
-    if not added:
+    if "error" in res:
+        return jsonify({"error": res['error']}), HTTPStatus.NOT_FOUND
+
+    if not res:
         return jsonify({"error": "Failed to add device"}), HTTPStatus.NOT_FOUND
 
-    return jsonify({"device_id": device_id}), HTTPStatus.CREATED
+    return jsonify(res), HTTPStatus.CREATED
 
 
 @user_blueprint.route('/devices/<device_id>', methods=['DELETE'])

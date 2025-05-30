@@ -31,7 +31,7 @@ class MobileSignIn extends GoogleSignInUtil {
 
         if (req.statusCode == 200) {
           String token = jsonDecode(req.body)['token'];
-          BaseStorage.getStorageFactory().saveData('token', token);
+          BaseStorage.getStorageFactory().saveToken(token);
           context.go(Routes.HOME);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

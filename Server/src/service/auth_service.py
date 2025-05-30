@@ -1,10 +1,11 @@
 import json
 from google.auth.transport import (requests as google_requests, Request)
 from src.utils.secrets import GOOGLE_CLIENT_ID
+from bson import ObjectId
 
 import regex as re
 
-from src.config.mongo import mongo_db, USER_COLLECTION
+from src.config.mongo import mongo_db, USER_COLLECTION, DEVICE_COLLECTION
 from src.config.redis import r
 from src.utils.crypt import encrypt, decrypt
 from src.utils.tokenizer import generate_token
@@ -37,9 +38,21 @@ def handle_form_login(email: str, password: str) -> dict:
         encrypted_password = user['password']
         decrypted_password = decrypt(encrypted_password)
 
+        devices = user.get('devices', [])
+        device_data = []
+        for device_id in devices:
+            device = mongo_db[DEVICE_COLLECTION].find_one({"_id": ObjectId(device_id)})
+            if device:
+                device_data.append({
+                    'id': str(device['_id']),
+                    'name': device.get('name', 'Unknown Device'),
+                })
+
+        print(device_data)
+
         if decrypted_password == password:
             token = generate_token(email, str(user['_id']))
-            return {'token': token, 'devices': user['devices']}
+            return {'token': token, 'devices': device_data}
         else:
             return {'error': 'Invalid email or password'}
     except Exception as e:

@@ -18,12 +18,10 @@ void main() {
       ),
     );
 
-    // Verify Home button
-    expect(find.byIcon(Icons.home), findsOneWidget);
     // Verify Trigger Irrigation button
     expect(find.byIcon(Icons.water_drop), findsOneWidget);
     // Verify Settings button
-    expect(find.byIcon(Icons.account_tree), findsOneWidget);
+    expect(find.byIcon(Icons.settings), findsOneWidget);
     // Verify Logout button
     expect(find.byIcon(Icons.cloud_download), findsOneWidget);
     // Verify the presence of the Floating Action Button

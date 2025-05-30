@@ -3,14 +3,17 @@ from unittest.mock import patch, MagicMock
 
 from bson import ObjectId
 
-from src.config.mongo import DEVICE_COLLECTION
+from src.config.mongo import DEVICE_COLLECTION, USER_COLLECTION
 from src.service.device_service import handle_get_device_data
 
 
 class TestDeviceManagement(unittest.TestCase):
     def setUp(self):
         # Mock MongoDB
-        self.mongo_db_mock = MagicMock()
+        self.mongo_db_mock = {
+            USER_COLLECTION: MagicMock(),
+            DEVICE_COLLECTION: MagicMock()
+        }
         self.mongo_patcher = patch('src.service.device_service.mongo_db', self.mongo_db_mock)
         self.mongo_patcher.start()
 

@@ -1,7 +1,9 @@
 import 'package:mobile_app/util/storage/base_storage.dart';
+import 'dart:convert';
 import 'dart:html' as html show Storage, window;
+import '../../entity/device.dart';
 
-class SessionStorage extends BaseStorage{
+class SessionStorage extends BaseStorage {
   static final html.Storage _sessionStorage = html.window.sessionStorage;
 
   @override
@@ -10,46 +12,54 @@ class SessionStorage extends BaseStorage{
   }
 
   @override
-  Future<void> deleteData(String key) async{
-    _sessionStorage.remove(key);
+  Future<void> saveToken(String token) async {
+    _sessionStorage['token'] = token;
   }
 
   @override
-  Future<String> getToken() async{
+  Future<String> getToken() async {
     return _sessionStorage['token'] ?? '';
   }
 
   @override
-  Future<List<String>> getDeviceList() async {
-    List<String> deviceIds = _sessionStorage['device_ids']?.split(',') ?? [];
+  Future<void> addDevice(Device device) async {
+    List<Device> devices = await getDevices();
 
-    deviceIds = deviceIds.where((id) => id.isNotEmpty).toList();
+    devices.removeWhere((d) => d.id == device.id);
+    devices.add(device);
 
-    return deviceIds;
+    String encoded = json.encode(devices.map((d) => d.toMap()).toList());
+    _sessionStorage['devices'] = encoded;
   }
-
 
   @override
-  Future<void> saveData(String key, value) async{
-    if (key == 'device_ids') {
-      if (value is List) {
-        List<String> deviceIds = [];
-        for (var deviceId in value) {
-          deviceIds.add(deviceId);
-        }
-        _sessionStorage['device_ids'] = deviceIds.join(',');
-      } else if (value is String) {
-        List<String> deviceIds = await getDeviceList();
-        deviceIds.add(value);
-        _sessionStorage['device_ids'] = deviceIds.join(',');
-      }
-    }
-
-    if (key == 'token') {
-      _sessionStorage['token'] = value;
-    }
+  Future<void> saveDevices(List<Device> devices) async {
+    String encoded = json.encode(devices.map((d) => d.toMap()).toList());
+    _sessionStorage['devices'] = encoded;
   }
-  
+
+  @override
+  Future<void> removeDevice(String deviceId) async {
+    List<Device> devices = await getDevices();
+    devices.removeWhere((d) => d.id == deviceId);
+    List<String> encodedDevices = devices.map((d) => json.encode(d.toMap())).toList();
+    _sessionStorage['devices'] = json.encode(encodedDevices);
+  }
+
+  @override
+  Future<void> removeAllDevices() async {
+    _sessionStorage.remove('devices');
+  }
+
+  @override
+  Future<List<Device>> getDevices() async {
+    String? devicesJson = _sessionStorage['devices'];
+    if (devicesJson == null || devicesJson.isEmpty) {
+      return [];
+    }
+    List<dynamic> decoded = json.decode(devicesJson);
+    return decoded.map((d) => Device.fromMap(d)).toList();
+  }
 }
 
 BaseStorage getStorage() => SessionStorage();

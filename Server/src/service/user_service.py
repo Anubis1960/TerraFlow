@@ -18,14 +18,24 @@ def handle_get_user_devices(user_id: str):
     """
     # Check if the user exists in the database
     user = mongo_db[USER_COLLECTION].find_one({"_id": ObjectId(user_id)})
+    print(user)
     if not user:
         return None
+    devices = user.get("devices", []) if user else []
+    res = []
+    for device_id in devices:
+        device = mongo_db[DEVICE_COLLECTION].find_one({"_id": ObjectId(device_id)})
+        if device:
+            res.append({
+                "id": str(device["_id"]),
+                "name": device.get("name", ""),
+            })
 
     # Return the list of devices associated with the user
-    return user.get("devices", [])
+    return res
 
 
-def handle_add_device(device_id: str, user_id: str):
+def handle_add_device(device_id: str, user_id: str) -> dict:
     """
     Adds a device to a user's account in the database.
 
@@ -36,7 +46,7 @@ def handle_add_device(device_id: str, user_id: str):
     # Check if the user exists in the database
     user = mongo_db[USER_COLLECTION].find_one({"_id": ObjectId(user_id)})
     if not user:
-        return False
+        return {"error": "User not found"}
 
     # Get the list of devices associated with the user
     devices = user.get("devices", [])
@@ -47,7 +57,7 @@ def handle_add_device(device_id: str, user_id: str):
     new_device = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
     if not new_device:
         print("Device not found")
-        return False
+        return {"error": "Device not found"}
 
     print(new_device)
 
@@ -70,7 +80,7 @@ def handle_add_device(device_id: str, user_id: str):
 
     print(user_list)
 
-    return True
+    return {"id": device_id, "name": new_device.get("name", "")}
 
 
 def handle_delete_device(device_id: str, user_id: str):
