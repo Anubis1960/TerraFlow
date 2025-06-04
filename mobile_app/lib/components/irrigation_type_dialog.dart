@@ -12,6 +12,8 @@ class IrrigationTypeDialog {
     List<String> scheduleType = ['DAILY', 'WEEKLY', 'MONTHLY'];
     String selectedScheduleType = scheduleType[0];
     TimeOfDay selectedTime = const TimeOfDay(hour: 8, minute: 0);
+    int pumpDurationSeconds = 5;
+
 
     showDialog(
       context: context,
@@ -84,6 +86,25 @@ class IrrigationTypeDialog {
                             .toList(),
                       ),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: TextField(
+                        keyboardType: TextInputType.number,
+                        textDirection: TextDirection.ltr, // Force LTR
+                        onChanged: (value) {
+                          int seconds = int.tryParse(value) ?? 5;
+                          setState(() {
+                            pumpDurationSeconds = seconds;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: "Duration (seconds)",
+                          hintText: "Enter seconds",
+                          border: OutlineInputBorder(),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                        ),
+                      ),
+                    ),
                     ListTile(
                       title: const Text('Select Time'),
                       trailing: Text(
@@ -120,6 +141,7 @@ class IrrigationTypeDialog {
                         }
                       },
                     ),
+
                   ],
                 ],
               ),
@@ -147,6 +169,7 @@ class IrrigationTypeDialog {
                     if (selectedType == 'SCHEDULED') {
                       schedule['type'] = selectedScheduleType;
                       schedule['time'] = '${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}';
+                      schedule['duration'] = pumpDurationSeconds.toString();
                     }
 
                     SocketService.socket.emit('irrigation_type', {

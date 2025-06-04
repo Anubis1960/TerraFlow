@@ -17,12 +17,9 @@ def handle_form_login(email: str, password: str) -> dict:
     """
     Handle login with email and password.
 
-    Args:
-        email: str: The email of the user.
-        password: str: The password of the user.
-
-    Returns:
-        dict: A dictionary containing the token and devices associated with the user.
+    :param email: str: The email of the user.
+    :param password: str: The password of the user.
+    :return: dict: A dictionary containing the token and devices associated with the user, or an error message.
 
     """
     try:
@@ -63,11 +60,8 @@ def handle_token_login(email: str) -> dict:
     """
     Handle login with an access token.
 
-    Args:
-        email: str: The email of the user.
-
-    Returns:
-        dict: A dictionary containing the token and devices associated with the user.
+    :param email: str: The email of the user.
+    :return: dict: A dictionary containing the token if the user exists, or creates a new user and returns the token.
     """
     user = mongo_db[USER_COLLECTION].find_one({"email": email})
     if user:
@@ -81,12 +75,8 @@ def google_auth(request: Request) -> dict:
     """
     Authorizes the user using Google OAuth.
 
-    Args:
-        request: Request: The request object.
-
-    Returns:
-        dict: A dictionary containing the token and controllers associated with the user.
-
+    :param request: Request: The request object.
+    :return: dict: A dictionary containing the token if the user exists, or creates a new user and returns the token.
     """
     id_token_str = request.form.get('id_token')
     if not id_token_str:
@@ -103,6 +93,13 @@ def google_auth(request: Request) -> dict:
 
 
 def handle_register(email: str, password: str) -> dict:
+    """
+    Handle user registration.
+
+    :param email: str: The email of the user.
+    :param password: str: The password of the user.
+    :return: dict: A dictionary containing the token if registration is successful, or an error message.
+    """
     try:
         res = mongo_db[USER_COLLECTION].find({'email': email})
         users = list(res)
@@ -124,16 +121,12 @@ def handle_register(email: str, password: str) -> dict:
 
 
 def handle_logout(user_id: str, deviceIds: list) -> dict:
-
     """
     Handle logout for a user.
 
-    Args:
-        user_id: str: The ID of the user.
-        deviceIds: str: The IDs of the devices to be logged out.
-
-    Returns:
-        dict: A dictionary indicating success or failure of the logout operation.
+    :param user_id: str: The ID of the user.
+    :param deviceIds: str: The IDs of the devices to be logged out.
+    :return: dict: A dictionary indicating success or an error message.
     """
     try:
         user = mongo_db[USER_COLLECTION].find_one({'_id': user_id})

@@ -10,12 +10,13 @@ from src.utils.secrets import SENDER_EMAIL, SENDER_PASSWORD, SMTP_SERVER
 from bson import ObjectId
 
 
-def send_monthly_report():
+def send_monthly_report() -> None:
     """
     Send a monthly report via email.
     This function should be implemented to gather the necessary data and send the email.
-    """
 
+    :return: None
+    """
     users = mongo_db[USER_COLLECTION].find()
 
     print("Starting to send monthly reports...")

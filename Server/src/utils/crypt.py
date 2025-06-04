@@ -1,28 +1,3 @@
-"""
-AES Encryption and Decryption Utility.
-
-This module provides functions to encrypt and decrypt data using the AES algorithm in CBC mode.
-The encryption key is hashed using SHA-256 to ensure compatibility with AES key length requirements.
-
-Functions:
-- `encrypt`: Encrypts a string or bytes using AES-CBC.
-- `decrypt`: Decrypts an AES-CBC encrypted string or bytes.
-
-Dependencies:
-- `pycryptodome`: Provides AES and SHA-256 functionalities.
-- `base64`: For encoding and decoding encrypted data.
-
-Constants:
-- `key`: The encryption key imported from the configuration.
-
-Usage:
-- `encrypt(source)`: Encrypts the given plaintext.
-- `decrypt(source)`: Decrypts the given ciphertext.
-
-Exceptions:
-- Raises `ValueError` if padding is invalid during decryption.
-"""
-
 import base64
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
@@ -34,15 +9,9 @@ def encrypt(source: str, encode=True) -> str:
     """
     encrypts the given plaintext using AES in CBC mode.
 
-    Args:
-        source (str or bytes): The plaintext data to encrypt. if a string, it will be encoded to bytes.
-        encode (bool): Whether to encode the output in Base64. defaults to True.
-
-    Returns:
-        str or bytes: The encrypted data, encoded in Base64 if `encode=True`.
-
-    Raises:
-        TypeError: If the input data type is invalid.
+    :param source: str: The plaintext data to encrypt. if a string, it will be encoded to bytes.
+    :param encode: bool: Whether to encode the output in Base64. defaults to True.
+    :return: str: The encrypted data as a Base64-encoded string if `encode` is True, otherwise as bytes.
     """
     if isinstance(source, str):
         source = source.encode("utf-8")  # Convert string to bytes
@@ -71,17 +40,11 @@ def encrypt(source: str, encode=True) -> str:
 
 def decrypt(source: str, decode=True) -> str:
     """
-    decrypts the given AES-CBC encrypted data.
+    decrypts the given AES-CBC encrypted data
 
-    Args:
-        source (str or bytes): The encrypted data to decrypt. if a string, it should be Base64-encoded.
-        decode (bool): Whether the input is Base64-encoded. defaults to True.
-
-    Returns:
-        str: The decrypted plaintext.
-
-    Raises:
-        ValueError: If the padding is invalid or corrupted.
+    :param source: str: The encrypted data to decrypt. if a string, it should be Base64-encoded.
+    :param decode: bool: Whether the input is Base64-encoded. defaults to True.
+    :return: str: The decrypted plaintext.
     """
     if decode:
         # Decode the input data from Base64

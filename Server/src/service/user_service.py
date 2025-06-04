@@ -9,12 +9,12 @@ from src.utils.predict import predict_disease
 import cv2
 
 
-def handle_get_user_devices(user_id: str):
+def handle_get_user_devices(user_id: str) -> list[dict[str, str]] or None:
     """
     Fetches the devices associated with a user from the database.
 
-    :param user_id: The ID of the user whose devices are to be fetched.
-    :return: A list of device IDs associated with the user.
+    :param user_id: str: The ID of the user whose devices are to be fetched.
+    :return: list[dict[str, str]] or None: A list of device IDs associated with the user.
     """
     # Check if the user exists in the database
     user = mongo_db[USER_COLLECTION].find_one({"_id": ObjectId(user_id)})
@@ -39,9 +39,9 @@ def handle_add_device(device_id: str, user_id: str) -> dict:
     """
     Adds a device to a user's account in the database.
 
-    :param device_id: The ID of the device to be added.
-    :param user_id: The ID of the user to whom the device is to be added.
-    :return: True if the device was successfully added, False otherwise.
+    :param device_id: str: The ID of the device to be added.
+    :param user_id: str: The ID of the user to whom the device is to be added.
+    :return: dict: True if the device was successfully added, False otherwise.
     """
     # Check if the user exists in the database
     user = mongo_db[USER_COLLECTION].find_one({"_id": ObjectId(user_id)})
@@ -83,7 +83,14 @@ def handle_add_device(device_id: str, user_id: str) -> dict:
     return {"id": device_id, "name": new_device.get("name", "")}
 
 
-def handle_delete_device(device_id: str, user_id: str):
+def handle_delete_device(device_id: str, user_id: str) -> bool:
+    """
+    Deletes a device from a user's account in the database.
+
+    :param device_id: str: The ID of the device to be deleted.
+    :param user_id: str: The ID of the user from whose account the device is to be deleted.
+    :return: bool: True if the device was successfully deleted, False otherwise.
+    """
     user = mongo_db[USER_COLLECTION].find_one({"_id": ObjectId(user_id)})
     if not user:
         return False
@@ -103,12 +110,12 @@ def handle_delete_device(device_id: str, user_id: str):
     return True
 
 
-def handle_predict_disease(image_file) -> dict[str, str]:
+def handle_predict_disease(image_file) -> dict:
     """
     Predicts disease from an image file.
 
     :param image_file: The path to the image file.
-    :return: A dictionary containing the prediction result.
+    :return: dict: A dictionary containing the prediction result.
     """
     file_bytes = image_file.read()
     np_arr = np.frombuffer(file_bytes, np.uint8)

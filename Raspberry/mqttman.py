@@ -1,35 +1,30 @@
-from time import localtime, sleep
+from utime import localtime, sleep, time
 import asyncio
 import ujson as json
 from machine import Pin, ADC
 import dht
-import requests
+import urequests
 from constants import WEATHER_API_KEY
 from machine import RTC
 
 moisture_pin = ADC(Pin(26))
 rain_pin = ADC(Pin(27))
-wet_soil = 19000
-dry_soil = 44300
-rain_upper = 65535
-rain_lower = 13000
 DHT = dht.DHT22(Pin(2))
 relay = Pin(16, Pin.OUT)
 water_used_per_second = 0.023  # l/second
-# moisture_conversion_factor = 100 / (65535)
 
 class MQTTManager:
-    def __init__(self, client, topics, location_data):
+    def __init__(self, client, topics, location):
         self.client = client
         self.topics = topics
         self.schedule = {
             'type': "DAILY",
-            'time': "08:00"
+            'time': "08:00",
+            'duration': 2,
         }
-        self.schedule_updated_event = asyncio.Event()
         self.irrigation_task = asyncio.create_task(self.check_irrigation())
         self.irrigation_type = "AUTOMATIC"
-        self.location_data = location_data
+        self.location_data = location
         self.start_water_timer = None
         relay_off()
 
@@ -37,31 +32,27 @@ class MQTTManager:
         """
         Handles the irrigation command.
         """
-        self.start_water_timer = localtime()
-
+        start_time = time()  # Start timestamp in seconds
         relay_on()
-        sleep(5)
+        sleep(5)  # Simulate watering for 5 seconds
         relay_off()
+        
+        end_time = time()
+        duration_seconds = end_time - start_time
 
-        if self.start_water_timer is None:
-            print("Watering not started.")
-            return
+        print("Watering started at:", localtime(start_time))
+        print("Watering ended at:", localtime(end_time))
+        print("Watering duration:", duration_seconds, "seconds")
 
-        end_water_timer = localtime()
-        print("Watering started at:", self.start_water_timer)
-        print("Watering ended at:", end_water_timer)
-        print("Watering duration:", end_water_timer[5] - self.start_water_timer[5], "seconds")
-
-        water_used = water_used_per_second * (end_water_timer[5] - self.start_water_timer[5])
+        water_used = water_used_per_second * duration_seconds
         print("Water used:", water_used, "liters")
 
-        self.start_water_timer = None
-
+        # Record data
         timestamp = localtime()
         year, month = timestamp[:2]
         water_data = {
             'water_used': water_used,
-            'date': "{:04d}/{:02d}".format(year, month)
+            'date': f"{year:04d}/{month:02d}"
         }
         self.client.publish(self.topics['RECORD_WATER_USED_PUB'], json.dumps(water_data))
     
@@ -71,50 +62,30 @@ class MQTTManager:
         """
         if json_data['prediction'] == 1: # 1 means ON
             if self.start_water_timer == None:
-                self.start_water_timer = localtime()
+                self.start_water_timer = time()
             relay_on()
             sleep(5)
             self.send_for_prediction()
         elif json_data['prediction'] == 0: # 0 means OFF
             relay_off()
             if self.start_water_timer != None:
-                end_water_timer = localtime()
-                print("Watering started at:", self.start_water_timer)
-                print("Watering ended at:", end_water_timer)
-                print("Active time:", end_water_timer[3] - self.start_water_timer[3], "hours")
-                print("Watering duration:", end_water_timer[4] - self.start_water_timer[4], "minutes")
-                print("Watering duration:", end_water_timer[5] - self.start_water_timer[5], "seconds")
-                print("Watering duration:", end_water_timer[6] - self.start_water_timer[6], "milliseconds")
+                end_time = time()
+                duration_seconds = end_time - self.start_water_timer
+                print("Watering started at:", localtime(self.start_water_timer))
+                print("Watering ended at:", localtime(end_time))
+                print("Watering duration:", duration_seconds, "seconds")
 
-                water_used = water_used_per_second * (end_water_timer[4] - self.start_water_timer[4]) * 60
+                water_used = water_used_per_second * duration_seconds
                 print("Water used:", water_used, "liters")
 
                 self.start_water_timer = None
-            timestamp = localtime()
-            year, month = timestamp[:2]
-            water_data = {
-                'water_used': water_used if self.start_water_timer != None else 0,
-                'date': "{:04d}/{:02d}".format(year, month)
-            }
-            self.client.publish(self.topics['RECORD_WATER_USED_PUB'], json.dumps(water_data))
-    
-    def handle_schedule_cmd(self, msg: dict):
-        """
-        Handles the schedule command.
-        """
-
-        if 'type' not in msg or 'time' not in msg:
-            self.schedule = {}
-            self.schedule_updated_event.set()
-            return
-
-        type = msg['type']
-        time = msg['time']
-
-        if type in ['DAILY', 'WEEKLY', 'MONTHLY']:
-            self.schedule['type'] = type
-            self.schedule['time'] = time
-            self.schedule_updated_event.set()
+                timestamp = localtime()
+                year, month = timestamp[:2]
+                water_data = {
+                    'water_used': water_used,
+                    'date': "{:04d}/{:02d}".format(year, month)
+                }
+                self.client.publish(self.topics['RECORD_WATER_USED_PUB'], json.dumps(water_data))
 
     
     def handle_irrigation_type_cmd(self, msg: dict):
@@ -135,25 +106,34 @@ class MQTTManager:
         if self.irrigation_type == 'AUTOMATIC':
             self.schedule = {
                 'type': "DAILY",
-                'time': "08:00"
+                'time': "08:00",
+                'duration': 5,
             }
         elif self.irrigation_type == 'MANUAL':
             self.schedule = {
                 'type': "MANUAL",
-                'time': "00:00"
+                'time': "00:00",
+                'duration': 5,
             }
         elif self.irrigation_type == 'SCHEDULED':
             if 'schedule' not in msg:
                 return
             schedule = msg['schedule']
-            if 'type' not in schedule or 'time' not in schedule:
+            if 'type' not in schedule or 'time' not in schedule or 'duration' not in schedule:
                 return
             type = schedule['type']
             time = schedule['time']
+            try:
+                duration = int(schedule['duration'])
+            except Exception as e:
+                print(e)
+                return
             if type in ['DAILY', 'WEEKLY', 'MONTHLY']:
                 self.schedule['type'] = type
                 self.schedule['time'] = time
-            
+                self.schedule['duration'] = duration
+
+        print("Creating task")    
         self.irrigation_task = asyncio.create_task(self.check_irrigation())
         relay_off()
     
@@ -170,11 +150,7 @@ class MQTTManager:
         topic = topic.decode()
         msg = msg.decode()
         
-        if topic == self.topics['SCHEDULE_SUB']:
-            print("Schedule command received:", msg)
-            json_data = json.loads(msg)
-            self.handle_schedule_cmd(json_data)
-        elif topic == self.topics['IRRIGATE_SUB']:
+        if topic == self.topics['IRRIGATE_SUB']:
             print("Irrigation command received:", msg)
             self.handle_irrigation_cmd()
         elif topic == self.topics['PREDICTION_SUB']:
@@ -208,8 +184,6 @@ class MQTTManager:
             period_ms (int): The interval between messages in seconds.
         """
         while True:
-            # Generate timestamp
-            print(RTC().datetime())
             timestamp = localtime()
             year, month, day, hour, minute, second = timestamp[:6]
 
@@ -260,11 +234,9 @@ class MQTTManager:
         print(f"Next irrigation in {time_until_irrigation} seconds")
         
         while time_until_irrigation > 0:
-            print("Waiting 1")
             delay = min(time_until_irrigation, 86400)  # Wait up to 24 hours at a time
             try:
                 await asyncio.sleep(delay)
-                print("Waiting 2")
                 break  # Exit if the schedule is updated
             except asyncio.TimeoutError:
                 time_until_irrigation -= delay
@@ -296,13 +268,23 @@ class MQTTManager:
     async def handle_scheduled_irrigation(self):
         await self.wait_for_schedule()
         relay_on()
-        sleep(5)
+        sleep(self.schedule['duration'])
         relay_off()
+        water_used = water_used_per_second * self.schedule['duration']
+        print("Water used:", water_used, "liters")
+        timestamp = localtime()
+        year, month = timestamp[:2]
+        water_data = {
+            'water_used': water_used,
+            'date': "{:04d}/{:02d}".format(year, month)
+        }
+        self.client.publish(self.topics['RECORD_WATER_USED_PUB'], json.dumps(water_data))
+        await asyncio.sleep(60)
 
 
     async def check_irrigation(self):
         """
-        If a schedule is set, it follows the schedule.
+        Check irrigation type and call the correct handler
         """
         print("Irrigation check started.")
         while True:
@@ -318,6 +300,9 @@ class MQTTManager:
     
 
     def send_for_prediction(self):
+        """
+        Sends data to the server for the model to predict
+        """
         moisture_level = read_moisture()
         print("Moisture level:", moisture_level)
         temperature, humidity = read_dht()
@@ -340,7 +325,7 @@ class MQTTManager:
             dict: The weather data.
         """
         url = f"https://api.weatherapi.com/v1/current.json?q={self.location_data['coordinates']}&key={WEATHER_API_KEY}"
-        response = requests.get(url)
+        response = urequests.get(url)
         return response.json()
 
 
@@ -379,12 +364,16 @@ def read_dht():
     return 0, 0
 
 def read_moisture():
+    wet_soil = 19000
+    dry_soil = 44300
     raw_value = moisture_pin.read_u16()
     moisture_level = ((dry_soil - raw_value) / (dry_soil - wet_soil)) * 100
     moisture_level = max(0, min(100, moisture_level))
     return moisture_level
 
 def read_rain():
+    rain_upper = 65535
+    rain_lower = 13000
     rain_state = rain_pin.read_u16()
     if rain_state > rain_upper:
         rain_state = 100

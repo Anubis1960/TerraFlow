@@ -11,6 +11,12 @@ device_blueprint = Blueprint('device', __name__, url_prefix='/device')
 
 @device_blueprint.route('/<device_id>/data', methods=['GET'])
 def get_device_data(device_id):
+    """
+    Endpoint to get device data by device ID.
+    The user must be authenticated via a token in the Authorization header.
+
+    :param device_id: str: The ID of the device to fetch data for.
+    """
     token = request.headers.get('Authorization')
     token = token.split(" ")[1] if token else None
     payload = decode_token(token)

@@ -1,8 +1,6 @@
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:mobile_app/components/irrigation_type_dialog.dart';
-import 'package:mobile_app/util/constants.dart';
 import 'package:mobile_app/service/socket_service.dart';
 
 class BottomNavBar{
@@ -17,33 +15,6 @@ class BottomNavBar{
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Home Button
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    // Navigate to Home Screen
-                    context.go(Routes.HOME);
-                  },
-                  icon: Icon(Icons.home, color: Colors.deepPurpleAccent),
-                  tooltip: 'Home',
-                ),
-                Flexible(
-                  child: Text(
-                    'Home',
-                    style: TextStyle(
-                      color: Colors.deepPurpleAccent,
-                      fontSize: 14, // Adjusted font size
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center, // Center the text
-                  ),
-                ),
-              ],
-            ),
-          ),
           // Trigger Irrigation Button
           Expanded(
             child: Column(

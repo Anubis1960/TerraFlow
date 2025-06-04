@@ -1,47 +1,20 @@
-"""
-IoT Application for an Irrigation System.
-
-This script connects to a Wi-Fi network, communicates with an MQTT broker,
-and handles sensor data for an irrigation system. It uses `asyncio` for asynchronous tasks
-and generates unique device IDs for registering with the MQTT broker.
-
-Features:
-- Generates a unique device ID and stores it persistently in a file.
-- Publishes sensor data and water usage data to specific MQTT topics.
-- Listens for scheduling and irrigation commands from the MQTT broker.
-- Supports asynchronous execution for non-blocking operations.
-
-Modules and Constants:
-- `SSID`, `PASSWORD`: Wi-Fi credentials.
-- `MQTT_BROKER`, `MQTT_CLIENT_ID`: MQTT broker information.
-- `generate_object_id`: Function to create a unique device identifier.
-
-Attributes:
-    _device_id (str): A unique identifier for this IoT device.
-"""
-
-from time import sleep, localtime
+from utime import sleep, localtime
 import ntptime
 import network
 import os
 from umqtt.simple import MQTTClient
 import asyncio
 import ujson as json
-from constants import SSID, PASSWORD, MQTT_BROKER, MQTT_CLIENT_ID, get_mqtt_topics
+from constants import SSID, PASSWORD, MQTT_BROKER, MQTT_CLIENT_ID, get_mqtt_topics, DATETIME_API_KEY
 from generate_id import generate_object_id
 from mqttman import MQTTManager
-import requests
+import urequests
 from machine import RTC
 
 def init():
     """
     Initializes the IoT device by synchronizing the time and generating a unique device ID.
     """
-    try:
-        ntptime.host = "pool.ntp.org"
-        ntptime.settime()
-    except OSError as e:
-        print("Error synchronizing time:", e)
 
     # Ensure a unique device ID is stored persistently
     if 'id.txt' not in os.listdir():
@@ -60,48 +33,46 @@ def init():
 
 def get_location():
     print("Fetching location data...")
-    response = requests.get('https://ipinfo.io/json')
+    response = urequests.get('https://ipinfo.io/json')
     data = response.json()
     response.close()
     city = data.get('city', 'Unknown')
     region = data.get('region', 'Unknown')
     country = data.get('country', 'Unknown')
     loc = data.get('loc', 'Unknown')
+    timezone = data.get('timezone', 'Unknown')
     return {
         'city': city,
         'region': region,
         'country': country,
         'coordinates': loc,
+        'timezone': timezone
     }
 
+def sync_time_with_ip_geolocation_api(rtc, timezone):
 
-def get_world_time():
-    url = "http://worldtimeapi.org/api/ip"
-    print("Fetching time data...")
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            response.close()
-            return data
+    url = f'http://api.ipgeolocation.io/timezone?apiKey={DATETIME_API_KEY}&tz={timezone}'
+    response = urequests.get(url)
+    data = response.json()
+
+    print("API Response:", data)
+
+    if 'date_time' in data:
+        current_time = data["date_time"]
+        print("Current Time String:", current_time)
+
+        if " " in current_time:
+            the_date, the_time = current_time.split(" ")
+            year, month, mday = map(int, the_date.split("-"))
+            hours, minutes, seconds = map(int, the_time.split(":"))
+
+            week_day = data.get("day_of_week", 0)  # Default to 0 if not available
+            rtc.datetime((year, month, mday, week_day, hours, minutes, seconds, 0))
+            print("RTC Time After Setting:", rtc.datetime())
         else:
-            print("Failed to retrieve data. Status code:", response.status_code)
-            response.close()
-            return None
-    except Exception as e:
-        print("Error fetching data:", e)
-        return None
-
-# Set internal RTC with local time
-def set_rtc_from_unix(unixtime, utc_offset_seconds):
-    # Convert Unix timestamp + offset to local time tuple
-    local_seconds = unixtime + utc_offset_seconds
-    tm = localtime(local_seconds)
-
-    # Format as RTC tuple: (year, month, day, weekday, hour, minute, second, subsecond)
-    rtc_tuple = (tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], 0)
-    RTC().datetime(rtc_tuple)
-    print("RTC set to:", tm[0], tm[1], tm[2], tm[3], tm[4], tm[5])
+            print("Error: Unexpected time format:", current_time)
+    else:
+        print("Error: The expected data is not present in the response.")
 
 async def main():
     """
@@ -122,14 +93,7 @@ async def main():
     # Initialize device ID
     _device_id= init()
 
-    time_data = get_world_time()
 
-    if time_data:
-        unixtime = time_data["unixtime"]
-        utc_offset = time_data["raw_offset"] + time_data.get("dst_offset", 0)
-        print("UTC Offset (with DST): {} seconds".format(utc_offset))
-
-        set_rtc_from_unix(unixtime, utc_offset)
 
     # Get MQTT topics
     topics = get_mqtt_topics(_device_id)
@@ -137,6 +101,13 @@ async def main():
     # Get location data
     location_data = get_location()
     print("Location data:", location_data)
+
+    rtc = RTC()
+
+    sync_time_with_ip_geolocation_api(rtc, location_data['timezone'])
+
+
+    print(rtc.datetime())
 
     client = MQTTClient(MQTT_CLIENT_ID, MQTT_BROKER)
     mqtt_mng = MQTTManager(client, topics, location_data)

@@ -1,34 +1,3 @@
-"""
-Socket.IO Event Handlers for IoT Application
-
-This module defines event handlers for various Socket.IO events, enabling real-time communication between the server
-and connected clients. The handlers process user requests, manage devices, and handle irrigation scheduling.
-
-### Key Features:
-1. **Real-Time Connection Management**:
-   - Handles client connections, disconnections, and initialization.
-
-2. **device Management**:
-   - Add, remove, and manage devices associated with users.
-   - Fetch device data for real-time updates.
-
-3. **Irrigation Control**:
-   - Trigger manual irrigation or schedule automated irrigation tasks.
-
-4. **User Authentication**:
-   - Register and log in users using Socket.IO events.
-
-5. **General Communication**:
-   - Handles miscellaneous messages for debugging or additional communication.
-
-### Dependencies:
-- `Flask`: Used to manage HTTP requests (e.g., `request.sid` for socket session IDs).
-- `socketio`: For handling WebSocket communication.
-- Custom Services (`socket_service`):
-  - Contains core logic for handling devices, irrigation, user authentication, etc.
-
-"""
-
 from flask import request
 from src.service.socket_service import (
     handle_connect, handle_disconnect, handle_irrigate, handle_irrigation_type,
@@ -42,17 +11,6 @@ from src.utils.tokenizer import decode_token
 def connet_event() -> None:
     """
     Handles client connection.
-
-    Actions:
-        - Prints a connection message and logs the socket ID.
-        - Calls `handle_connect` to process the new connection.
-
-    Returns:
-        None
-
-    Logs:
-        - "Client connected"
-        - "Socket ID: <socket_id>"
     """
     print('Client connected')
     print('Request:', request)
@@ -65,21 +23,6 @@ def connet_event() -> None:
 def init_event(data: dict) -> None:
     """
     Initializes the client session by remapping Redis with devices.
-
-    Args:
-        data (dict): JSON containing user information and associated devices.
-            Required keys: 'user_id', 'devices'.
-
-    Returns:
-        None
-
-    Actions:
-        - Remaps Redis with the user ID, devices, and the socket ID.
-        - Validates presence of required keys and devices.
-
-    Logs:
-        - "Init: <data>"
-        - Errors if 'user_id' or 'devices' are missing or empty.
     """
     print('Init:', data)
     socket_id = request.sid
@@ -104,18 +47,6 @@ def init_event(data: dict) -> None:
 def disconnect_event(data: dict) -> None:
     """
     Handles client disconnection.
-
-    Args:
-        data (dict): JSON payload (optional) sent during disconnection.
-
-    Returns:
-        None
-
-    Actions:
-        - Calls `handle_disconnect` to process the disconnection.
-
-    Logs:
-        - "Client disconnected"
     """
     print('Client disconnected')
     handle_disconnect(data)
@@ -125,20 +56,6 @@ def disconnect_event(data: dict) -> None:
 def irrigate_event(data: dict) -> None:
     """
     Triggers manual irrigation for a device.
-
-    Args:
-        data (dict): JSON payload with the required key 'device_id'.
-
-    Returns:
-        None
-
-    Actions:
-        - Validates presence of 'device_id' in the payload.
-        - Calls `handle_irrigate` to initiate irrigation.
-
-    Logs:
-        - "Irrigating: <device_id>"
-        - Errors if 'device_id' is missing.
     """
     if 'device_id' not in data:
         print('device ID not found, found:', data)
@@ -152,15 +69,6 @@ def irrigate_event(data: dict) -> None:
 def export_event(data: dict) -> None:
     """
     Handles export requests for device data.
-
-    Args:
-        data (dict): JSON payload with keys 'device_id' and 'type'.
-
-    Returns:
-        None
-
-    Logs:
-        - Errors if required keys are missing.
     """
     if 'device_id' not in data:
         print('device ID or type not found, found:', data)
@@ -176,21 +84,7 @@ def schedule_irrigation_event(data: dict) -> None:
     """
     Schedules irrigation for a device.
 
-    Args:
-        data (dict): JSON payload with keys:
-            - 'device_id': ID of the device.
-            - 'schedule_type': Type of schedule ('DAILY', 'WEEKLY', 'MONTHLY').
-            - 'Schedule_time': Time for the schedule.
-
-    Returns:
-        None
-
-    Actions:
-        - Validates required keys and schedule type.
-        - Calls `handle_schedule_irrigation` with the device ID and schedule.
-
-    Logs:
-        - Errors if required keys are missing or schedule type is invalid.
+    :param data: dict: JSON payload with keys 'device_id', 'schedule_type', and 'schedule_time'.
     """
     if 'device_id' not in data or 'schedule_type' not in data or 'schedule_time' not in data:
         print('device ID or Schedule not found, found:', data)
@@ -212,18 +106,7 @@ def irrigation_type_event(data: dict) -> None:
     """
     Sets the irrigation type for a device.
 
-    Args:
-        data (dict): JSON payload with keys 'device_id' and 'irrigation_type'.
-
-    Returns:
-        None
-
-    Actions:
-        - Validates presence of required keys.
-        - Calls `handle_irrigation_type` with the device ID and irrigation type.
-
-    Logs:
-        - Errors if required keys are missing.
+    :param data: dict: JSON payload with keys 'device_id', 'irrigation_type', and optional 'schedule'.
     """
     if 'device_id' not in data or 'irrigation_type' not in data:
         print('device ID or irrigation type not found, found:', data)
@@ -240,19 +123,7 @@ def remove_schedule_event(data: dict) -> None:
     """
     Removes irrigation schedule for a device.
 
-    Args:
-        data (dict): JSON payload with the key 'device_id'.
-
-    Returns:
-        None
-
-    Actions:
-        - Validates presence of 'device_id' in the payload.
-        - Calls `handle_schedule_irrigation` with an empty schedule to remove the existing schedule.
-
-    Logs:
-        - "Removing schedule for: <device_id>"
-        - Errors if 'device_id' is missing.
+    :param data: dict: JSON payload with key 'device_id'.
     """
     if 'device_id' not in data:
         print('device ID not found, found:', data)
@@ -267,13 +138,6 @@ def message_event(data: dict) -> None:
     """
     Handles general messages.
 
-    Args:
-        data (dict): JSON payload of the message.
-
-    Returns:
-        None
-
-    Logs:
-        - "Message: <data>"
+    :param data: dict: JSON payload containing the message data.
     """
     print('Message:', data)

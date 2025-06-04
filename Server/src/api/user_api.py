@@ -1,16 +1,17 @@
 from http import HTTPStatus
-
 from flask import Blueprint, request, jsonify
-
 from src.service.user_service import (handle_get_user_devices, handle_add_device, handle_delete_device,
                                       handle_predict_disease)
 from src.utils.tokenizer import decode_token
-
 user_blueprint = Blueprint('user', __name__, url_prefix='/user')
 
 
 @user_blueprint.route('/devices', methods=['GET'])
 def get_devices():
+    """
+    Endpoint to get all devices associated with a user.
+    The user must be authenticated via a token in the Authorization header.
+    """
     token = request.headers.get('Authorization')
     token = token.split(" ")[1] if token else None
     payload = decode_token(token)
@@ -29,6 +30,11 @@ def get_devices():
 
 @user_blueprint.route('/', methods=['PATCH'])
 def add_device():
+    """
+    Endpoint to add a device to a user's account.
+    The request should contain a JSON body with the device_id field.
+    The user must be authenticated via a token in the Authorization header.
+    """
     data = request.get_json()
     print(data)
     print(request.headers)
@@ -61,6 +67,11 @@ def add_device():
 
 @user_blueprint.route('/devices/<device_id>', methods=['DELETE'])
 def delete_device(device_id):
+    """
+    Endpoint to delete a device from a user's account.
+    The user must be authenticated via a token in the Authorization header.
+    :param device_id: The ID of the device to be deleted.
+    """
     token = request.headers.get('Authorization')
     token = token.split(" ")[1] if token else None
     payload = decode_token(token)

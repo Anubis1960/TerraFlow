@@ -1,11 +1,8 @@
 import os
 import pickle as pkl
-from typing import Any
-
 import numpy as np
 import pandas as pd
 import cv2
-from numpy import ndarray, dtype, float64
 from tensorflow.keras.models import load_model as load_keras_model
 
 INT_TO_CLASS = {
@@ -20,7 +17,9 @@ INT_TO_CLASS = {
 
 def load_model(path: str):
     """
-    Load the model from the pickle file.
+    Load the model from the file.
+    :param path: str: Path to the model file.
+    :return: Loaded model.
     """
     try:
         with open(path, 'rb') as file:
@@ -33,6 +32,9 @@ def load_model(path: str):
 def predict_water(data: pd.DataFrame) -> list[int]:
     """
     Predict the output using the model.
+
+    :param data: pd.DataFrame: DataFrame containing the input data.
+    :return: list[int]: List of predictions.
     """
     # Base directory of your project (e.g., where src/ lives)
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -44,10 +46,14 @@ def predict_water(data: pd.DataFrame) -> list[int]:
     return prediction
 
 
-def prepare_image(image: cv2.Mat, img_size=(48, 48)):
+def prepare_image(image: cv2.Mat, img_size=(48, 48)) -> np.ndarray:
     """
     Preprocess the image for prediction.
     This function should be customized based on the model's requirements.
+
+    :param image: cv2.Mat: Input image in OpenCV format.
+    :param img_size: tuple: Desired size for the image (default is (48, 48)).
+    :return: np.ndarray: Preprocessed image ready for prediction.
     """
 
     # Ensure correct resizing to (48, 48)
@@ -65,6 +71,9 @@ def prepare_image(image: cv2.Mat, img_size=(48, 48)):
 def predict_disease(img: cv2.Mat) -> dict[str, str | float]:
     """
     Predict the disease from the image using the model.
+
+    :param img: cv2.Mat: Input image in OpenCV format.
+    :return: dict[str, str | float]: Dictionary containing the prediction and confidence score.
     """
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

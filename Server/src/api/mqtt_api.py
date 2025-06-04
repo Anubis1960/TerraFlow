@@ -34,15 +34,12 @@ from src.config.protocol import mqtt
 @mqtt.on_connect()
 def handle_connect(client: paho.mqtt.client.Client, userdata: typing.Any, flags: dict, rc: int):
     """
-    handle MQTT connection events.
+    Handle MQTT connection events.
 
-    Args:
-        client (paho.mqtt.client.Client): The MQTT client instance for this callback.
-        userdata (typing.Any): The private user data provided to the client.
-        flags (dict): Response flags sent by the broker.
-        rc (int): The connection result. 0 indicates success.
-
-    log the connection result and associated client information.
+    :param client: paho.mqtt.client.Client: The MQTT client instance.
+    :param userdata: typing.Any: The private user data provided to the client.
+    :param flags: dict: Response flags from the MQTT broker.
+    :param rc: int: The connection result code, indicating success or failure.
     """
     print(f"Connected with result code {rc}, client: {client}")
 
@@ -52,20 +49,9 @@ def handle_mqtt_message(client: paho.mqtt.client.Client, userdata: typing.Any, m
     """
     handle incoming MQTT messages.
 
-    Args:
-        client (paho.mqtt.client.Client): The MQTT client instance.
-        userdata (typing.Any): The private user data provided to the client.
-        message (paho.mqtt.client.MQTTMessage): The message object containing the topic, payload, and QoS.
-
-    processes messages based on their topic and forwards the payload to the appropriate handler.
-    supported topics:
-        - '/record/sensor_data': Records sensor data.
-        - '/predict': Triggers prediction logic.
-        - '/record/water_used': Logs water usage.
-        - 'register': Registers a new IoT device.
-
-    Exceptions:
-        Catches and logs errors during message processing to avoid interruption of service.
+    :param client: paho.mqtt.client.Client: The MQTT client instance.
+    :param userdata: typing.Any: The private user data provided to the client.
+    :param message: paho.mqtt.client.MQTTMessage: The received MQTT message containing topic and payload.
     """
     try:
         # Decode the received message payload and log the topic and QoS.

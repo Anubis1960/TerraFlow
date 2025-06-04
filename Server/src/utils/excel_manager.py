@@ -7,6 +7,17 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 
 def create_bar_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title: str, start_col: str, start_row: int) \
         -> None:
+    """
+    Creates a bar chart in the specified worksheet with the given titles and starting position.
+
+    :param ws: Workbook: The worksheet where the chart will be added.
+    :param title: str: The title of the chart.
+    :param y_axis_title: str: The title for the Y-axis.
+    :param x_axis_title: str: The title for the X-axis.
+    :param start_col: str: The column letter where the chart will start.
+    :param start_row: int: The row number where the chart will start.
+    :return: None
+    """
     chart = BarChart()
     chart.title = title
     chart.y_axis.title = y_axis_title
@@ -25,6 +36,17 @@ def create_bar_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title: 
 
 def create_line_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title: str, start_col: str, start_row: int) \
         -> None:
+    """
+    Creates a line chart in the specified worksheet with the given titles and starting position.
+
+    :param ws: The worksheet where the chart will be added.
+    :param title: The title of the chart.
+    :param y_axis_title: The title for the Y-axis.
+    :param x_axis_title: The title for the X-axis.
+    :param start_col: The column letter where the chart will start.
+    :param start_row: The row number where the chart will start.
+    :return: None
+    """
     chart = LineChart()
     chart.title = title
     chart.y_axis.title = y_axis_title
@@ -43,6 +65,9 @@ def create_line_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title:
 def export_to_excel(_data: dict) -> BytesIO:
     """
     Exports data to an Excel file with multiple sheets for sensor records and water usage.
+
+    :param _data: The data containing sensor records and water usage.
+    :return: BytesIO buffer containing the Excel file.
     """
     wb = Workbook()
     build_excel_sheet(wb, _data)
@@ -55,6 +80,14 @@ def export_to_excel(_data: dict) -> BytesIO:
 
 
 def build_excel_sheet(wb: Workbook, data, prefix='') -> None:
+    """
+    Builds an Excel sheet from the provided data, creating separate sheets for sensor records and water usage.
+
+    :param wb: The workbook to which the sheets will be added.
+    :param data: The data containing sensor records and water usage.
+    :param prefix: A prefix for the sheet names.
+    :return: None
+    """
     MONTH_MAP = {
         "01": "January", "02": "February", "03": "March", "04": "April",
         "05": "May", "06": "June", "07": "July", "08": "August",
@@ -109,11 +142,17 @@ def build_excel_sheet(wb: Workbook, data, prefix='') -> None:
 
 
 def export_to_excel_devices(_data: list) -> BytesIO:
+    """
+    Exports a list of devices to an Excel file with separate sheets for each device's sensor records and water usage.
+
+    :param _data: A list of device data dictionaries.
+    :return: BytesIO: A buffer containing the Excel file.
+    """
     wb = Workbook()
     for idx, device in enumerate(_data):
         if 'record' not in device or 'water_usage' not in device:
             continue
-        name = f'Device {idx + 1}'
+        name = f'Device {idx + 1}: {device.get("name", "Unknown")}'
         if 'name' in device:
             name = device['name']
         build_excel_sheet(wb, device, prefix=name)

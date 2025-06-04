@@ -7,6 +7,8 @@ PASSWORD = get_env_var("PASSWORD") or ""
 
 WEATHER_API_KEY = get_env_var("WEATHER_API_KEY") or ""
 
+DATETIME_API_KEY = get_env_var("DATETIME_API_KEY") or ""
+
 
 def get_mqtt_topics(device_id):
     """

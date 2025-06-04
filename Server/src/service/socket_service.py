@@ -1,26 +1,7 @@
-"""
-Service handlers for IoT irrigation devices, including user management, device interaction,
-and irrigation scheduling.
-
-### Functions:
-1. **handle_connect** - Handles the event when a client connects.
-2. **handle_disconnect** - Handles the event when a client disconnects.
-3. **handle_irrigate** - Triggers an irrigation event for a specific device.
-4. **handle_add_device** - Adds a device to a user's account and updates Redis.
-5. **handle_remove_device** - Removes a device from a user's account and updates Redis.
-6. **handle_schedule_irrigation** - Schedules irrigation for a specific device.
-7. **handle_register** - Registers a new user.
-8. **handle_login** - Logs in an existing user.
-9. **handle_retrieve_device_data** - Retrieves device data from the database and sends it to the client.
-10. **remap_redis** - Updates Redis with new user-device associations.
-"""
-
 import json
-
 import bson.errors
 import regex as re
 from bson.objectid import ObjectId
-
 from src.config.mongo import mongo_db, DEVICE_COLLECTION
 from src.config.protocol import mqtt, socketio
 from src.config.redis import r
@@ -33,11 +14,8 @@ def handle_connect(data) -> None:
     """
     Handles the event when a client connects.
 
-    Args:
-        data (dict): Data associated with the connection.
-
-    Returns:
-        None
+    :param data: Data associated with the connection.
+    :return: None
     """
     print(data)
 
@@ -46,11 +24,8 @@ def handle_disconnect(data) -> None:
     """
     Handles the event when a client disconnects.
 
-    Args:
-        data (dict): Data associated with the disconnection.
-
-    Returns:
-        None
+    :param data: Data associated with the disconnection.
+    :return: None
     """
     print(data)
 
@@ -59,11 +34,8 @@ def handle_irrigate(device_id: str) -> None:
     """
     Triggers an irrigation event for a specific device.
 
-    Args:
-        device_id (str): The unique identifier of the device to trigger irrigation for.
-
-    Returns:
-        None
+    :param device_id: str: The unique identifier of the device to trigger irrigation for.
+    :return: None
     """
     json_data = {
         'irrigate': True
@@ -75,12 +47,9 @@ def handle_schedule_irrigation(device_id: str, schedule: dict) -> None:
     """
     schedules irrigation for a specific device.
 
-    Args:
-        device_id (str): The unique identifier of the device.
-        schedule (dict): The schedule for irrigation containing the type and time.
-
-    Returns:
-        None
+    :param device_id: str: The unique identifier of the device.
+    :param schedule: dict: The schedule for irrigation contains the type and time.
+    :return: None
     """
     mqtt.publish(f'{device_id}/schedule', json.dumps(schedule))
 
@@ -89,13 +58,10 @@ def handle_irrigation_type(device_id: str, irrigation_type: str, schedule: dict)
     """
     schedules irrigation for a specific device.
 
-    Args:
-        device_id (str): The unique identifier of the device.
-        irrigation_type (str): The type of irrigation to be scheduled.
-        schedule (dict): The schedule for irrigation containing the time.
-
-    Returns:
-        None
+    :param device_id: str: The unique identifier of the device.
+    :param irrigation_type: str: The type of irrigation to be scheduled.
+    :param schedule: dict: The schedule for irrigation contains the time.
+    :return: None
     """
     json_data = {
         'irrigation_type': irrigation_type,
@@ -108,13 +74,10 @@ def remap_redis(device_id: str, user_id: str, socket_id: str) -> None:
     """
     Updates Redis with new user-device associations.
 
-    Args:
-        device_id (str): The unique identifier of the device.
-        user_id (str): The unique identifier of the user.
-        socket_id (str): The socket ID for the current connection.
-
-    Returns:
-        None
+    :param device_id: str: The unique identifier of the device.
+    :param user_id: str: The unique identifier of the user.
+    :param socket_id: str: The socket ID for the current connection.
+    :return: None
     """
     try:
         device_key = f"device:{device_id}"
@@ -148,12 +111,9 @@ def handle_export(device_id: str, socket_id: str) -> None:
     """
     exports data from the device to a file.
 
-    Args:
-        device_id (str): The unique identifier of the device.
-        socket_id (str): the sid of the socket connection.
-
-    Returns:
-        None
+    :param device_id: str: str: the unique identifier of the device.
+    :param socket_id: str: the sid of the socket connection.
+    :return: None
     """
     try:
         res = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})

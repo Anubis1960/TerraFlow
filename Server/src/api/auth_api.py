@@ -18,9 +18,6 @@ def hello_world():
 def login():
     """
     Logs in the user using the provided credentials or access token.
-
-    Returns:
-        A JSON response with the user's token and controllers if successful, an error message otherwise.
     """
     print("Logging in...")
     if request.method == 'POST':
@@ -56,10 +53,6 @@ def login():
 def authorize():
     """
     Authorizes the user using Google OAuth.
-
-    Returns:
-        A redirect to the callback URL with the user's token if successful, an error message otherwise.
-
     """
     print("Authorizing...")
     google = current_app.oauth_manager.get_provider('google')
@@ -88,10 +81,6 @@ def authorize():
 def register():
     """
     Registers a new user with the provided email and password.
-
-    Returns:
-        A JSON response with the user's token if successful, an error message otherwise.
-
     """
     data = request.get_json()
     if 'password' in data and 'email' in data:

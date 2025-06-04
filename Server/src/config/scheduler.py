@@ -4,6 +4,12 @@ import atexit
 
 
 def start_scheduler():
+    """
+    Start the background scheduler to send monthly reports.
+    This function sets up a job that runs on the last day of each month at midnight.
+
+    :return: None
+    """
     scheduler = BackgroundScheduler()
     scheduler.add_job(
         func=lambda: send_monthly_report(),

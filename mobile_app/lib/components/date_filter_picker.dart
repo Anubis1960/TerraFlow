@@ -97,36 +97,39 @@ class DateFilterPicker extends StatelessWidget {
   }
 
   Widget _buildDateButton(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.deepPurpleAccent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 23),
-        side: BorderSide(
-          color: Colors.deepPurpleAccent,
-        ),
-        textStyle: const TextStyle(fontSize: 16),
-      ),
-      onPressed: onDatePick,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.calendar_today, size: 20, color: Colors.deepPurpleAccent),
-          const SizedBox(width: 12),
-          Text(
-            selectedFilterValue.isEmpty ? "Select Date" : selectedFilterValue,
-            style: TextStyle(
-              color: selectedFilterValue.isEmpty
-                  ? Colors.grey[700]!
-                  : Colors.deepPurpleAccent,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+    return SizedBox(
+      height: 48,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.deepPurpleAccent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          side: BorderSide(
+            color: Colors.deepPurpleAccent,
+          ),
+          textStyle: const TextStyle(fontSize: 16),
+        ),
+        onPressed: onDatePick,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.calendar_today, size: 20, color: Colors.deepPurpleAccent),
+            const SizedBox(width: 8),
+            Text(
+              selectedFilterValue.isEmpty ? "Select Date" : selectedFilterValue,
+              style: TextStyle(
+                color: selectedFilterValue.isEmpty
+                    ? Colors.grey
+                    : Colors.deepPurpleAccent,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

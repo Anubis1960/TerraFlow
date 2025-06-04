@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 from bson import ObjectId
 
 from src.config.mongo import DEVICE_COLLECTION, USER_COLLECTION
-from src.service.device_service import handle_get_device_data
+from src.service.device_service import handle_get_device_data, handle_update_device
 
 
 class TestDeviceManagement(unittest.TestCase):
@@ -116,3 +116,17 @@ class TestDeviceManagement(unittest.TestCase):
 
         # Assert that the result is None
         self.assertIsNone(result)
+
+    def test_handle_update_device(self):
+        # Test the handle_update_device function
+        device_id = "681785b2abcafa0ae18c75f9"
+        new_device_name = "New Device Name"
+
+        # Mock the MongoDB update_one method
+        self.mongo_db_mock[DEVICE_COLLECTION].update_one.return_value.modified_count = 1
+
+        # Call the function
+        result = handle_update_device(device_id, new_device_name)
+
+        # Assert that the result is as expected
+        self.assertEqual(result, {"message": f"Device {device_id} updated to {new_device_name}"})
