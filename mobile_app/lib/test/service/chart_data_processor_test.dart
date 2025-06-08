@@ -1,34 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile_app/entity/sensor_data.dart';
 
 import '../../components/charts.dart';
 import '../../service/chart_data_processor.dart';
 
 void main() {
-  final sampleRecords = [
-    {
-      'timestamp': '2024/01/01 08:30:00',
-      'sensor_data': {'temperature': 22.5},
-    },
-    {
-      'timestamp': '2024/01/01 09:30:00',
-      'sensor_data': {'temperature': 23.0},
-    },
-    {
-      'timestamp': '2024/01/02 10:00:00',
-      'sensor_data': {'temperature': 21.5},
-    },
-    {
-      'timestamp': '2024/02/01 14:00:00',
-      'sensor_data': {'temperature': 20.0},
-    },
-    {
-      'timestamp': '2024/02/01 15:00:00',
-      'sensor_data': {'temperature': 20.4},
-    },
-    {
-      'timestamp': '2024/03/01 12:00:00',
-      'sensor_data': {'temperature': 19.6},
-    },
+  final List<SensorData> sampleRecords = [
+    SensorData(timestamp: '2024/01/01 08:30:00', sensorData: {'temperature': 22.5}),
+    SensorData(timestamp: '2024/01/01 09:30:00', sensorData: {'temperature': 23.0}),
+    SensorData(timestamp: '2024/01/02 10:00:00', sensorData: {'temperature': 21.5}),
+    SensorData(timestamp: '2024/02/01 14:00:00', sensorData: {'temperature': 20.0}),
+    SensorData(timestamp: '2024/02/01 15:00:00', sensorData: {'temperature': 20.4}),
+    SensorData(timestamp: '2024/03/01 12:00:00', sensorData: {'temperature': 19.6}),
   ];
 
   group('ChartDataProcessor - getSensorDataSpots', () {

@@ -31,7 +31,7 @@ def load_model(path: str):
 
 def predict_water(data: pd.DataFrame) -> list[int]:
     """
-    Predict the output using the model.
+    predict the output using the model.
 
     :param data: pd.DataFrame: DataFrame containing the input data.
     :return: list[int]: List of predictions.
@@ -70,7 +70,7 @@ def prepare_image(image: cv2.Mat, img_size=(48, 48)) -> np.ndarray:
 
 def predict_disease(img: cv2.Mat) -> dict[str, str | float]:
     """
-    Predict the disease from the image using the model.
+    predict the disease from the image using the model.
 
     :param img: cv2.Mat: Input image in OpenCV format.
     :return: dict[str, str | float]: Dictionary containing the prediction and confidence score.
@@ -79,7 +79,7 @@ def predict_disease(img: cv2.Mat) -> dict[str, str | float]:
 
     print(f"Project root directory: {PROJECT_ROOT}")
 
-    path = os.path.join(PROJECT_ROOT, 'utils', 'model', 'd_color-1024merged-qwen.keras')
+    path = os.path.join(PROJECT_ROOT, 'utils', 'model', '128-all-aug-FULL48x48.keras')
     model = load_keras_model(path)
 
     print(f"Model loaded from {path}")
@@ -87,8 +87,6 @@ def predict_disease(img: cv2.Mat) -> dict[str, str | float]:
     processed_img = prepare_image(img)  # Shape will now be (1, 48, 48, 3)
     prediction = model.predict(processed_img)
     max_index = np.argmax(prediction, axis=1)[0]
-    print(f"Prediction index: {max_index}")
-    print(f"Confidence scores: {prediction[0][max_index]}")
     res = {
         "prediction": INT_TO_CLASS[max_index] if max_index in INT_TO_CLASS else "Unknown",
         "confidence": float(prediction[0][max_index])

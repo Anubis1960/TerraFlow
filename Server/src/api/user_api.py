@@ -15,14 +15,12 @@ def get_devices():
     token = request.headers.get('Authorization')
     token = token.split(" ")[1] if token else None
     payload = decode_token(token)
-    print(payload)
     if 'error' in payload:
         return jsonify({"error": payload['error']}), HTTPStatus.UNAUTHORIZED
     if 'user_id' not in payload:
         return jsonify({"error": "Invalid token"}), HTTPStatus.UNAUTHORIZED
     user_id = payload['user_id']
     devices = handle_get_user_devices(user_id)
-    print(devices)
     if not devices:
         return jsonify({"error": "User not found"}), HTTPStatus.NOT_FOUND
     return jsonify(devices), HTTPStatus.OK
@@ -36,8 +34,6 @@ def add_device():
     The user must be authenticated via a token in the Authorization header.
     """
     data = request.get_json()
-    print(data)
-    print(request.headers)
     if not data:
         return jsonify({"error": "Invalid input"}), HTTPStatus.BAD_REQUEST
     if 'device_id' not in data:
@@ -45,9 +41,7 @@ def add_device():
     device_id = data['device_id']
     token = request.headers.get('Authorization')
     token = token.split(" ")[1] if token else None
-    print(token)
     payload = decode_token(token)
-    print(payload)
     if 'error' in payload:
         return jsonify({"error": payload['error']}), HTTPStatus.UNAUTHORIZED
     if 'user_id' not in payload:

@@ -11,14 +11,13 @@ import cv2
 
 def handle_get_user_devices(user_id: str) -> list[dict[str, str]] or None:
     """
-    Fetches the devices associated with a user from the database.
+    fetches the devices associated with a user from the database.
 
     :param user_id: str: The ID of the user whose devices are to be fetched.
     :return: list[dict[str, str]] or None: A list of device IDs associated with the user.
     """
     # Check if the user exists in the database
     user = mongo_db[USER_COLLECTION].find_one({"_id": ObjectId(user_id)})
-    print(user)
     if not user:
         return None
     devices = user.get("devices", []) if user else []
@@ -51,15 +50,11 @@ def handle_add_device(device_id: str, user_id: str) -> dict:
     # Get the list of devices associated with the user
     devices = user.get("devices", [])
 
-    print(devices)
-
     # Check if the device exists in the database
     new_device = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
     if not new_device:
         print("Device not found")
         return {"error": "Device not found"}
-
-    print(new_device)
 
     # If the device is not already associated with the user, add it
     if device_id not in devices:
@@ -77,8 +72,6 @@ def handle_add_device(device_id: str, user_id: str) -> dict:
     if user_id not in user_list:
         user_list.append(user_id)
         r.set(device_key, json.dumps(user_list))
-
-    print(user_list)
 
     return {"id": device_id, "name": new_device.get("name", "")}
 

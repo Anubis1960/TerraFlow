@@ -117,7 +117,6 @@ async def main():
 
     # Subscribe to topics
     client.subscribe(topics['IRRIGATE_SUB'])
-    client.subscribe(topics['SCHEDULE_SUB'])
     client.subscribe(topics['PREDICTION_SUB'])
     client.subscribe(topics['IRRIGATION_TYPE_SUB'])
 

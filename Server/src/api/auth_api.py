@@ -1,18 +1,11 @@
 from http import HTTPStatus
 
-from flask import redirect, url_for, session, Blueprint, request, jsonify, current_app
+from flask import redirect, url_for, Blueprint, request, jsonify, current_app
 
 from src.service.auth_service import handle_form_login, handle_token_login, handle_register, handle_logout
 from src.utils.tokenizer import decode_token
 
 auth_blueprint = Blueprint('auth', __name__)
-
-
-@auth_blueprint.route('/')
-def hello_world():
-    email = session.get('email', None)
-    return f'Hello, you are logged in as {email}!' if email else 'Hello, you are not logged in!'
-
 
 @auth_blueprint.route('/login', methods=['GET', 'POST'])
 def login():
@@ -35,7 +28,6 @@ def login():
             print(f"Access token: {access_token}")
             email = data['email']
             res = handle_token_login(email)
-            print(f"Response: {res}")
             if 'error' in res:
                 return jsonify(res), HTTPStatus.BAD_REQUEST
             else:
@@ -70,8 +62,14 @@ def authorize():
         res = handle_token_login(user_email)
 
         callback_url = f"http://localhost:4200/auth/callback?token={res['token'] if 'token' in res else ''}"
-        return redirect(callback_url)
-
+        if 'devices' in res:
+            body = {
+                'devices': res['devices'],
+            }
+        else:
+            body = {}
+        print(f"Redirecting to: {callback_url} with body: {body}")
+        return redirect(callback_url, code=HTTPStatus.FOUND, Response=body)
     except Exception as e:
         print(f"An error occurred: {e}")
         return jsonify({"error": "Internal server error"}), HTTPStatus.INTERNAL_SERVER_ERROR
@@ -99,7 +97,7 @@ def logout():
     data = request.get_json()
     token = request.headers.get('Authorization')
     token = token.split(" ")[1] if token else None
-    print('Logging out:', data)
+    print('Received token:', token)
     if 'deviceIds' in data:
         device_ids = data['deviceIds']
         decoded_token = decode_token(token)

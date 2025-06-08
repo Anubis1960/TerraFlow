@@ -1,30 +1,3 @@
-"""
-MQTT Event Handlers for IoT Device Communication.
-
-This module defines handlers for MQTT events using the `paho.mqtt.client` library.
-It includes functionality for handling connections and processing messages across various topics.
-
-Handlers:
-- `handle_connect`: Triggered when the MQTT client establishes a connection with the broker.
-- `handle_mqtt_message`: Triggered when a message is received on subscribed topics.
-
-Dependencies:
-- `paho.mqtt.client`: For MQTT functionality.
-- `src.service.mqtt_service`: Includes service methods for registering devices, making predictions,
-recording sensor data, and water usage.
-- `src.utils.extensions.mqtt`: MQTT utility extension.
-
-Functionality:
-- Handles messages for topics such as:
-  - `/record/sensor_data`: Record sensor data from devices.
-  - `/predict`: Make predictions based on received data.
-  - `/record/water_used`: Record water usage statistics.
-  - `register`: Register a new IoT device or device.
-
-Exceptions:
-- Handles and logs exceptions during message processing to avoid crashes.
-"""
-
 import typing
 import paho.mqtt.client
 from src.service.mqtt_service import register_device, predict, record_sensor_data, record_water_used
@@ -34,7 +7,7 @@ from src.config.protocol import mqtt
 @mqtt.on_connect()
 def handle_connect(client: paho.mqtt.client.Client, userdata: typing.Any, flags: dict, rc: int):
     """
-    Handle MQTT connection events.
+    handle MQTT connection events.
 
     :param client: paho.mqtt.client.Client: The MQTT client instance.
     :param userdata: typing.Any: The private user data provided to the client.

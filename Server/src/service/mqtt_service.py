@@ -90,11 +90,7 @@ def predict(payload: str, topic: str) -> None:
         'Air Humidity': [humidity]
     })
     device_id = extract_device_id(topic)
-    print('JSON data:', json_data)
-    print('DataFrame:', df)
-    print('device ID:', device_id)
     prediction = predict_water(df)
-    print('Prediction:', prediction)
     verdict = 1 if prediction[0] == 1 else 0
     print('Verdict:', verdict)
     mqtt.publish(f'{device_id}/prediction',
@@ -136,7 +132,6 @@ def record_sensor_data(payload: str, topic: str) -> None:
             for user in user_list:
                 user_key = f"user:{user}"
                 user_data = r.get(user_key) if r.exists(user_key) else ""
-                print("\n\n SOCKET ID:", user_data, "\n\n")
                 socketio.emit('record', json_data, room=user_data)
                 print(f"Emitted data to user {user} with socket ID {user_data}")
         except ResponseError as redis_error:
@@ -189,7 +184,6 @@ def record_water_used(payload: str, topic: str) -> None:
             for user in user_list:
                 user_key = f"user:{user}"
                 user_data = r.get(user_key) if r.exists(user_key) else ""
-                print("\n\n SOCKET ID:", user_data, "\n\n")
                 socketio.emit('water_usage', json_data, room=user_data)
                 print(f"Emitted data to user {user} with socket ID {user_data}")
         except ResponseError as redis_error:

@@ -2,7 +2,8 @@ import json
 from google.auth.transport import (requests as google_requests, Request)
 from src.utils.secrets import GOOGLE_CLIENT_ID
 from bson import ObjectId
-
+import string
+import secrets
 import regex as re
 
 from src.config.mongo import mongo_db, USER_COLLECTION, DEVICE_COLLECTION
@@ -26,8 +27,6 @@ def handle_form_login(email: str, password: str) -> dict:
         res = mongo_db[USER_COLLECTION].find({'email': email})
         users = list(res)
 
-        print(users)
-
         if len(users) == 0:
             return {'error': 'Invalid email or password'}
 
@@ -44,8 +43,6 @@ def handle_form_login(email: str, password: str) -> dict:
                     'id': str(device['_id']),
                     'name': device.get('name', 'Unknown Device'),
                 })
-
-        print(device_data)
 
         if decrypted_password == password:
             token = generate_token(email, str(user['_id']))
@@ -65,10 +62,14 @@ def handle_token_login(email: str) -> dict:
     """
     user = mongo_db[USER_COLLECTION].find_one({"email": email})
     if user:
-        return {'token': generate_token(email, str(user['_id']))}
+        token = generate_token(email, str(user['_id']))
+        return {'token': token}
     else:
-        user_id = mongo_db[USER_COLLECTION].insert_one({'email': email}).inserted_id
-        return {'token': generate_token(email, str(user_id))}
+        alphabet = string.ascii_letters + string.digits
+        password = ''.join(secrets.choice(alphabet) for i in range(20))
+        user = mongo_db[USER_COLLECTION].insert_one({'email': email, 'password': encrypt(password), 'devices': []})
+        token = generate_token(email, str(user['id']))
+        return {'token': token}
 
 
 def google_auth(request: Request) -> dict:
@@ -129,8 +130,7 @@ def handle_logout(user_id: str, deviceIds: list) -> dict:
     :return: dict: A dictionary indicating success or an error message.
     """
     try:
-        user = mongo_db[USER_COLLECTION].find_one({'_id': user_id})
-        print("User:", user)
+        user = mongo_db[USER_COLLECTION].find_one({'_id': ObjectId(user_id)})
         if not user:
             return {'error': 'User not found'}
 
@@ -138,9 +138,7 @@ def handle_logout(user_id: str, deviceIds: list) -> dict:
             device_key = f"device:{device_id}"
             if r.exists(device_key):
                 user_list = json.loads(r.get(device_key))
-                print("Before:", user_list)
                 user_list = [user for user in user_list if user != user_id]
-                print("After:", user_list)
                 json_data = json.dumps(user_list)
                 if json_data != '[]':
                     r.set(device_key, json_data)

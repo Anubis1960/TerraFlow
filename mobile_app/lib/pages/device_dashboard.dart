@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_app/entity/sensor_data.dart';
 import '../components/bottom_navbar.dart';
+import '../entity/device_data.dart';
+import '../entity/water_usage.dart';
 import '../service/chart_data_processor.dart';
 import '../service/filter_service.dart';
 import '../components/date_filter_picker.dart';
@@ -14,6 +17,7 @@ import 'dart:convert';
 import '../util/export/file_downloader.dart';
 import '../components/top_bar.dart';
 
+
 class DeviceDashBoard extends StatefulWidget {
   final dynamic deviceId;
   const DeviceDashBoard({super.key, required this.deviceId});
@@ -23,20 +27,20 @@ class DeviceDashBoard extends StatefulWidget {
 }
 
 class _DeviceDashBoardState extends State<DeviceDashBoard> {
-  final dynamic deviceId;
+  final String deviceId;
   String deviceName = 'Device Dashboard';
   late ScrollController _scrollController;
 
   _DeviceDashBoardState(this.deviceId);
 
-  Map<String, dynamic> deviceData = {
-    'record': [],
-    'water_usage': [],
-  };
+  DeviceData deviceData = DeviceData(
+    sensorData: [],
+    waterUsageData: [],
+  );
 
   String filterType = 'day';
   String selectedFilterValue = '';
-  List<dynamic> filteredRecords = [];
+  List<SensorData> filteredRecords = [];
   Set<dynamic> filteredValues = {};
   double humidity = 0;
   double temperature = 0;
@@ -62,15 +66,15 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
         print('Response status: ${response.statusCode}');
         if (response.statusCode == 200) {
           var data = jsonDecode(response.body);
+          deviceData = DeviceData.fromJson(data);
           setState(() {
-            deviceData = data;
-            if (deviceData['record'].isNotEmpty) {
-              selectedFilterValue = deviceData['record'].last['timestamp'].substring(0, 10);
-              filteredRecords = FilterService.filterRecords(deviceData['record'], selectedFilterValue, filterType);
+            if (deviceData.sensorData.isNotEmpty) {
+              selectedFilterValue = deviceData.sensorData.last.timestamp.substring(0, 10);
+              filteredRecords = FilterService.filterRecords(deviceData.sensorData, selectedFilterValue, filterType);
               humidity = FilterService.calculateAverage(filteredRecords, 'humidity');
               temperature = FilterService.calculateAverage(filteredRecords, 'temperature');
-              waterUsage = FilterService.calculateWaterUsage(deviceData['water_usage'], selectedFilterValue);
-              filteredValues = FilterService.getFilterValues(deviceData['record'], filterType);
+              waterUsage = FilterService.calculateWaterUsage(deviceData.waterUsageData, selectedFilterValue);
+              filteredValues = FilterService.getFilterValues(deviceData.sensorData, filterType);
             }
           });
         }
@@ -118,26 +122,29 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     });
 
     SocketService.socket.on('record', (data) {
-      deviceData['record'].add(data);
+      deviceData.sensorData.add( SensorData(
+        timestamp: data['timestamp'],
+        sensorData: data['sensor_data'],
+      ));
       if (data['timestamp'].startsWith(selectedFilterValue)) {
-        filteredRecords.add(data);
+        filteredRecords.add(SensorData(timestamp: data['timestamp'], sensorData: data['sensor_data']));
         setState(() {
-          humidity = FilterService.calculateAverage(filteredRecords, 'humidity');
-          temperature = FilterService.calculateAverage(filteredRecords, 'temperature');
+          humidity = (humidity * (filteredRecords.length - 1) + data['sensor_data']['humidity']) / filteredRecords.length;
+          temperature = (temperature * (filteredRecords.length - 1) + data['sensor_data']['temperature']) / filteredRecords.length;
         });
       }
     });
 
     SocketService.socket.on('water_usage', (data) {
-      for (var record in deviceData['water_usage']) {
-        if (record['date'] == data['date']) {
-          record['usage'] += data['water_usage'];
-          return;
+      for (var record in deviceData.waterUsageData) {
+        if (record.date == data['date']) {
+          record.waterUsed += data['water_used'];
+          break;
         }
       }
-      if (data['date'].startsWith(selectedFilterValue)) {
+      if (selectedFilterValue.startsWith(data['date']) || data['date'].startsWith(selectedFilterValue)) {
         setState(() {
-          waterUsage = FilterService.calculateWaterUsage(deviceData['water_usage'], selectedFilterValue);
+          waterUsage = waterUsage + data['water_used'];
         });
       }
     });
@@ -151,12 +158,12 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     if (newValue == null) return;
     setState(() {
       filterType = newValue;
-      filteredValues = FilterService.getFilterValues(deviceData['record'], filterType);
+      filteredValues = FilterService.getFilterValues(deviceData.sensorData, filterType);
       selectedFilterValue = filteredValues.isNotEmpty ? filteredValues.last : '';
-      filteredRecords = FilterService.filterRecords(deviceData['record'], selectedFilterValue, filterType);
+      filteredRecords = FilterService.filterRecords(deviceData.sensorData, selectedFilterValue, filterType);
       humidity = FilterService.calculateAverage(filteredRecords, 'humidity');
       temperature = FilterService.calculateAverage(filteredRecords, 'temperature');
-      waterUsage = FilterService.calculateWaterUsage(deviceData['water_usage'], selectedFilterValue);
+      waterUsage = FilterService.calculateWaterUsage(deviceData.waterUsageData, selectedFilterValue);
     });
   }
 
@@ -171,10 +178,10 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
       String formattedDate = "${pickedDate.year}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.day.toString().padLeft(2, '0')}";
       setState(() {
         selectedFilterValue = formattedDate;
-        filteredRecords = FilterService.filterRecords(deviceData['record'], formattedDate, filterType);
+        filteredRecords = FilterService.filterRecords(deviceData.sensorData, formattedDate, filterType);
         humidity = FilterService.calculateAverage(filteredRecords, 'humidity');
         temperature = FilterService.calculateAverage(filteredRecords, 'temperature');
-        waterUsage = FilterService.calculateWaterUsage(deviceData['water_usage'], formattedDate);
+        waterUsage = FilterService.calculateWaterUsage(deviceData.waterUsageData, formattedDate);
       });
     }
   }
@@ -183,10 +190,10 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     if (newValue == null) return;
     setState(() {
       selectedFilterValue = newValue;
-      filteredRecords = FilterService.filterRecords(deviceData['record'], newValue, filterType);
+      filteredRecords = FilterService.filterRecords(deviceData.sensorData, newValue, filterType);
       humidity = FilterService.calculateAverage(filteredRecords, 'humidity');
       temperature = FilterService.calculateAverage(filteredRecords, 'temperature');
-      waterUsage = FilterService.calculateWaterUsage(deviceData['water_usage'], newValue);
+      waterUsage = FilterService.calculateWaterUsage(deviceData.waterUsageData, newValue);
     });
   }
 

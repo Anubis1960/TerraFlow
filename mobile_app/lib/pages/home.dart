@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     token.then((onUser) async {
-      final List<Device> onDevice = await devices; // ✅ Wait for the result
+      final List<Device> onDevice = await devices;
 
       if (onDevice.isEmpty) {
         String url = kIsWeb ? Server.WEB_BASE_URL : Server.MOBILE_BASE_URL;
@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
           await BaseStorage.getStorageFactory().saveDevices(deviceObjects);
 
           setState(() {
-            _loadDeviceIds(); // reload future
+            devices = _loadDeviceIds();
           });
         }
       }

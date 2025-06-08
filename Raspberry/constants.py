@@ -1,5 +1,5 @@
 from dotenv import get_env_var
-MQTT_BROKER = get_env_var("MQTT_BROKER") or ""
+MQTT_BROKER = get_env_var("MQTT_BROKER") or "broker.hivemq.com"
 MQTT_CLIENT_ID = get_env_var("MQTT_CLIENT_ID") or ""
 
 SSID = get_env_var("SSID") or ""
@@ -25,7 +25,6 @@ def get_mqtt_topics(device_id):
         "RECORD_SENSOR_DATA_PUB": f"{device_id}/record/sensor_data",
         "RECORD_WATER_USED_PUB": f"{device_id}/record/water_used",
         "PREDICT_PUB": f"{device_id}/predict",
-        "SCHEDULE_SUB": f"{device_id}/schedule",
         "IRRIGATE_SUB": f"{device_id}/irrigate",
         "PREDICTION_SUB": f"{device_id}/prediction",
         "IRRIGATION_TYPE_SUB": f"{device_id}/irrigation_type",

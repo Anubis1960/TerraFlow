@@ -9,7 +9,7 @@ from src.model.device_model import Device
 
 def handle_get_device_data(device_id: str) -> dict or None:
     """
-    Fetches the irrigation data for a specific device.
+    fetches the irrigation data for a specific device.
 
     :param device_id: str: The ID of the device whose data is to be fetched.
     :return: dict or None: A dictionary containing the device's irrigation record and water usage data.
@@ -29,7 +29,7 @@ def handle_update_watering_type(device_id: str, json_data: dict) -> dict:
     Updates the watering type for a specific device and publishes the change to MQTT.
 
     :param device_id: str: The ID of the device whose watering type is to be updated.
-    :param json_data: str: A dictionary containing the new watering type and other related data.
+    :param json_data: str: A dictionary containing the new watering type and schedule if applicable.
     :return: dict: A dictionary indicating the success of the operation.
     """
     mqtt.publish(f'{device_id}/watering_type', json.dumps(json_data))
@@ -41,7 +41,7 @@ def handle_update_watering_type(device_id: str, json_data: dict) -> dict:
 
 def handle_update_device(device_id: str, device_name: str) -> dict:
     """
-    Updates the name of a device in the database.
+    updates the name of a device in the database.
 
     :param device_id: str: The ID of the device to be updated.
     :param device_name: str: The new name for the device.

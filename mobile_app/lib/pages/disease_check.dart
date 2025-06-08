@@ -1,4 +1,5 @@
 // disease_check_screen.dart
+
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -6,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-
+import 'dart:typed_data';
 import '../components/top_bar.dart';
 import '../util/constants.dart';
 import '../util/storage/base_storage.dart';
@@ -55,18 +56,16 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
         request.headers.addAll(headers);
 
         if (kIsWeb) {
-          // Web-specific handling
           final bytes = await image.readAsBytes();
           request.files.add(
             http.MultipartFile.fromBytes(
               'image',
               bytes,
               filename: image.name,
-              contentType: MediaType('image', 'jpeg'), // Or use MediaType.parse(mimeType)
+              contentType: MediaType('image', 'jpeg'),
             ),
           );
         } else {
-          // Mobile-specific handling
           File imageFile = File(image.path);
           request.files.add(
             await http.MultipartFile.fromPath(
@@ -88,8 +87,8 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
                 ? '${(data['confidence'] * 100).toStringAsFixed(2)}%'
                 : '0%';
             setState(() {
-              _diseaseResult = "Disease Detected: ${prediction}";
-              _confidence = "Confidence: ${confidence}";
+              _diseaseResult = "Disease Detected: $prediction";
+              _confidence = "Confidence: $confidence";
             });
           } else {
             setState(() {
@@ -118,6 +117,49 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
     }
   }
 
+  Widget _buildImagePreview() {
+    if (_selectedImage == null) return SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white, width: 2),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: kIsWeb
+              ? FutureBuilder<Uint8List>(
+            future: _selectedImage!.readAsBytes(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done &&
+                  snapshot.hasData) {
+                return Image.memory(
+                  snapshot.data!,
+                  height: 250,
+                  fit: BoxFit.cover,
+                );
+              } else if (snapshot.hasError) {
+                return Text("Failed to load image");
+              } else {
+                return Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: CircularProgressIndicator(),
+                );
+              }
+            },
+          )
+              : Image.file(
+            File(_selectedImage!.path),
+            height: 250,
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -136,7 +178,7 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Image Selection Card
+                // Image Selection Button
                 Card(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -164,40 +206,48 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
                           Text(
                             _selectedImage == null
                                 ? "Select Image"
-                                : "Selected Image",
+                                : "Image Selected",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.deepPurpleAccent,
                             ),
                           ),
-                          if (_selectedImage != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                _diseaseResult,
-                                style: TextStyle(
-                                  color: _diseaseResult.contains("Detected")
-                                      ? Colors.red
-                                      : Colors.green,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          Padding(padding: const EdgeInsets.only(top: 8.0)),
-                          if (_selectedImage != null)
-                            Text(
-                              _confidence,
-                              style: TextStyle(
-                                color: Colors.black54,
-                                fontSize: 16,
-                              ),
-                            ),
                         ],
                       ),
                     ),
                   ),
                 ),
+
+                // Preview Image
+                _buildImagePreview(),
+
+                // Result Display
+                if (_diseaseResult.isNotEmpty && !_isLoading)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      _diseaseResult,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _diseaseResult.contains("Detected") ? Colors.red : Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+
+                if (_confidence.isNotEmpty && !_isLoading)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      _confidence,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
 
                 if (_isLoading)
                   Padding(

@@ -1,19 +1,21 @@
+import 'package:mobile_app/entity/sensor_data.dart';
+
 import '../components/charts.dart';
 
 class ChartDataProcessor {
-  static List<ChartData> getSensorDataSpots(List<dynamic> records, String sensorKey, String filterType) {
+  static List<ChartData> getSensorDataSpots(List<SensorData> records, String sensorKey, String filterType) {
     if (filterType == 'day') {
       return records.map((record) => ChartData(
-          record['timestamp'].substring(11, 19),
-          record['sensor_data'][sensorKey].toDouble()
+          record.timestamp.substring(11, 19),
+          record.sensorData[sensorKey].toDouble()
       )).toList();
     } else if (filterType == 'month') {
       List<String> xAxisLabels = List.generate(31, (index) => (index + 1).toString().padLeft(2, '0'));
       Map<String, List<double>> aggregatedData = {};
       for (var record in records) {
-        String timestamp = record['timestamp'];
+        String timestamp = record.timestamp;
         String key = timestamp.substring(8, 10);
-        double value = record['sensor_data'][sensorKey].toDouble();
+        double value = record.sensorData[sensorKey].toDouble();
         if (!aggregatedData.containsKey(key)) {
           aggregatedData[key] = [];
         }
@@ -39,9 +41,9 @@ class ChartDataProcessor {
       };
       Map<String, List<double>> aggregatedData = {};
       for (var record in records) {
-        String timestamp = record['timestamp'];
+        String timestamp = record.timestamp;
         String key = timestamp.substring(5, 7);
-        double value = record['sensor_data'][sensorKey].toDouble();
+        double value = record.sensorData[sensorKey].toDouble();
         if (!aggregatedData.containsKey(key)) {
           aggregatedData[key] = [];
         }

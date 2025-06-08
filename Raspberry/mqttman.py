@@ -20,7 +20,7 @@ class MQTTManager:
         self.schedule = {
             'type': "DAILY",
             'time': "08:00",
-            'duration': 2,
+            'duration': 5,
         }
         self.irrigation_task = asyncio.create_task(self.check_irrigation())
         self.irrigation_type = "AUTOMATIC"
@@ -60,6 +60,8 @@ class MQTTManager:
         """
         Handles the prediction command.
         """
+        if self.irrigation_type != 'AUTOMATIC':
+            return
         if json_data['prediction'] == 1: # 1 means ON
             if self.start_water_timer == None:
                 self.start_water_timer = time()
@@ -314,7 +316,7 @@ class MQTTManager:
                 "humidity": humidity,
                 "moisture": moisture_level
             },
-            'timestamp': "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(*localtime())
+            'timestamp': "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(*localtime()[:6])
         }))
 
     def get_weather_data(self):
@@ -327,7 +329,6 @@ class MQTTManager:
         url = f"https://api.weatherapi.com/v1/current.json?q={self.location_data['coordinates']}&key={WEATHER_API_KEY}"
         response = urequests.get(url)
         return response.json()
-
 
 
 def relay_on():

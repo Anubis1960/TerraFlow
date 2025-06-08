@@ -2,7 +2,7 @@ import base64
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 from Crypto import Random
-from src.utils.secrets import ENCRYPT_KEY as key  # Key imported from configuration
+from src.utils.secrets import ENCRYPT_KEY as key
 
 
 def encrypt(source: str, encode=True) -> str:
@@ -24,7 +24,7 @@ def encrypt(source: str, encode=True) -> str:
     # Generate a random Initialization Vector (IV)
     IV = Random.new().read(AES.block_size)
 
-    # Create AES cipher object with CBC mode
+    # Create an AES cipher object with CBC mode
     encryptor = AES.new(_key, AES.MODE_CBC, IV)
 
     # Add padding to the plaintext to match AES block size
@@ -56,7 +56,7 @@ def decrypt(source: str, decode=True) -> str:
     # Extract the IV from the start of the encrypted data
     IV = source[:AES.block_size]
 
-    # Create AES cipher object with CBC mode
+    # Create an AES cipher object with CBC mode
     decryptor = AES.new(_key, AES.MODE_CBC, IV)
 
     # Decrypt the ciphertext (excluding the IV)

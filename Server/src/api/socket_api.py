@@ -1,7 +1,7 @@
 from flask import request
 from src.service.socket_service import (
     handle_connect, handle_disconnect, handle_irrigate, handle_irrigation_type,
-    handle_schedule_irrigation, remap_redis, handle_export,
+    remap_redis, handle_export,
 )
 from src.config.protocol import socketio
 from src.utils.tokenizer import decode_token
@@ -26,7 +26,6 @@ def init_event(data: dict) -> None:
     """
     print('Init:', data)
     socket_id = request.sid
-    print("\n\n SOCKET ID:", socket_id, "\n\n")
     if 'token' not in data or 'devices' not in data:
         print('User ID not found, found:', data)
         return
@@ -79,28 +78,6 @@ def export_event(data: dict) -> None:
     handle_export(device_id, socket_id)
 
 
-@socketio.on('schedule_irrigation')
-def schedule_irrigation_event(data: dict) -> None:
-    """
-    Schedules irrigation for a device.
-
-    :param data: dict: JSON payload with keys 'device_id', 'schedule_type', and 'schedule_time'.
-    """
-    if 'device_id' not in data or 'schedule_type' not in data or 'schedule_time' not in data:
-        print('device ID or Schedule not found, found:', data)
-        return
-    if data['schedule_type'] not in ['DAILY', 'WEEKLY', 'MONTHLY']:
-        print('Invalid schedule type, found:', data)
-        return
-    device_id = data['device_id']
-    schedule = {
-        'type': data['schedule_type'],
-        'time': data['schedule_time']
-    }
-    print('Schedule:', schedule)
-    handle_schedule_irrigation(device_id, schedule)
-
-
 @socketio.on('irrigation_type')
 def irrigation_type_event(data: dict) -> None:
     """
@@ -116,21 +93,6 @@ def irrigation_type_event(data: dict) -> None:
     schedule = data.get('schedule', {})
     print('Irrigation Type:', irrigation_type)
     handle_irrigation_type(device_id, irrigation_type, schedule)
-
-
-@socketio.on('remove_schedule')
-def remove_schedule_event(data: dict) -> None:
-    """
-    Removes irrigation schedule for a device.
-
-    :param data: dict: JSON payload with key 'device_id'.
-    """
-    if 'device_id' not in data:
-        print('device ID not found, found:', data)
-        return
-    device_id = data['device_id']
-    print('Removing schedule for:', device_id)
-    handle_schedule_irrigation(device_id, {})
 
 
 @socketio.on('message')

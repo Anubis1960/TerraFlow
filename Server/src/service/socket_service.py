@@ -43,17 +43,6 @@ def handle_irrigate(device_id: str) -> None:
     mqtt.publish(f'{device_id}/irrigate', json.dumps(json_data))
 
 
-def handle_schedule_irrigation(device_id: str, schedule: dict) -> None:
-    """
-    schedules irrigation for a specific device.
-
-    :param device_id: str: The unique identifier of the device.
-    :param schedule: dict: The schedule for irrigation contains the type and time.
-    :return: None
-    """
-    mqtt.publish(f'{device_id}/schedule', json.dumps(schedule))
-
-
 def handle_irrigation_type(device_id: str, irrigation_type: str, schedule: dict) -> None:
     """
     schedules irrigation for a specific device.
@@ -117,7 +106,6 @@ def handle_export(device_id: str, socket_id: str) -> None:
     """
     try:
         res = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
-        print('res:', res)
         if not res:
             print(f"device with ID {device_id} not found.")
             return
