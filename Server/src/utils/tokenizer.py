@@ -3,6 +3,30 @@ import datetime
 from src.utils.secrets import SECRET_KEY
 
 
+def validate_header(headers) -> str or None:
+    """
+    Validate the request header to ensure it contains a valid token.
+
+    :param headers: dict: The request headers containing the Authorization token.
+    :return: bool: True if the header is valid, False otherwise.
+    """
+    if 'Authorization' not in headers:
+        return None
+    token = headers['Authorization'].split(" ")[1] if ' ' in headers['Authorization'] else None
+    if not token:
+        return None
+    try:
+        payload = decode_token(token)
+        if 'error' in payload:
+            return None
+        if 'user_id' not in payload:
+            return None
+        return payload['user_id']
+    except jwt.InvalidTokenError:
+        return None
+
+
+
 def generate_token(email: str, user_id: str) -> str:
     """
     Generate a JWT token with an expiration time of 30 days.

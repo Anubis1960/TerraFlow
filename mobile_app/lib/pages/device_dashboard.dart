@@ -201,6 +201,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
   void dispose() {
     SocketService.socket.off('record');
     SocketService.socket.off('export_response');
+    SocketService.socket.off('water_usage');
     _scrollController.dispose();
     super.dispose();
   }

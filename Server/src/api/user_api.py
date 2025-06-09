@@ -1,8 +1,11 @@
 from http import HTTPStatus
 from flask import Blueprint, request, jsonify
+
+from src.service.auth_service import handle_logout
 from src.service.user_service import (handle_get_user_devices, handle_add_device, handle_delete_device,
                                       handle_predict_disease)
-from src.utils.tokenizer import decode_token
+from src.utils.tokenizer import decode_token, validate_header
+
 user_blueprint = Blueprint('user', __name__, url_prefix='/user')
 
 
@@ -12,14 +15,10 @@ def get_devices():
     Endpoint to get all devices associated with a user.
     The user must be authenticated via a token in the Authorization header.
     """
-    token = request.headers.get('Authorization')
-    token = token.split(" ")[1] if token else None
-    payload = decode_token(token)
-    if 'error' in payload:
-        return jsonify({"error": payload['error']}), HTTPStatus.UNAUTHORIZED
-    if 'user_id' not in payload:
-        return jsonify({"error": "Invalid token"}), HTTPStatus.UNAUTHORIZED
-    user_id = payload['user_id']
+    user_id = validate_header(request.headers)
+
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), HTTPStatus.UNAUTHORIZED
     devices = handle_get_user_devices(user_id)
     if not devices:
         return jsonify({"error": "User not found"}), HTTPStatus.NOT_FOUND
@@ -39,14 +38,10 @@ def add_device():
     if 'device_id' not in data:
         return jsonify({"error": "Missing required fields"}), HTTPStatus.BAD_REQUEST
     device_id = data['device_id']
-    token = request.headers.get('Authorization')
-    token = token.split(" ")[1] if token else None
-    payload = decode_token(token)
-    if 'error' in payload:
-        return jsonify({"error": payload['error']}), HTTPStatus.UNAUTHORIZED
-    if 'user_id' not in payload:
-        return jsonify({"error": "Invalid token"}), HTTPStatus.UNAUTHORIZED
-    user_id = payload['user_id']
+    user_id = validate_header(request.headers)
+
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), HTTPStatus.UNAUTHORIZED
 
     res = handle_add_device(device_id, user_id)
 
@@ -66,14 +61,10 @@ def delete_device(device_id):
     The user must be authenticated via a token in the Authorization header.
     :param device_id: The ID of the device to be deleted.
     """
-    token = request.headers.get('Authorization')
-    token = token.split(" ")[1] if token else None
-    payload = decode_token(token)
-    if 'error' in payload:
-        return jsonify({"error": payload['error']}), HTTPStatus.UNAUTHORIZED
-    if 'user_id' not in payload:
-        return jsonify({"error": "Invalid token"}), HTTPStatus.UNAUTHORIZED
-    user_id = payload['user_id']
+    user_id = validate_header(request.headers)
+
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), HTTPStatus.UNAUTHORIZED
 
     deleted = handle_delete_device(device_id, user_id)
 

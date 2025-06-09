@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import '../entity/device.dart';
 import '../util/storage/base_storage.dart';
 import '../util/constants.dart';
 
@@ -53,12 +54,5 @@ class SocketService {
 
       return _socket!;
     }
-  }
-
-  Future<http.Response> sendDisconnectNotification() async {
-    final url = Uri.parse('https://your-api.com/api/disconnect');
-    final body = jsonEncode({'userId': 'someUserId', 'status': 'disconnected'});
-
-    return await http.post(url, headers: {'Content-Type': 'application/json'}, body: body);
   }
 }

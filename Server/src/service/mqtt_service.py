@@ -129,11 +129,23 @@ def record_sensor_data(payload: str, topic: str) -> None:
         try:
             device_key = f"device:{device_id}"
             user_list = json.loads(r.get(device_key)) if r.exists(device_key) else []
+
             for user in user_list:
                 user_key = f"user:{user}"
-                user_data = r.get(user_key) if r.exists(user_key) else ""
-                socketio.emit('record', json_data, room=user_data)
-                print(f"Emitted data to user {user} with socket ID {user_data}")
+                socket_id = r.get(user_key) if r.exists(user_key) else None
+
+                if not socket_id:
+                    print(f"No socket_id found for user {user}. Skipping emit.")
+                    if r.exists(device_key):
+                        _user_list = json.loads(r.get(device_key))
+                        if user in _user_list:
+                            _user_list.remove(user)
+                            r.set(device_key, json.dumps(_user_list))
+                            print(f"Removed user {user} from device {device_id}.")
+                    continue
+
+                socketio.emit('record', json_data, room=socket_id)
+
         except ResponseError as redis_error:
             print(f"Redis ResponseError: {redis_error}")
 

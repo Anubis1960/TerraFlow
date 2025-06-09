@@ -3,9 +3,10 @@ from http import HTTPStatus
 from flask import redirect, url_for, Blueprint, request, jsonify, current_app
 
 from src.service.auth_service import handle_form_login, handle_token_login, handle_register, handle_logout
-from src.utils.tokenizer import decode_token
+from src.utils.tokenizer import decode_token, validate_header
 
 auth_blueprint = Blueprint('auth', __name__)
+
 
 @auth_blueprint.route('/login', methods=['GET', 'POST'])
 def login():
@@ -94,16 +95,15 @@ def register():
 
 @auth_blueprint.route('/logout', methods=['POST'])
 def logout():
+    """
+    Logs out the user.
+    """
     data = request.get_json()
-    token = request.headers.get('Authorization')
-    token = token.split(" ")[1] if token else None
-    print('Received token:', token)
+    user_id = validate_header(request.headers)
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), HTTPStatus.UNAUTHORIZED
     if 'deviceIds' in data:
         device_ids = data['deviceIds']
-        decoded_token = decode_token(token)
-        if 'error' in decoded_token:
-            return jsonify({"error": decoded_token['error']}), HTTPStatus.UNAUTHORIZED
-        user_id = decoded_token['user_id']
         res = handle_logout(user_id, device_ids)
         if 'error' in res:
             return jsonify(res), HTTPStatus.BAD_REQUEST
