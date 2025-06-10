@@ -1,7 +1,4 @@
 # docker-compose.yml
-
-version: '3.8'
-
 services:
   mongodb:
     image: mongo:latest
@@ -24,7 +21,7 @@ services:
     ports:
       - "5000:5000"
     env_file:
-      - ./backend/.env
+      - ./Server/.env
     environment:
       HOST: 127.0.0.1
       PORT: 5000
