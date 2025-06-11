@@ -1,6 +1,6 @@
-FROM python:3.13
+FROM python:3.11
 
-WORKDIR /app
+WORKDIR /flask
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -10,11 +10,9 @@ RUN apt-get update && apt-get install -y \
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY app.py .
-COPY src ./src
+COPY . .
 
 EXPOSE 5000
 CMD ["gunicorn", "--bind", "127.0.0.1:5000", "app:app"]

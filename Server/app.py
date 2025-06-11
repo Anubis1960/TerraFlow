@@ -41,4 +41,4 @@ start_scheduler()
 # Run the app
 if __name__ == '__main__':
     # app.run(debug=True)
-    socketio.run(app, host=HOST, port=PORT, use_reloader=False, debug=True)
+    socketio.run(app, host=HOST, port=PORT, use_reloader=True, debug=True)
