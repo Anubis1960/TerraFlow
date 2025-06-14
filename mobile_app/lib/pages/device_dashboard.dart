@@ -122,6 +122,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     });
 
     SocketService.socket.on('record', (data) {
+      if (data['device_id'] != deviceId) return; // Ignore records for other devices
       deviceData.sensorData.add( SensorData(
         timestamp: data['timestamp'],
         sensorData: data['sensor_data'],
@@ -136,6 +137,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     });
 
     SocketService.socket.on('water_usage', (data) {
+      if (data['device_id'] != deviceId) return; // Ignore records for other devices
       for (var record in deviceData.waterUsageData) {
         if (record.date == data['date']) {
           record.waterUsed += data['water_used'];

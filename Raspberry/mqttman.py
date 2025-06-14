@@ -32,9 +32,9 @@ class MQTTManager:
         """
         Handles the irrigation command.
         """
-        start_time = time()  # Start timestamp in seconds
+        start_time = time()
         relay_on()
-        sleep(5)  # Simulate watering for 5 seconds
+        sleep(5)
         relay_off()
         
         end_time = time()
@@ -59,6 +59,8 @@ class MQTTManager:
     def handle_prediction_cmd(self, json_data: dict):
         """
         Handles the prediction command.
+
+        :param json_data: dict
         """
         if self.irrigation_type != 'AUTOMATIC':
             return
@@ -93,6 +95,8 @@ class MQTTManager:
     def handle_irrigation_type_cmd(self, msg: dict):
         """
         Handles the watering type command.
+
+        :param msg: dict
         """
         if 'irrigation_type' not in msg:
             return
@@ -145,9 +149,9 @@ class MQTTManager:
         """
         Handles incoming MQTT messages.
 
-        Args:
-            topic (bytes): The topic of the received message.
-            msg (bytes): The payload of the received message.
+        
+        :param topic: bytes, the topic of the received message.
+        :param msg: bytes, the payload of the received message.
         """
         topic = topic.decode()
         msg = msg.decode()
@@ -169,8 +173,7 @@ class MQTTManager:
         """
         Listens for incoming MQTT messages.
 
-        Args:
-            period_ms (int): The interval between checks in seconds.
+        :param period_ms: int, the interval between checks in seconds.
         """
         print("Listening for MQTT messages...")
         while True:
@@ -181,9 +184,8 @@ class MQTTManager:
         """
         Publishes sensor and water usage data to MQTT topics.
 
-        Args:
-            client (MQTTClient): The MQTT client instance.
-            period_ms (int): The interval between messages in seconds.
+        :param client: MQTTClient, The MQTT client instance.
+        :period_ms (int): The interval between messages in seconds.
         """
         while True:
             timestamp = localtime()
@@ -209,6 +211,9 @@ class MQTTManager:
         
     
     async def wait_for_schedule(self):
+        """
+        Waits until the schedule is over
+        """
         schedule_type = self.schedule.get("type")
         schedule_time = self.schedule.get("time")
 
@@ -245,6 +250,9 @@ class MQTTManager:
 
 
     async def handle_auto_irrigation(self):
+        """
+        Handles auto irrigation
+        """
         await self.wait_for_schedule()
         rain_level = read_rain()
         print("Rain level:", rain_level)
@@ -268,6 +276,9 @@ class MQTTManager:
     
 
     async def handle_scheduled_irrigation(self):
+        """
+        Handles scheduled irrigation
+        """
         await self.wait_for_schedule()
         relay_on()
         sleep(self.schedule['duration'])
@@ -323,8 +334,7 @@ class MQTTManager:
         """
         Fetches weather data from the Weather API.
 
-        Returns:
-            dict: The weather data.
+        :return: dict, The weather data.
         """
         url = f"https://api.weatherapi.com/v1/current.json?q={self.location_data['coordinates']}&key={WEATHER_API_KEY}"
         response = urequests.get(url)
@@ -344,8 +354,7 @@ def read_dht():
     """
     Reads the temperature and humidity from the DHT sensor.
 
-    Returns:
-        tuple: The temperature and humidity.
+    :return: tuple, The temperature and humidity.
     """
     count = 0
     while count < 5:
@@ -365,6 +374,11 @@ def read_dht():
     return 0, 0
 
 def read_moisture():
+    """
+    Reads the moisture level from the sensor.
+
+    :return: float, soil moisture percentage.
+    """
     wet_soil = 19000
     dry_soil = 44300
     raw_value = moisture_pin.read_u16()
@@ -373,6 +387,11 @@ def read_moisture():
     return moisture_level
 
 def read_rain():
+    """
+    Reads the precipitation level from the sensor.
+
+    :return: float, precipitation percentage.
+    """
     rain_upper = 65535
     rain_lower = 13000
     rain_state = rain_pin.read_u16()

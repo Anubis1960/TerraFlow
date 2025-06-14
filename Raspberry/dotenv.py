@@ -4,12 +4,10 @@ def get_env_var(key: str, env_file: str = ".env") -> str | None:
     """
     Retrieves the value of an environment variable from a .env file.
 
-    Args:
-        key (str): The name of the environment variable.
-        env_file (str): The path to the .env file.
+    :param key: str, The name of the environment variable.
+    :param env_file: str, The path to the .env file.
 
-    Returns:
-        str: The value of the environment variable.
+    :return: str, The value of the environment variable.
     """
     print(f"Reading {key} from {env_file}")
     try:

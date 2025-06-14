@@ -87,7 +87,7 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
                 ? '${(data['confidence'] * 100).toStringAsFixed(2)}%'
                 : '0%';
             setState(() {
-              _diseaseResult = "Disease Detected: $prediction";
+              _diseaseResult = "Verdict: $prediction";
               _confidence = "Confidence: $confidence";
             });
           } else {
@@ -163,7 +163,7 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: TopBar.buildTopBar(title: 'Crop Disease Detection', context: context),
+      appBar: TopBar.buildTopBar(title: 'Disease Detection', context: context),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(

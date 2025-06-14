@@ -13,7 +13,7 @@ from machine import RTC
 
 def init():
     """
-    Initializes the IoT device by synchronizing the time and generating a unique device ID.
+    Initializes the IoT device by generating a unique device ID.
     """
 
     # Ensure a unique device ID is stored persistently
@@ -32,6 +32,11 @@ def init():
     return _device_id
 
 def get_location():
+    """
+    Fetched the location data from ipinfo
+
+    :return: dict, information about device location
+    """
     print("Fetching location data...")
     response = urequests.get('https://ipinfo.io/json')
     data = response.json()
@@ -49,7 +54,13 @@ def get_location():
         'timezone': timezone
     }
 
-def sync_time_with_ip_geolocation_api(rtc, timezone):
+def sync_time_with_ip_geolocation_api(rtc, timezone: str):
+    """
+    Syncs the rtc to current time
+    
+    :param rtc: RTC
+    :param timezone: str
+    """
 
     url = f'http://api.ipgeolocation.io/timezone?apiKey={DATETIME_API_KEY}&tz={timezone}'
     response = urequests.get(url)
@@ -77,9 +88,9 @@ def sync_time_with_ip_geolocation_api(rtc, timezone):
 async def main():
     """
     Main entry point for the IoT application. Handles:
-    - Wi-Fi connection.
-    - MQTT client setup and subscriptions.
-    - Task scheduling for publishing and listening.
+    - Wi-Fi connection
+    - MQTT client setup and subscriptions
+    - Task scheduling
     """
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -92,8 +103,6 @@ async def main():
 
     # Initialize device ID
     _device_id= init()
-
-
 
     # Get MQTT topics
     topics = get_mqtt_topics(_device_id)

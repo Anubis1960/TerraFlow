@@ -24,8 +24,7 @@ def generate_object_id():
     
     The first 24 characters of the SHA-256 hash (12 bytes) are returned as the Object ID.
     
-    Returns:
-        str: A 24-character hexadecimal string representing the unique Object ID.
+    :return: str, A 24-character hexadecimal string representing the unique Object ID.
     """
     global _counter
 

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mobile_app/util/url/strategy.dart';
 import 'package:mobile_app/util/router.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-
-void main() {
+Future main() async {
+  await dotenv.load(
+    fileName: ".env",
+  );
   if (kIsWeb) {
     Strategy.getStrategyFactory().configure();
   }

@@ -10,15 +10,12 @@ WEATHER_API_KEY = get_env_var("WEATHER_API_KEY") or ""
 DATETIME_API_KEY = get_env_var("DATETIME_API_KEY") or ""
 
 
-def get_mqtt_topics(device_id):
+def get_mqtt_topics(device_id: str):
     """
     Returns the MQTT topics for the given device ID.
 
-    Args:
-        device_id (str): The device ID.
-
-    Returns:
-        dict: A dictionary containing the MQTT topics.
+    :param device_id: str, The device ID.
+    :return: dict, A dictionary containing the MQTT topics.
     """
     return {
         "REGISTER_PUB": "register",
