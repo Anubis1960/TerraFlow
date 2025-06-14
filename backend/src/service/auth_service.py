@@ -68,7 +68,7 @@ def handle_token_login(email: str) -> dict:
         alphabet = string.ascii_letters + string.digits
         password = ''.join(secrets.choice(alphabet) for i in range(20))
         user = mongo_db[USER_COLLECTION].insert_one({'email': email, 'password': encrypt(password), 'devices': []})
-        token = generate_token(email, str(user['id']))
+        token = generate_token(email, str(user.inserted_id))
         return {'token': token}
 
 

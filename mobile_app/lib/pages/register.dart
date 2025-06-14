@@ -34,6 +34,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -44,19 +47,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               // Profile Icon with Background
               Image.asset(
-                'assets/images/logo.png', // Replace with your logo path
-                width: 150,
-                height: 150,
+                'assets/images/logo-text.png', // Replace with your logo path
+                width: 200,
+                height: 200,
               ),
-              SizedBox(height: screenHeight * 0.02),
+              SizedBox(height: screenHeight * 0.001),
 
               // Title
               Text(
                 'Create Account',
-                style: TextStyle(
-                  fontSize: 28,
+                style: textTheme.headlineMedium?.copyWith(
+                  color: Colors.black,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blueGrey,
                 ),
               ),
               SizedBox(height: screenHeight * 0.01),

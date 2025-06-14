@@ -9,7 +9,7 @@ import random
 
 load_dotenv()
 
-device_id = "d372fd8aa13bc1dc8e891b3a"
+device_id = "d372fd8aa13bc1dc8e891e21"   # Example device ID, replace with actual device ID
 
 MQTT_BROKER = os.getenv("MQTT_BROKER", "broker.hivemq.com")
 MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", f'mqtt-client-{random.randint(0, 1000)}')
@@ -93,24 +93,27 @@ async def send(client, period_s: int = 10):
         timestamp = localtime()
         year, month, day, hour, minute, second = timestamp[:6]
 
-        time_str = "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(year, month, day, hour, minute, second)
+        days=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        for i in days:
+            time_str = "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(year, 6, i, hour, minute, second)
 
-        moisture = random.uniform(0, 100)  # Simulated moisture value
-        temperature = random.uniform(15, 35)  # Simulated temperature value
-        humidity = random.uniform(30, 90)  # Simulated humidity value
+            moisture = random.uniform(45, 55)  # Simulated moisture value
+            temperature = random.uniform(20, 25)  # Simulated temperature value
+            humidity = random.uniform(50, 55)  # Simulated humidity value
 
-        # Sensor data
-        sensor_data = {
-            'sensor_data': {
-                "temperature": temperature,
-                "humidity": humidity,
-                "moisture": moisture,
-            },
-            'timestamp': time_str
-        }
-        client.publish(topics['RECORD_SENSOR_DATA_PUB'], json.dumps(sensor_data))
+            # Sensor data
+            sensor_data = {
+                'sensor_data': {
+                    "temperature": temperature,
+                    "humidity": humidity,
+                    "moisture": moisture,
+                },
+                'timestamp': time_str
+            }
+            client.publish(topics['RECORD_SENSOR_DATA_PUB'], json.dumps(sensor_data))
 
-        await asyncio.sleep(period_s)
+            await asyncio.sleep(period_s)
+        break
 
 
 def main():
@@ -155,6 +158,8 @@ def main():
     registration_data = {
         'device_id': device_id
     }
+
+    print('registering device:', registration_data)
 
     client.publish(topics["REGISTER_PUB"], json.dumps(registration_data))
 

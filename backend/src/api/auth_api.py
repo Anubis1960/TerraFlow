@@ -16,10 +16,12 @@ def login():
     print("Logging in...")
     if request.method == 'POST':
         data = request.get_json()
+        print(data)
         if 'password' in data:
             password = data['password']
             email = data['email']
             res = handle_form_login(email, password)
+            print(res)
             if 'error' in res:
                 return jsonify(res), HTTPStatus.BAD_REQUEST
             else:

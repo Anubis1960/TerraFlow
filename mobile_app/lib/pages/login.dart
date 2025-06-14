@@ -46,11 +46,11 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               // Logo Section
               Image.asset(
-                'assets/images/logo.png', // Replace with your logo path
-                width: 150,
-                height: 150,
+                'assets/images/logo-text.png', // Replace with your logo path
+                width: 200,
+                height: 200,
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 10),
 
               // Welcome Back Text
               Text(
@@ -62,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Login to your existing account of TerraFlow',
+                'Login to TerraFlow',
                 textAlign: TextAlign.center,
                 style: textTheme.bodyMedium?.copyWith(
                   color: Colors.grey[600],

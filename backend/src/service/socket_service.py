@@ -73,10 +73,14 @@ def remap_redis(device_id: str, user_id: str, socket_id: str) -> None:
         raw_data = r.get(device_key)
 
         if raw_data is None:
-            print('device key not found')
-            return
+            device = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
+            if not device:
+                print(f"Device with ID {device_id} not found in database.")
+                return
+            user_list = [user_id]
+        else:
+            user_list = json.loads(raw_data)
 
-        user_list = json.loads(raw_data)
         if user_id not in user_list:
             user_list.append(user_id)
 

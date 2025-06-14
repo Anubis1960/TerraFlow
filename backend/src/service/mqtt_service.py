@@ -34,7 +34,6 @@ def register_device(payload: str) -> None:
 
         device = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
         if not device:
-            print(f"device with ID {device_id} already exists. Skipping registration.")
 
             ctrl_json = {
                 '_id': ObjectId(device_id),

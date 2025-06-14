@@ -18,6 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
       title: 'TerraFlow',
       theme: ThemeData(
         scaffoldBackgroundColor: Color(0xFFF5F5F5), // Light grey background

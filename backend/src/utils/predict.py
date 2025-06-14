@@ -78,7 +78,7 @@ def predict_disease(img: cv2.Mat) -> dict[str, str | float]:
 
     print(f"Project root directory: {PROJECT_ROOT}")
 
-    path = os.path.join(PROJECT_ROOT, 'utils', 'model', '128_resnetv50_100_(224, 224, 3).keras')
+    path = os.path.join(PROJECT_ROOT, 'utils', 'model', '128_resnet_100_224x224.keras')
     model = load_keras_model(path)
 
     print(f"Model loaded from {path}")

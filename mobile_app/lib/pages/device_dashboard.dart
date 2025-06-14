@@ -276,7 +276,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
         ),
       ),
       bottomNavigationBar: SizedBox(
-        height: screenHeight * 0.135,
+        height: screenHeight * 0.115,
         child: BottomNavBar.buildBottomNavBar(
           context: context,
           deviceId: deviceId,
