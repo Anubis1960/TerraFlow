@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../service/socket_service.dart';
 
+/// A dialog to select the type of irrigation and its settings.
 class IrrigationTypeDialog {
   static void showIrrigationTypeDialog({
     required BuildContext context,

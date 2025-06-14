@@ -9,6 +9,7 @@ import 'package:mobile_app/util/storage/base_storage.dart';
 import 'package:mobile_app/components/top_bar.dart';
 import 'package:mobile_app/util/constants.dart';
 
+/// The home screen that displays a list of devices and allows management actions.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -25,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     token = BaseStorage.getStorageFactory().getToken();
-    devices = _loadDeviceIds();
+    devices = _loadDevices();
 
     SocketService.socket.on('error', (data) {
       if (data['error_msg'] != null && data['error_msg'].isNotEmpty) {
@@ -68,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
           await BaseStorage.getStorageFactory().saveDevices(deviceObjects);
 
           setState(() {
-            devices = _loadDeviceIds();
+            devices = _loadDevices();
           });
         }
       }
@@ -84,7 +85,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<List<Device>> _loadDeviceIds() async {
+  /// Loads the list of devices from storage.
+  Future<List<Device>> _loadDevices() async {
     return await BaseStorage.getStorageFactory().getDevices();
   }
 
@@ -94,6 +96,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  /// Deletes a device from the server and updates the storage.
+  /// @param device The device to delete.
   void _deleteDevice(Device device) async {
     final token = await BaseStorage.getStorageFactory().getToken();
 
@@ -116,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await BaseStorage.getStorageFactory().saveDevices(storedDevices);
 
       setState(() {
-        this.devices = _loadDeviceIds(); // Refresh UI
+        this.devices = _loadDevices(); // Refresh UI
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -135,6 +139,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Deletes selected devices after confirmation.
+  /// Prompts the user for confirmation before proceeding with deletion.
   void _deleteSelectedDevices() async {
     if (_selectedDeviceIds.isEmpty) return;
 
@@ -329,6 +335,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Opens a dialog to edit the name of a device.
+  /// @param context The build context.
+  /// @param device The device to edit.
+  /// @returns A future that resolves when the dialog is closed.
   void _editDeviceName(BuildContext context, Device device) async {
     final TextEditingController nameController = TextEditingController(text: device.name);
 
@@ -380,7 +390,7 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           setState(() {
-            devices = _loadDeviceIds(); // Refresh UI
+            devices = _loadDevices(); // Refresh UI
             _selectedDeviceIds.clear(); // Clear selection after edit
           });
 
@@ -400,6 +410,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Shows a dialog to add a new device.
+  /// @param context The build context.
+  /// @return A future that resolves when the dialog is closed.
   void _showAddDeviceDialog(BuildContext context) {
     final TextEditingController deviceIdController = TextEditingController();
 
@@ -497,7 +510,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     await BaseStorage.getStorageFactory().addDevice(newDevice);
 
                     setState(() {
-                      this.devices = _loadDeviceIds();
+                      this.devices = _loadDevices();
                     });
 
                     messenger.showSnackBar(

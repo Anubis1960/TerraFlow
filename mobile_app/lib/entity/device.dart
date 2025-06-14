@@ -1,3 +1,5 @@
+
+/// Represents a device with an ID and a name.
 class Device {
   final String id;
   final String name;

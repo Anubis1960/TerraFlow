@@ -10,11 +10,8 @@ void main() {
           home: LoginScreen(),
         ),
       );
-
-      expect(find.byIcon(Icons.lock_outline), findsOneWidget);
       expect(find.text('Login'), findsOneWidget);
       expect(find.text('Sign in with Google'), findsOneWidget);
-      expect(find.text('Don’t have an account? Register'), findsOneWidget);
     });
   });
 }

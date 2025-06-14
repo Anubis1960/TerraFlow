@@ -3,6 +3,8 @@ import 'package:mobile_app/util/constants.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_app/util/storage/base_storage.dart';
 
+
+/// CallbackScreen is used to handle the callback from the authentication provider.
 class CallbackScreen extends StatelessWidget {
   final Map<String, String> queryParams;
 

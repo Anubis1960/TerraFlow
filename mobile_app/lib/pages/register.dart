@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_app/util/constants.dart';
 import 'package:mobile_app/service/auth_service.dart';
 
+/// A screen for user registration.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 

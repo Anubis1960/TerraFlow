@@ -3,6 +3,7 @@ import 'dart:core';
 import 'package:mobile_app/entity/sensor_data.dart';
 import 'package:mobile_app/entity/water_usage.dart';
 
+/// Represents the data structure for a device, including sensor data and water usage data.
 class DeviceData {
   List<SensorData> sensorData;
   List<WaterUsage> waterUsageData;

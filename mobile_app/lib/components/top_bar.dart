@@ -6,6 +6,8 @@ import 'package:mobile_app/service/auth_service.dart';
 
 class TopBar{
 
+  /// Handles the logout process.
+  /// @param context The BuildContext of the current widget.
   static void _handleLogout(BuildContext context) async {
     var authService = AuthService();
     bool res = await authService.logout();

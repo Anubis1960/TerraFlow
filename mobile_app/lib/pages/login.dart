@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_app/util/constants.dart';
 import 'package:mobile_app/service/auth_service.dart';
 
+/// LoginScreen is the screen where users can log in to their existing accounts.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 

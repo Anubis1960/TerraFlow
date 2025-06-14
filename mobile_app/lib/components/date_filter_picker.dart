@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// A widget that provides a date filter picker with options for selecting a date or filtering by day, month, or year.
 class DateFilterPicker extends StatelessWidget {
   final String filterType;
   final String selectedFilterValue;

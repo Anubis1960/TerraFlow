@@ -9,8 +9,13 @@ import '../util/constants.dart';
 import '../util/google/sign_in.dart';
 import '../util/storage/base_storage.dart';
 
+/// A service class to handle authentication operations such as login, register, and logout.
 class AuthService{
 
+  /// Login method to authenticate a user with email and password.
+  /// @param email The user's email address.
+  /// @param password The user's password.
+  /// @return A Future that resolves to a boolean indicating success or failure of the login operation.
   Future<bool> login(String email, String password) async {
     Map<String, String> loginJson = {
       'email': email,
@@ -44,12 +49,19 @@ class AuthService{
   }
 
 
+  /// Initiates the Google Sign-In process.
+  /// @param context The BuildContext of the current widget.
+  ///
   Future<void> loginWithGoogle(BuildContext context) async {
     var googleSignIn = GoogleSignInUtil.getGoogleSignInFactory();
     await googleSignIn.signIn(context);
   }
 
 
+  /// Registers a new user with the provided email and password.
+  /// @param email The user's email address.
+  /// @param password The user's password.
+  /// @return A Future that resolves to a boolean indicating success or failure of the registration operation.
   Future<bool> register(String email, String password) async {
     Map<String, String> registerJson = {
       'email': email,
@@ -88,6 +100,8 @@ class AuthService{
   }
 
 
+  /// Logs out the user from all devices.
+  /// @return A Future that resolves to a boolean indicating success or failure of the logout operation.
   Future<bool> logout() async {
     try {
       final String token = await BaseStorage.getStorageFactory().getToken();

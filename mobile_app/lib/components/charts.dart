@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
+/// A utility class for building line charts using Syncfusion Flutter Charts.
 class Charts {
   static Widget buildLineChart({
     required String title,

@@ -1,3 +1,4 @@
+/// Represents water usage data for a specific date.
 class WaterUsage{
   double waterUsed;
   final String date;

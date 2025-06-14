@@ -2,7 +2,14 @@ import 'package:mobile_app/entity/sensor_data.dart';
 
 import '../components/charts.dart';
 
+/// A class to process sensor data and convert it into chart data points.
 class ChartDataProcessor {
+
+  /// Converts a list of sensor data records into a list of chart data points.
+  /// @param records The list of sensor data records.
+  /// @param sensorKey The key of the sensor data to be processed.
+  /// @param filterType The type of filter to apply ('day', 'month', 'year').
+  /// @return A list of chart data points.
   static List<ChartData> getSensorDataSpots(List<SensorData> records, String sensorKey, String filterType) {
     if (filterType == 'day') {
       return records.map((record) => ChartData(

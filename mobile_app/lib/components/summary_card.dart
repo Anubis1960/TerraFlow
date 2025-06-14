@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+/// A widget that displays a summary card with a title, value, and unit.
 class SummaryCardWidget extends StatelessWidget {
   final String title;
   final double value;

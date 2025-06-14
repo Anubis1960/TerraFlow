@@ -4,6 +4,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../util/storage/base_storage.dart';
 import '../util/constants.dart';
 
+/// A service class to manage the Socket.IO connection.
 class SocketService {
   static IO.Socket? _socket;
 

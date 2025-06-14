@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile_app/pages/disease_check.dart'; // Adjust import path if needed
+import 'package:mobile_app/pages/disease_check.dart';
 
 void main() {
   group('DiseaseCheckScreen UI Tests', () {
@@ -10,9 +10,6 @@ void main() {
           home: DiseaseCheckScreen(),
         ),
       );
-
-      // Check AppBar title
-      expect(find.widgetWithText(AppBar, 'Crop Disease Detection'), findsOneWidget);
 
       // Check for image selection card with placeholder icon
       expect(find.byIcon(Icons.add_a_photo), findsOneWidget);

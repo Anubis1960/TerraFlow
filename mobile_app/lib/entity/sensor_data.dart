@@ -1,3 +1,5 @@
+
+/// Represents sensor data with a timestamp and a map of sensor readings.
 class SensorData {
   final String timestamp;
   final Map<String, dynamic> sensorData;

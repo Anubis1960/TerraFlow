@@ -17,6 +17,7 @@ import '../util/export/file_downloader.dart';
 import '../components/top_bar.dart';
 
 
+/// A dashboard page to display device data including sensor readings and water usage.
 class DeviceDashBoard extends StatefulWidget {
   final dynamic deviceId;
   const DeviceDashBoard({super.key, required this.deviceId});
@@ -54,6 +55,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     initSocketAndFetchData();
   }
 
+  /// Initializes the socket connection and fetches initial data from the server.
   void initSocketAndFetchData() {
 
     // Fetch initial data from server

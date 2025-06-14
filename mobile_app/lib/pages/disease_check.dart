@@ -13,6 +13,7 @@ import '../util/constants.dart';
 import '../util/storage/base_storage.dart';
 import 'package:http_parser/http_parser.dart';
 
+/// DiseaseCheckScreen is a Flutter widget that allows users to upload an image of a plant leaf to check for diseases. It uses the ImagePicker package to select images and sends them to a server for processing. The results are displayed on the screen, including the predicted disease and confidence level.
 class DiseaseCheckScreen extends StatefulWidget {
   const DiseaseCheckScreen({Key? key}) : super(key: key);
 
@@ -26,6 +27,8 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
   String _confidence = "Confidence: 0%";
   bool _isLoading = false;
 
+  /// Picks an image from the gallery, processes it, and sends it to the server for disease prediction.
+  /// Handles both web and mobile platforms, ensuring the image is resized appropriately.
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     try {
