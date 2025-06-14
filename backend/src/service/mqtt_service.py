@@ -112,7 +112,6 @@ def record_sensor_data(payload: str, topic: str) -> None:
 
         device_id = extract_device_id(topic)
         res = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
-        json_data['device_id'] = device_id
 
         if not res:
             print(f"device with ID {device_id} not found in database.")
@@ -169,7 +168,6 @@ def record_water_used(payload: str, topic: str) -> None:
 
         device_id = extract_device_id(topic)
         res = mongo_db[DEVICE_COLLECTION].find_one({'_id': ObjectId(device_id)})
-        json_data['device_id'] = device_id
 
         if not res:
             print(f"device with ID {device_id} not found in database.")
