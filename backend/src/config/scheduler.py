@@ -16,6 +16,8 @@ def start_scheduler():
         trigger='cron',
         day='last',  # Run on the last day of the month
         hour=0,  # At midnight
+        # trigger='interval',
+        # minutes=3,
     )
     print("Scheduler started")
     scheduler.start()

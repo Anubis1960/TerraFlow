@@ -165,112 +165,108 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
     return Scaffold(
       appBar: TopBar.buildTopBar(title: 'Disease Detection', context: context),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF4e54c8), Color(0xFF8f94fb)],
-          ),
-        ),
+        padding: const EdgeInsets.all(24),
+        color: Colors.grey[200], // Light neutral background
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Image Selection Button
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Image Selection Button
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 4,
+                child: InkWell(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white,
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          _selectedImage == null ? Icons.add_a_photo : Icons.check_circle,
+                          size: 64,
+                          color: _selectedImage == null
+                              ? Colors.blueGrey
+                              : Colors.green,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _selectedImage == null
+                              ? "Select Image"
+                              : "Image Selected",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueGrey.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  elevation: 4,
-                  child: InkWell(
-                    onTap: _pickImage,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: Colors.white,
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            _selectedImage == null ? Icons.add_a_photo : Icons.check_circle,
-                            size: 64,
-                            color: _selectedImage == null
-                                ? Colors.deepPurpleAccent
-                                : Colors.green,
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            _selectedImage == null
-                                ? "Select Image"
-                                : "Image Selected",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurpleAccent,
-                            ),
-                          ),
-                        ],
-                      ),
+                ),
+              ),
+
+              // Preview Image
+              _buildImagePreview(),
+
+              // Result Display
+              if (_diseaseResult.isNotEmpty && !_isLoading)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Text(
+                    _diseaseResult,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _diseaseResult.contains("Detected")
+                          ? Colors.redAccent
+                          : Colors.green.shade700,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
                   ),
                 ),
 
-                // Preview Image
-                _buildImagePreview(),
-
-                // Result Display
-                if (_diseaseResult.isNotEmpty && !_isLoading)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      _diseaseResult,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _diseaseResult.contains("Detected") ? Colors.red : Colors.green,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-
-                if (_confidence.isNotEmpty && !_isLoading)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      _confidence,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-
-                if (_isLoading)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 24),
-                    child: CircularProgressIndicator(),
-                  ),
-
-                // Instructions
+              if (_confidence.isNotEmpty && !_isLoading)
                 Padding(
-                  padding: const EdgeInsets.only(top: 32),
+                  padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    _selectedImage == null
-                        ? "Tap to select an image from your gallery"
-                        : "Processing complete",
-                    textAlign: TextAlign.center,
+                    _confidence,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.grey[700],
                       fontSize: 16,
                     ),
                   ),
                 ),
-              ],
-            ),
+
+              if (_isLoading)
+                Padding(
+                  padding: const EdgeInsets.only(top: 24),
+                  child: CircularProgressIndicator(
+                    color: Colors.blueGrey,
+                  ),
+                ),
+
+              // Instructions
+              Padding(
+                padding: const EdgeInsets.only(top: 24),
+                child: Text(
+                  _selectedImage == null
+                      ? "Tap to select an image from your gallery"
+                      : "Processing complete",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

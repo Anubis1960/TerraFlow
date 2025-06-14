@@ -62,7 +62,6 @@ def prepare_image(image: cv2.Mat, img_size=(48, 48)) -> np.ndarray:
     # Normalize pixel values
     normalized_image = resized_image.astype('float32') / 255.0
 
-    # Add batch dimension -> shape becomes (1, 48, 48, 3)
     normalized_image = np.expand_dims(normalized_image, axis=0)
 
     return normalized_image
@@ -79,12 +78,12 @@ def predict_disease(img: cv2.Mat) -> dict[str, str | float]:
 
     print(f"Project root directory: {PROJECT_ROOT}")
 
-    path = os.path.join(PROJECT_ROOT, 'utils', 'model', '128-all-aug-lower48x48-1000s.keras')
+    path = os.path.join(PROJECT_ROOT, 'utils', 'model', '128_resnetv50_100_(224, 224, 3).keras')
     model = load_keras_model(path)
 
     print(f"Model loaded from {path}")
 
-    processed_img = prepare_image(img)  # Shape will now be (1, 48, 48, 3)
+    processed_img = prepare_image(img, img_size=(224, 224))
     prediction = model.predict(processed_img)
     max_index = np.argmax(prediction, axis=1)[0]
     res = {

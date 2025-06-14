@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mobile_app/util/url/strategy.dart';
 import 'package:mobile_app/util/router.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-Future main() async {
-  await dotenv.load(
-    fileName: ".env",
-  );
+void main() {
   if (kIsWeb) {
     Strategy.getStrategyFactory().configure();
   }
@@ -24,7 +20,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'TerraFlow',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Color(0xFFF5F5F5), // Light grey background
+        colorScheme: ColorScheme.light(primary: Colors.blueGrey).copyWith(
+          background: Colors.white,
+          surface: Colors.white,
+        ),
+        // Other theme settings...
       ),
       routerConfig: router,
     );

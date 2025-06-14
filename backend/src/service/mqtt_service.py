@@ -145,7 +145,7 @@ def record_sensor_data(payload: str, topic: str) -> None:
                             print(f"Removed user {user} from device {device_id}.")
                     continue
 
-                socketio.emit('record', json_data, room=socket_id)
+                socketio.emit(f"{device_id}/record", json_data, room=socket_id)
 
         except ResponseError as redis_error:
             print(f"Redis ResponseError: {redis_error}")
@@ -198,7 +198,7 @@ def record_water_used(payload: str, topic: str) -> None:
             for user in user_list:
                 user_key = f"user:{user}"
                 user_data = r.get(user_key) if r.exists(user_key) else ""
-                socketio.emit('water_usage', json_data, room=user_data)
+                socketio.emit(f"{device_id}/water_usage", json_data, room=user_data)
                 print(f"Emitted data to user {user} with socket ID {user_data}")
         except ResponseError as redis_error:
             print(f"Redis ResponseError: {redis_error}")

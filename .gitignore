@@ -186,4 +186,6 @@ AmritpalKaur.csv
 
 /backend/src/tests/imgs
 
+*.keras
+
 */imgs/

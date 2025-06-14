@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/entity/sensor_data.dart';
 import '../components/bottom_navbar.dart';
 import '../entity/device_data.dart';
-import '../entity/water_usage.dart';
 import '../service/chart_data_processor.dart';
 import '../service/filter_service.dart';
 import '../components/date_filter_picker.dart';
@@ -121,8 +120,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
       }
     });
 
-    SocketService.socket.on('record', (data) {
-      if (data['device_id'] != deviceId) return; // Ignore records for other devices
+    SocketService.socket.on('$deviceId/record', (data) {
       deviceData.sensorData.add( SensorData(
         timestamp: data['timestamp'],
         sensorData: data['sensor_data'],
@@ -136,8 +134,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
       }
     });
 
-    SocketService.socket.on('water_usage', (data) {
-      if (data['device_id'] != deviceId) return; // Ignore records for other devices
+    SocketService.socket.on('$deviceId/water_usage', (data) {
       for (var record in deviceData.waterUsageData) {
         if (record.date == data['date']) {
           record.waterUsed += data['water_used'];
@@ -201,9 +198,9 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
 
   @override
   void dispose() {
-    SocketService.socket.off('record');
+    SocketService.socket.off('$deviceId/record');
     SocketService.socket.off('export_response');
-    SocketService.socket.off('water_usage');
+    SocketService.socket.off('$deviceId/water_usage');
     _scrollController.dispose();
     super.dispose();
   }
@@ -214,7 +211,10 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      appBar: TopBar.buildTopBar(title: _isLoading ? "Loading..." : deviceName, context: context),
+      appBar: TopBar.buildTopBar(
+        title: _isLoading ? "Loading..." : deviceName,
+        context: context,
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -222,6 +222,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
           padding: EdgeInsets.all(screenWidth * 0.02),
           child: Column(
             children: [
+              // Filter Picker
               DateFilterPicker(
                 filterType: filterType,
                 selectedFilterValue: selectedFilterValue,
@@ -230,9 +231,15 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
                 onDatePick: _onDatePick,
                 onFilterValueChanged: _onFilterValueChange,
               ),
+
               SizedBox(height: screenHeight * 0.01),
+
+              // Line Chart Placeholder
               _buildLineChart(screenWidth, screenHeight),
+
               SizedBox(height: screenHeight * 0.01),
+
+              // Summary Cards
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -268,7 +275,10 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
       ),
       bottomNavigationBar: SizedBox(
         height: screenHeight * 0.135,
-        child: BottomNavBar.buildBottomNavBar(context: context, deviceId: deviceId),
+        child: BottomNavBar.buildBottomNavBar(
+          context: context,
+          deviceId: deviceId,
+        ),
       ),
     );
   }

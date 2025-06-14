@@ -14,7 +14,6 @@ class IrrigationTypeDialog {
     TimeOfDay selectedTime = const TimeOfDay(hour: 8, minute: 0);
     int pumpDurationSeconds = 5;
 
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -22,13 +21,23 @@ class IrrigationTypeDialog {
           builder: (context, setState) {
             return AlertDialog(
               backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               title: const Center(
-                child: Text('Select Irrigation Type', style: TextStyle(fontSize: 20)),
+                child: Text(
+                  'Select Irrigation Type',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueGrey,
+                  ),
+                ),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // DropdownMenu for selecting irrigation type
+                  // Dropdown for irrigation type
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: DropdownMenu<String>(
@@ -41,11 +50,11 @@ class IrrigationTypeDialog {
                           });
                         }
                       },
-                      menuStyle: const MenuStyle(
-                        backgroundColor: WidgetStatePropertyAll(Colors.white),
-                        elevation: WidgetStatePropertyAll(8), // optional
-                        surfaceTintColor: WidgetStatePropertyAll(Colors.white), // for Material 3
-                        shadowColor: WidgetStatePropertyAll(Colors.black26), // optional
+                      menuStyle: MenuStyle(
+                        backgroundColor: WidgetStateProperty.all(Colors.white),
+                        elevation: WidgetStateProperty.all(8),
+                        surfaceTintColor: WidgetStateProperty.all(Colors.white),
+                        shadowColor: WidgetStateProperty.all(Colors.black26),
                       ),
                       dropdownMenuEntries: type
                           .map((value) => DropdownMenuEntry<String>(
@@ -53,17 +62,16 @@ class IrrigationTypeDialog {
                         label: _getDisplayText(value),
                       ))
                           .toList(),
-
                     ),
                   ),
 
-
-                  // Show time picker only if "SCHEDULED" is selected
+                  // Conditional fields for "SCHEDULED"
                   if (selectedType == 'SCHEDULED') ...[
+                    // Schedule Type Dropdown
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: DropdownMenu<String>(
-                        label: const Text("Schedule type"),
+                        label: const Text("Schedule Type"),
                         initialSelection: selectedScheduleType,
                         onSelected: (String? newValue) {
                           if (newValue != null) {
@@ -72,11 +80,11 @@ class IrrigationTypeDialog {
                             });
                           }
                         },
-                        menuStyle: const MenuStyle(
-                          backgroundColor: WidgetStatePropertyAll(Colors.white),
-                          elevation: WidgetStatePropertyAll(8), // optional
-                          surfaceTintColor: WidgetStatePropertyAll(Colors.white), // for Material 3
-                          shadowColor: WidgetStatePropertyAll(Colors.black26), // optional
+                        menuStyle: MenuStyle(
+                          backgroundColor: WidgetStateProperty.all(Colors.white),
+                          elevation: WidgetStateProperty.all(8),
+                          surfaceTintColor: WidgetStateProperty.all(Colors.white),
+                          shadowColor: WidgetStateProperty.all(Colors.black26),
                         ),
                         dropdownMenuEntries: scheduleType
                             .map((value) => DropdownMenuEntry<String>(
@@ -86,11 +94,12 @@ class IrrigationTypeDialog {
                             .toList(),
                       ),
                     ),
+
+                    // Duration Input
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       child: TextField(
                         keyboardType: TextInputType.number,
-                        textDirection: TextDirection.ltr, // Force LTR
                         onChanged: (value) {
                           int seconds = int.tryParse(value) ?? 5;
                           setState(() {
@@ -100,16 +109,26 @@ class IrrigationTypeDialog {
                         decoration: InputDecoration(
                           labelText: "Duration (seconds)",
                           hintText: "Enter seconds",
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.blueGrey.shade200),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.blueGrey.shade400),
+                          ),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                         ),
                       ),
                     ),
+
+                    // Time Picker
                     ListTile(
                       title: const Text('Select Time'),
                       trailing: Text(
                         '${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}',
-                        style: const TextStyle(fontSize: 16),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.blueGrey.shade700,
+                        ),
                       ),
                       onTap: () async {
                         final TimeOfDay? pickedTime = await showTimePicker(
@@ -118,12 +137,12 @@ class IrrigationTypeDialog {
                           builder: (BuildContext context, Widget? child) {
                             return Theme(
                               data: Theme.of(context).copyWith(
-                                colorScheme: const ColorScheme.light(primary: Colors.deepPurple),
+                                colorScheme: const ColorScheme.light(primary: Colors.blueGrey),
                                 textButtonTheme: TextButtonThemeData(
                                   style: TextButton.styleFrom(
-                                    foregroundColor: Colors.deepPurple,
-                                    textStyle: TextStyle(fontSize: 20),
-                                    padding: const EdgeInsets.all(16),
+                                    foregroundColor: Colors.blueGrey,
+                                    textStyle: const TextStyle(fontSize: 16),
+                                    padding: EdgeInsets.all(12),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -141,30 +160,38 @@ class IrrigationTypeDialog {
                         }
                       },
                     ),
-
                   ],
                 ],
               ),
               actions: [
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey.shade300,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                   onPressed: Navigator.of(context).pop,
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueGrey,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                   onPressed: () {
+                    var schedule = <String, String>{};
+
                     if (selectedType == 'SCHEDULED' && selectedScheduleType.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Please select a time for scheduled irrigation')),
                       );
                       return;
                     }
-
-                    var schedule = {
-                      'type': "",
-                      'time': "",
-                    };
 
                     if (selectedType == 'SCHEDULED') {
                       schedule['type'] = selectedScheduleType;

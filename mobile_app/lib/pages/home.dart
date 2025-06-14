@@ -174,7 +174,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: TopBar.buildTopBar(title: 'Devices', context: context),
-      // Wrap body in ScaffoldMessenger to control where SnackBar appears
       body: ScaffoldMessenger(
         child: Builder(
           builder: (context) => Column(
@@ -197,17 +196,18 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: TextStyle(
                                 fontSize: screenHeight * 0.025,
                                 fontWeight: FontWeight.w600,
+                                color: Colors.blueGrey.shade700,
                               ),
                             ),
                           ],
                         ),
                       );
                     } else {
-                      var devices = snapshot.data!;
+                      var devicesList = snapshot.data!;
                       return ListView.builder(
-                        itemCount: devices.length,
+                        itemCount: devicesList.length,
                         itemBuilder: (context, index) {
-                          Device device = devices[index];
+                          Device device = devicesList[index];
                           bool isSelected = _selectedDeviceIds.contains(device);
                           return Padding(
                             padding: EdgeInsets.all(screenWidth * 0.02),
@@ -218,23 +218,25 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               elevation: 4,
                               child: ListTile(
-                                contentPadding:
-                                EdgeInsets.all(screenWidth * 0.04),
+                                contentPadding: EdgeInsets.all(screenWidth * 0.04),
                                 leading: Icon(
                                   Icons.devices,
-                                  color:
-                                  isSelected ? Colors.red : const Color(0xFF4e54c8),
+                                  color: isSelected
+                                      ? Colors.red
+                                      : Colors.blueGrey.shade600,
                                 ),
                                 title: Text(
                                   'Name: ${device.name}',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: screenHeight * 0.02,
+                                    color: Colors.blueGrey.shade800,
                                   ),
                                 ),
                                 trailing: Icon(
                                   Icons.arrow_forward_ios,
-                                  color: Colors.deepPurpleAccent,
+                                  size: 16,
+                                  color: Colors.blueGrey.shade600,
                                 ),
                                 onTap: () {
                                   if (_selectedDeviceIds.isNotEmpty) {
@@ -267,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
-              SizedBox(height: screenHeight * 0.08),
+              SizedBox(height: screenHeight * 0.06),
             ],
           ),
         ),
@@ -288,13 +290,13 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             IconButton(
-              icon: const Icon(Icons.add_a_photo, size: 30, color: Colors.deepPurpleAccent),
+              icon: const Icon(Icons.add_a_photo, size: 30, color: Colors.blueGrey),
               onPressed: () {
                 context.go(Routes.DISEASE_CHECK);
               },
             ),
             IconButton(
-              icon: const Icon(Icons.add, size: 30, color: Colors.deepPurpleAccent),
+              icon: const Icon(Icons.add, size: 30, color: Colors.blueGrey),
               onPressed: () {
                 _showAddDeviceDialog(context);
               },
@@ -304,8 +306,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 Icons.edit,
                 size: 30,
                 color: _selectedDeviceIds.isNotEmpty && _selectedDeviceIds.length == 1
-                    ? Colors.blue
-                    : Colors.grey,
+                    ? Colors.blueGrey.shade600
+                    : Colors.grey.shade400,
               ),
               onPressed: _selectedDeviceIds.isNotEmpty && _selectedDeviceIds.length == 1
                   ? () => _editDeviceName(context, _selectedDeviceIds.first)
@@ -315,7 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(
                 Icons.delete,
                 size: 30,
-                color: _selectedDeviceIds.isNotEmpty ? Colors.red : Colors.grey,
+                color: _selectedDeviceIds.isNotEmpty ? Colors.red : Colors.grey.shade400,
               ),
               onPressed: _selectedDeviceIds.isNotEmpty
                   ? _deleteSelectedDevices

@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/components/irrigation_type_dialog.dart';
 import 'package:mobile_app/service/socket_service.dart';
 
-class BottomNavBar{
+class BottomNavBar {
   static Widget buildBottomNavBar({
     required BuildContext context,
     required String deviceId,
-}){
+  }) {
     return BottomAppBar(
       elevation: 0,
       color: Colors.white,
-      shape: CircularNotchedRectangle(),
+      shape: const CircularNotchedRectangle(),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -26,15 +26,15 @@ class BottomNavBar{
                       'device_id': deviceId,
                     });
                   },
-                  icon: Icon(Icons.water_drop, color: Colors.deepPurpleAccent),
+                  icon: Icon(Icons.water_drop, color: Colors.blueGrey),
                   tooltip: 'Trigger Irrigation',
                 ),
                 Flexible(
                   child: Text(
                     'Irrigate',
                     style: TextStyle(
-                      color: Colors.deepPurpleAccent,
-                      fontSize: 14, // Adjusted font size
+                      color: Colors.blueGrey,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
@@ -43,6 +43,7 @@ class BottomNavBar{
               ],
             ),
           ),
+
           // Schedule Irrigation Button
           Expanded(
             child: Column(
@@ -50,17 +51,18 @@ class BottomNavBar{
               children: [
                 IconButton(
                   onPressed: () {
-                    IrrigationTypeDialog.showIrrigationTypeDialog(context: context, deviceId: deviceId);
+                    IrrigationTypeDialog.showIrrigationTypeDialog(
+                        context: context, deviceId: deviceId);
                   },
-                  icon: Icon(Icons.settings, color: Colors.deepPurpleAccent),
+                  icon: Icon(Icons.settings, color: Colors.blueGrey),
                   tooltip: 'Irrigation Settings',
                 ),
                 Flexible(
                   child: Text(
                     'Settings',
                     style: TextStyle(
-                      color: Colors.deepPurpleAccent,
-                      fontSize: 14, // Adjusted font size
+                      color: Colors.blueGrey,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
@@ -69,6 +71,7 @@ class BottomNavBar{
               ],
             ),
           ),
+
           // Export Data Button
           Expanded(
             child: Column(
@@ -88,7 +91,7 @@ class BottomNavBar{
                     'Export',
                     style: TextStyle(
                       color: Colors.green,
-                      fontSize: 14, // Adjusted font size
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,

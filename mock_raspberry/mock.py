@@ -9,7 +9,7 @@ import random
 
 load_dotenv()
 
-device_id = "d372fd8aa13bc1dc8e891b2a"
+device_id = "d372fd8aa13bc1dc8e891b3a"
 
 MQTT_BROKER = os.getenv("MQTT_BROKER", "broker.hivemq.com")
 MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", f'mqtt-client-{random.randint(0, 1000)}')

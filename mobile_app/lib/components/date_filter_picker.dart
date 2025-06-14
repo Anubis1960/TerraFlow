@@ -24,15 +24,14 @@ class DateFilterPicker extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white,
-            Colors.white,
-          ],
-        ),
-
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade300,
+            blurRadius: 6,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -44,7 +43,7 @@ class DateFilterPicker extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.deepPurpleAccent,
+                  color: Colors.blueGrey.shade400,
                 ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -58,7 +57,7 @@ class DateFilterPicker extends StatelessWidget {
                       child: Text(
                         value.toUpperCase(),
                         style: TextStyle(
-                          color: Colors.deepPurpleAccent,
+                          color: Colors.blueGrey.shade700,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -68,14 +67,14 @@ class DateFilterPicker extends StatelessWidget {
                 }).toList(),
                 isExpanded: true,
                 underline: const SizedBox.shrink(),
-                style: const TextStyle(
-                  color: Colors.deepPurpleAccent,
+                style: TextStyle(
+                  color: Colors.blueGrey.shade700,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
                 icon: Icon(
                   Icons.arrow_drop_down,
-                  color: Colors.deepPurpleAccent,
+                  color: Colors.blueGrey.shade700,
                 ),
                 dropdownColor: Colors.white,
               ),
@@ -102,13 +101,13 @@ class DateFilterPicker extends StatelessWidget {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
-          foregroundColor: Colors.deepPurpleAccent,
+          foregroundColor: Colors.blueGrey.shade700,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           side: BorderSide(
-            color: Colors.deepPurpleAccent,
+            color: Colors.blueGrey.shade400,
           ),
           textStyle: const TextStyle(fontSize: 16),
         ),
@@ -116,14 +115,14 @@ class DateFilterPicker extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.calendar_today, size: 20, color: Colors.deepPurpleAccent),
+            const Icon(Icons.calendar_today, size: 20, color: Colors.blueGrey),
             const SizedBox(width: 8),
             Text(
               selectedFilterValue.isEmpty ? "Select Date" : selectedFilterValue,
               style: TextStyle(
                 color: selectedFilterValue.isEmpty
                     ? Colors.grey
-                    : Colors.deepPurpleAccent,
+                    : Colors.blueGrey.shade700,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
@@ -144,7 +143,7 @@ class DateFilterPicker extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.deepPurpleAccent,
+          color: Colors.blueGrey.shade400,
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -159,7 +158,7 @@ class DateFilterPicker extends StatelessWidget {
               child: Text(
                 value,
                 style: TextStyle(
-                  color: Colors.deepPurpleAccent,
+                  color: Colors.blueGrey.shade700,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -184,14 +183,13 @@ class DateFilterPicker extends StatelessWidget {
         isExpanded: true,
         underline: const SizedBox.shrink(),
         style: const TextStyle(
-          color: Colors.deepPurpleAccent,
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),
         icon: Icon(
           Icons.arrow_drop_down,
           color: filteredValues.isNotEmpty
-              ? Colors.deepPurpleAccent
+              ? Colors.blueGrey
               : Colors.grey,
         ),
         dropdownColor: Colors.white,

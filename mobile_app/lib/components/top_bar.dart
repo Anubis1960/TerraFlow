@@ -24,26 +24,34 @@ class TopBar{
     required BuildContext context,
   }) {
     return AppBar(
-      leading: IconButton(
-        icon: Icon(Icons.home, color: Colors.white),
-        onPressed: () {
+      // Replace IconButton with your app icon as the leading widget
+      leading: GestureDetector(
+        onTap: () {
           context.go(Routes.HOME);
         },
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset(
+            'assets/images/no-bg.png', // Your app icon or logo
+            width: 28,
+            height: 28,
+          ),
+        ),
       ),
       title: Text(
         title,
-        style: TextStyle(
-          fontSize: 22,
+        style: const TextStyle(
+          fontSize: 20,
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
       ),
       centerTitle: true,
-      backgroundColor: Colors.deepPurpleAccent,
+      backgroundColor: Colors.blueGrey,
       elevation: 0,
       actions: [
         IconButton(
-          icon: Icon(Icons.logout, color: Colors.white), // Logout icon
+          icon: const Icon(Icons.logout, color: Colors.white),
           onPressed: () async {
             _handleLogout(context);
           },

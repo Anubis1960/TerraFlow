@@ -48,15 +48,6 @@ class Charts {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {
               return SizedBox(
@@ -123,9 +114,9 @@ class Charts {
     TooltipBehavior tooltipBehavior = TooltipBehavior(
       enable: true,
       format: 'point.x : point.y',
-      color: Colors.deepPurple,
+      color: Color(0xFFCDE1F6),
       textStyle: const TextStyle(
-        color: Colors.white,
+        color: Colors.black,
         fontSize: 12,
         fontWeight: FontWeight.bold,
       ),

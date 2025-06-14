@@ -1,9 +1,6 @@
-import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-import '../entity/device.dart';
 import '../util/storage/base_storage.dart';
 import '../util/constants.dart';
 

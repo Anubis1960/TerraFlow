@@ -5,6 +5,7 @@ import 'base_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
+/// Shared Preferences based storage implementation
 class SharedPrefs extends BaseStorage {
   static final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 

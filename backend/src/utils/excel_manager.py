@@ -3,6 +3,15 @@ import pandas as pd
 from openpyxl import Workbook
 from openpyxl.chart import BarChart, Reference, LineChart
 from openpyxl.utils.dataframe import dataframe_to_rows
+import regex as re
+
+
+def sanitize_sheet_title(title: str) -> str:
+    invalid_chars = r'[\\/:*?"<>|]'  # Regular expression pattern for invalid characters
+    sanitized = re.sub(invalid_chars, '', title)
+    if len(title) > 31:  # Max length for sheet names is 31 characters
+        sanitized = sanitized[:31]
+    return sanitized.strip()
 
 
 def create_bar_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title: str, start_col: str, start_row: int) \
@@ -19,6 +28,7 @@ def create_bar_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title: 
     :return: None
     """
     chart = BarChart()
+    title = sanitize_sheet_title(title)
     chart.title = title
     chart.y_axis.title = y_axis_title
     chart.x_axis.title = x_axis_title
@@ -48,6 +58,7 @@ def create_line_chart(ws: Workbook, title: str, y_axis_title: str, x_axis_title:
     :return: None
     """
     chart = LineChart()
+    title = sanitize_sheet_title(title)
     chart.title = title
     chart.y_axis.title = y_axis_title
     chart.x_axis.title = x_axis_title
@@ -106,14 +117,16 @@ def build_excel_sheet(wb: Workbook, data, prefix='') -> None:
 
     # Create Excel workbook
     ws_records = wb.active
-    ws_records.title = f"{prefix} Sensor Records"
+    title = sanitize_sheet_title(f"{prefix} Sensor Records")
+    ws_records.title = title
 
     # Write records data to Excel
     for row in dataframe_to_rows(records_df, index=False, header=True):
         ws_records.append(row)
 
     # Write water usage data to Excel
-    ws_water = wb.create_sheet(f"{prefix} Water Usage")
+    title = sanitize_sheet_title(f"{prefix} Water Usage")
+    ws_water = wb.create_sheet(title)
     for row in dataframe_to_rows(water_usage_df.drop(columns=["Year"]), index=False, header=True):
         ws_water.append(row)
 
@@ -141,23 +154,54 @@ def build_excel_sheet(wb: Workbook, data, prefix='') -> None:
         create_line_chart(ws_year, f"Monthly Trend for {year}", "Water Used", "Month", "H", 2)
 
 
+def build_device_excel_sheet(ws, records_df: pd.DataFrame, water_usage_df: pd.DataFrame, device_name: str):
+    """
+    Writes sensor records and water usage to a single worksheet.
+    Adds headers for separation.
+    """
+    ws.append([f"Device: {device_name}"])
+    ws.append(["Sensor Records"])
+    for row in dataframe_to_rows(records_df, index=False, header=True):
+        ws.append(row)
+
+    ws.append([])  # Blank line
+    ws.append(["Water Usage"])
+    for row in dataframe_to_rows(water_usage_df, index=False, header=True):
+        ws.append(row)
+
+
 def export_to_excel_devices(_data: list) -> BytesIO:
     """
-    Exports a list of devices to an Excel file with separate sheets for each device's sensor records and water usage.
-
-    :param _data: A list of device data dictionaries.
-    :return: BytesIO: A buffer containing the Excel file.
+    Exports a list of devices into an Excel file where each device has its own sheet,
+    containing sensor records and water usage data.
     """
     wb = Workbook()
+    # Remove default sheet created by Workbook()
+    if 'Sheet' in wb.sheetnames:
+        del wb['Sheet']
+
     for idx, device in enumerate(_data):
         if 'record' not in device or 'water_usage' not in device:
             continue
-        name = f'Device {idx + 1}: {device.get("name", "Unknown")}'
-        if 'name' in device:
-            name = device['name']
-        build_excel_sheet(wb, device, prefix=name)
 
-    # Save workbook to BytesIO buffer
+        device_name = device.get("name", "Device")
+        device_name = f"{device_name} {idx + 1}"
+        print(f"Processing {device_name}")
+
+        # Convert sensor records to DataFrame
+        records_df = pd.DataFrame([{**r["sensor_data"], "Timestamp": r["timestamp"]} for r in device["record"]])
+
+        # Convert water usage to DataFrame
+        water_usage_df = pd.DataFrame(device["water_usage"])
+
+        # Create new sheet
+        sheet_title = sanitize_sheet_title(device_name)
+        ws = wb.create_sheet(sheet_title)
+
+        # Write both datasets to this sheet
+        build_device_excel_sheet(ws, records_df, water_usage_df, device_name)
+
+    # Save workbook to buffer
     buff = BytesIO()
     wb.save(buff)
     buff.seek(0)

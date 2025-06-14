@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_app/pages/disease_check.dart'; // Adjust import path if needed
-import 'package:image_picker/image_picker.dart';
 
 void main() {
   group('DiseaseCheckScreen UI Tests', () {

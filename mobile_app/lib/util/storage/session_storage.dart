@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:html' as html show Storage, window;
 import '../../entity/device.dart';
 
+/// SessionStorage class that implements BaseStorage to manage session data
 class SessionStorage extends BaseStorage {
   static final html.Storage _sessionStorage = html.window.sessionStorage;
 
