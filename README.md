@@ -91,8 +91,8 @@ Go to the [Google Cloud Console](https://console.cloud.google.com/) and:
 
 You can either train the models yourself or download pre-trained versions:
 
-- **Plant Disease Detection Model**: Use `src/utils/plant_disease.ipynb` and dataset `<insert link here>`
-- **Irrigation Prediction Model**: Use `src/utils/irrigation_models.py` and dataset `<insert link here>`
+- **Plant Disease Detection Model**: Use `src/utils/plant_disease.ipynb` and dataset [Plant Disease Classification Merged Dataset](https://www.kaggle.com/datasets/alinedobrovsky/plant-disease-classification-merged-dataset/data)
+- **Irrigation Prediction Model**: Use `src/utils/irrigation_models.py` and datasets [Dataset for Predicting watering the plants](https://www.kaggle.com/datasets/nelakurthisudheer/dataset-for-predicting-watering-the-plants), [Soil Moisture, Air temperature, humidity, and Motor on/off Monitoring data](https://data.mendeley.com/datasets/fpdwmm7nrb/1)
 
 Place the trained models in the correct directory inside `/models`.
 
@@ -137,7 +137,13 @@ If you're using **Raspberry Pi Pico W**, follow these steps:
 
 - Flash MicroPython: [Download Here](https://micropython.org/download/RPI_PICO_W/)
 - Use Thonny IDE or VS Code with Raspberry Pi Pico extension.
-- Connect sensors as per the circuit diagram: `circuit_diagram.png`
+- Connect sensors as per the circuit diagram:
+
+ 
+![Circuit Diagram](https://i.imgur.com/AlghjFM.jpeg)
+
+
+
 - Configure .env file
 
 
