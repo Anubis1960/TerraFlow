@@ -30,17 +30,6 @@ class BottomNavBar {
                   icon: Icon(Icons.water_drop, color: Colors.blueGrey),
                   tooltip: 'Trigger Irrigation',
                 ),
-                Flexible(
-                  child: Text(
-                    'Irrigate',
-                    style: TextStyle(
-                      color: Colors.blueGrey,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
               ],
             ),
           ),
@@ -57,17 +46,6 @@ class BottomNavBar {
                   },
                   icon: Icon(Icons.settings, color: Colors.blueGrey),
                   tooltip: 'Irrigation Settings',
-                ),
-                Flexible(
-                  child: Text(
-                    'Settings',
-                    style: TextStyle(
-                      color: Colors.blueGrey,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
                 ),
               ],
             ),
@@ -86,17 +64,6 @@ class BottomNavBar {
                   },
                   icon: Icon(Icons.cloud_download, color: Colors.green),
                   tooltip: 'Export Excel',
-                ),
-                Flexible(
-                  child: Text(
-                    'Export',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
                 ),
               ],
             ),

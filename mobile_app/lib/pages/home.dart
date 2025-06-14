@@ -300,12 +300,14 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 context.go(Routes.DISEASE_CHECK);
               },
+              tooltip: 'Disease Check',
             ),
             IconButton(
               icon: const Icon(Icons.add, size: 30, color: Colors.blueGrey),
               onPressed: () {
                 _showAddDeviceDialog(context);
               },
+              tooltip: 'Add Device',
             ),
             IconButton(
               icon: Icon(
@@ -318,6 +320,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: _selectedDeviceIds.isNotEmpty && _selectedDeviceIds.length == 1
                   ? () => _editDeviceName(context, _selectedDeviceIds.first)
                   : null,
+              tooltip: _selectedDeviceIds.isNotEmpty && _selectedDeviceIds.length == 1
+                  ? 'Edit Device Name'
+                  : 'Select One Device to Edit',
             ),
             IconButton(
               icon: Icon(
@@ -328,6 +333,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: _selectedDeviceIds.isNotEmpty
                   ? _deleteSelectedDevices
                   : null,
+              tooltip: _selectedDeviceIds.isNotEmpty
+                  ? 'Delete Selected Devices'
+                  : 'No Devices Selected',
             ),
           ],
         ),

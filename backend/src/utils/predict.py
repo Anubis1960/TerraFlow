@@ -78,12 +78,12 @@ def predict_disease(img: cv2.Mat) -> dict[str, str | float]:
 
     print(f"Project root directory: {PROJECT_ROOT}")
 
-    path = os.path.join(PROJECT_ROOT, 'utils', 'model', '128_resnet_100_224x224.keras')
+    path = os.path.join(PROJECT_ROOT, 'utils', 'model', '128_custom_500_48.keras')
     model = load_keras_model(path)
 
     print(f"Model loaded from {path}")
 
-    processed_img = prepare_image(img, img_size=(224, 224))
+    processed_img = prepare_image(img, img_size=(48, 48))
     prediction = model.predict(processed_img)
     max_index = np.argmax(prediction, axis=1)[0]
     res = {

@@ -57,6 +57,7 @@ class TopBar{
           onPressed: () async {
             _handleLogout(context);
           },
+          tooltip: 'Logout',
         ),
       ],
     );
