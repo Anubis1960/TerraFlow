@@ -123,6 +123,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     });
 
     SocketService.socket.on('$deviceId/record', (data) {
+      print('Received record for device $deviceId: $data');
       deviceData.sensorData.add( SensorData(
         timestamp: data['timestamp'],
         sensorData: data['sensor_data'],
