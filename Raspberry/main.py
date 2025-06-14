@@ -5,7 +5,7 @@ import os
 from umqtt.simple import MQTTClient
 import asyncio
 import ujson as json
-from constants import SSID, PASSWORD, MQTT_BROKER, MQTT_CLIENT_ID, get_mqtt_topics, DATETIME_API_KEY
+from constants import SSID, PASSWORD, MQTT_BROKER, MQTT_CLIENT_ID, get_mqtt_topics, IPGEOLOCATION_API_KEY
 from generate_id import generate_object_id
 from mqttman import MQTTManager
 import urequests
@@ -62,7 +62,7 @@ def sync_time_with_ip_geolocation_api(rtc, timezone: str):
     :param timezone: str
     """
 
-    url = f'http://api.ipgeolocation.io/timezone?apiKey={DATETIME_API_KEY}&tz={timezone}'
+    url = f'http://api.ipgeolocation.io/timezone?apiKey={IPGEOLOCATION_API_KEY}&tz={timezone}'
     response = urequests.get(url)
     data = response.json()
 
