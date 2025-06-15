@@ -89,10 +89,10 @@ Go to the [Google Cloud Console](https://console.cloud.google.com/) and:
 
 ### 4. Train or Download Models
 
-You can either train the models yourself or download pre-trained versions:
+You can either train the models yourself or download pre-trained versions from https://drive.google.com/drive/folders/1SZDdnHJjSfsy7Ieaxu56nuYDSlNrAvXH?usp=sharing
 
-- **Plant Disease Detection Model**: Use `src/utils/plant_disease.ipynb` and dataset [Plant Disease Classification Merged Dataset](https://www.kaggle.com/datasets/alinedobrovsky/plant-disease-classification-merged-dataset/data)
-- **Irrigation Prediction Model**: Use `src/utils/irrigation_models.py` and datasets [Dataset for Predicting watering the plants](https://www.kaggle.com/datasets/nelakurthisudheer/dataset-for-predicting-watering-the-plants), [Soil Moisture, Air temperature, humidity, and Motor on/off Monitoring data](https://data.mendeley.com/datasets/fpdwmm7nrb/1)
+- **Plant Disease Detection Model**: Use `src/utils/plant_disease.ipynb` and datasets [Plant Disease Classification Merged Dataset](https://www.kaggle.com/datasets/alinedobrovsky/plant-disease-classification-merged-dataset/data) and [Flickr](https://www.kaggle.com/datasets/hsankesara/flickr-image-dataset)
+- **Irrigation Prediction Model**: Use `src/utils/irrigation_models.py` and datasets [Dataset for Predicting watering the plants](https://www.kaggle.com/datasets/nelakurthisudheer/dataset-for-predicting-watering-the-plants) and [Soil Moisture, Air temperature, humidity, and Motor on/off Monitoring data](https://data.mendeley.com/datasets/fpdwmm7nrb/1)
 
 Place the trained models in the correct directory inside `/models`.
 
