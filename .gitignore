@@ -179,3 +179,13 @@ cython_debug/
 key.jks
 
 AmritpalKaur.csv
+
+./Raspberry/.env
+
+/Raspberry/.env
+
+/backend/src/tests/imgs
+
+*.keras
+
+*/imgs/

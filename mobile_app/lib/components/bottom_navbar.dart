@@ -1,130 +1,60 @@
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:mobile_app/util/constants.dart';
-import 'package:mobile_app/util/socket_service.dart';
-import 'package:mobile_app/components/schedule_dialog.dart';
+import 'package:mobile_app/components/irrigation_type_dialog.dart';
+import 'package:mobile_app/service/socket_service.dart';
 
-class BottomNavBar{
+/// A widget that builds a bottom navigation bar with buttons for irrigation control and data export.
+class BottomNavBar {
+
+  /// Builds the bottom navigation bar with buttons for triggering irrigation, scheduling irrigation, and exporting data.
+  /// @param context The BuildContext for the widget tree.
+  /// @param deviceId The ID of the device for which the irrigation and export actions will be performed.
+  /// @return A [Container] widget containing the navigation buttons.
   static Widget buildBottomNavBar({
     required BuildContext context,
-    required String controllerId,
-}){
-    return BottomAppBar(
-      elevation: 0,
-      color: Colors.white,
-      shape: CircularNotchedRectangle(),
+    required String deviceId,
+    double height = 60.0,
+  }) {
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Home Button
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    // Navigate to Home Screen
-                    context.go(Routes.HOME);
-                  },
-                  icon: Icon(Icons.home, color: Colors.deepPurpleAccent),
-                  tooltip: 'Home',
-                ),
-                Flexible(
-                  child: Text(
-                    'Home',
-                    style: TextStyle(
-                      color: Colors.deepPurpleAccent,
-                      fontSize: 14, // Adjusted font size
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center, // Center the text
-                  ),
-                ),
-              ],
-            ),
+          IconButton(
+            onPressed: () {
+              SocketService.socket.emit('trigger_irrigation', {
+                'device_id': deviceId,
+              });
+            },
+            icon: Icon(Icons.water_drop, color: Colors.blueGrey, size: 30),
+            tooltip: 'Trigger Irrigation',
           ),
-          // Trigger Irrigation Button
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    SocketService.socket.emit('trigger_irrigation', {
-                      'controller_id': controllerId,
-                    });
-                  },
-                  icon: Icon(Icons.water_drop, color: Colors.deepPurpleAccent),
-                  tooltip: 'Trigger Irrigation',
-                ),
-                Flexible(
-                  child: Text(
-                    'Irrigation',
-                    style: TextStyle(
-                      color: Colors.deepPurpleAccent,
-                      fontSize: 14, // Adjusted font size
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
+          IconButton(
+            onPressed: () {
+              IrrigationTypeDialog.showIrrigationTypeDialog(
+                  context: context, deviceId: deviceId);
+            },
+            icon: Icon(Icons.settings, color: Colors.blueGrey, size: 30),
+            tooltip: 'Irrigation Settings',
           ),
-          // Schedule Irrigation Button
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    ScheduleDialog.showScheduleDialog(context: context, controllerId: controllerId);
-                  },
-                  icon: Icon(Icons.schedule, color: Colors.deepPurpleAccent),
-                  tooltip: 'Schedule Irrigation',
-                ),
-                Flexible(
-                  child: Text(
-                    'Schedule',
-                    style: TextStyle(
-                      color: Colors.deepPurpleAccent,
-                      fontSize: 14, // Adjusted font size
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Export Data Button
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    SocketService.socket.emit('export', {
-                      'controller_id': controllerId,
-                    });
-                  },
-                  icon: Icon(Icons.cloud_download, color: Colors.green),
-                  tooltip: 'Export Data',
-                ),
-                Flexible(
-                  child: Text(
-                    'Export',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontSize: 14, // Adjusted font size
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
+          IconButton(
+            onPressed: () {
+              SocketService.socket.emit('export', {
+                'device_id': deviceId,
+              });
+            },
+            icon: Icon(Icons.cloud_download, color: Colors.green, size: 30),
+            tooltip: 'Export Excel',
           ),
         ],
       ),

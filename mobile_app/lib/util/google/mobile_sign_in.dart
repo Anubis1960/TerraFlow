@@ -7,9 +7,15 @@ import 'package:http/http.dart' as http;
 import 'package:mobile_app/util/constants.dart';
 import 'package:mobile_app/util/storage/base_storage.dart';
 
+/// A mobile implementation of Google Sign-In that handles user authentication
 class MobileSignIn extends GoogleSignInUtil {
+
+  /// The GoogleSignIn instance used for authentication.
   static final _googleSignIn = GoogleSignIn();
 
+  /// Signs in the user using Google authentication.
+  /// @param context The build context of the application.
+  /// @return A [Future] that completes when the sign-in process is complete.
   @override
   Future<void> signIn(BuildContext context) async {
     try {
@@ -31,27 +37,28 @@ class MobileSignIn extends GoogleSignInUtil {
 
         if (req.statusCode == 200) {
           String token = jsonDecode(req.body)['token'];
-          BaseStorage.getStorageFactory().saveData('token', token);
+          BaseStorage.getStorageFactory().saveToken(token);
           context.go(Routes.HOME);
         } else {
-          print('Login failed: ${req.body}');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Login failed: ${req.body}')),
           );
         }
       }
     } catch (e) {
-      print('Error during login: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed: $e')),
       );
     }
   }
 
+  /// Signs out the user from the Google account.
+  /// @return A [Future] that completes when the sign-out process is complete.
   @override
   Future<void> signOut() async {
     await _googleSignIn.signOut();
   }
 }
 
+/// Returns the appropriate Google sign-in implementation based on the platform.
 GoogleSignInUtil getGoogleSignIn() => MobileSignIn();

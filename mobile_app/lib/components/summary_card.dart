@@ -1,44 +1,92 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
-class SummaryCard{
-  static Widget buildSummaryCard({
-    required String title,
-    required double value,
-    required Color color,
-    required double screenWidth,
-    required double screenHeight}) {
-    return Card(
-      color: Colors.white,
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+/// A widget that displays a summary card with a title, value, and unit.
+class SummaryCardWidget extends StatelessWidget {
+  final String title;
+  final double value;
+  final String unit;
+  final Color color; // This will be used for the dot indicator
+  final double screenWidth;
+  final double screenHeight;
+
+  /// Creates a [SummaryCardWidget].
+  /// @param title The title of the summary card.
+  /// @param value The numerical value to be displayed.
+  /// @param color The color for the dot indicator.
+  /// @param screenWidth The width of the screen, used for responsive design.
+  /// @param screenHeight The height of the screen, used for responsive design.
+  /// @param unit The unit of measurement for the value.
+  const SummaryCardWidget({
+    Key? key,
+    required this.title,
+    required this.value,
+    required this.color,
+    required this.screenWidth,
+    required this.screenHeight,
+    required this.unit,
+  }) : super(key: key);
+
+  /// Builds the summary card widget.
+  /// @return A [Container] widget that contains the summary card.
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade300,
+            blurRadius: 10,
+            spreadRadius: 2,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: EdgeInsets.all(screenWidth * 0.02), // 2% of screen width
-        child: Column(
-          mainAxisSize: MainAxisSize.min, // Adapts to content height
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: screenHeight * 0.018, // 1.8% of screen height
-                fontWeight: FontWeight.bold,
-                color: color,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: EdgeInsets.all(screenWidth * 0.02),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: color, // Dynamic color passed in
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: screenHeight * 0.018,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blueGrey.shade800, // Matches app-wide theme
+                    ),
+                  ),
+                ],
               ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: screenHeight * 0.008), // 0.8% of screen height
-            FittedBox(
-              child: Text(
-                value.toStringAsFixed(2),
-                style: TextStyle(
-                  fontSize: screenHeight * 0.022, // 2.2% of screen height
-                  fontWeight: FontWeight.bold,
+              SizedBox(height: screenHeight * 0.01),
+              FittedBox(
+                child: Text(
+                  '${value.toStringAsFixed(2)} $unit',
+                  style: TextStyle(
+                    fontSize: screenHeight * 0.026,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

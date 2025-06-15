@@ -1,16 +1,3 @@
-"""
-A module for generating unique Object IDs using a combination of timestamp, random values, and cryptographic hashing.
-
-This module is designed for embedded systems where libraries like `bson` might not be available. It uses lightweight
-alternatives (`utime`, `urandom`, and `uhashlib`) to generate unique identifiers.
-
-Attributes:
-    _counter (int): A global counter used to ensure uniqueness within the same second. 
-        It is incremented with each call to `generate_object_id` and wraps around at 0xFFFFFF.
-    _salt (int): A fixed 32-bit random value generated once when the module is loaded.
-        This adds additional randomness to the generated IDs.
-"""
-
 import utime
 import urandom
 import uhashlib
@@ -37,12 +24,7 @@ def generate_object_id():
     
     The first 24 characters of the SHA-256 hash (12 bytes) are returned as the Object ID.
     
-    Returns:
-        str: A 24-character hexadecimal string representing the unique Object ID.
-    
-    Example:
-        >>> generate_object_id()
-        '1f2e3d4c5b6a7f8e9d0c1b2e'
+    :return: str, A 24-character hexadecimal string representing the unique Object ID.
     """
     global _counter
 
