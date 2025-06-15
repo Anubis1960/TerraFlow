@@ -11,6 +11,13 @@ class SummaryCardWidget extends StatelessWidget {
   final double screenWidth;
   final double screenHeight;
 
+  /// Creates a [SummaryCardWidget].
+  /// @param title The title of the summary card.
+  /// @param value The numerical value to be displayed.
+  /// @param color The color for the dot indicator.
+  /// @param screenWidth The width of the screen, used for responsive design.
+  /// @param screenHeight The height of the screen, used for responsive design.
+  /// @param unit The unit of measurement for the value.
   const SummaryCardWidget({
     Key? key,
     required this.title,
@@ -21,6 +28,8 @@ class SummaryCardWidget extends StatelessWidget {
     required this.unit,
   }) : super(key: key);
 
+  /// Builds the summary card widget.
+  /// @return A [Container] widget that contains the summary card.
   @override
   Widget build(BuildContext context) {
     return Container(

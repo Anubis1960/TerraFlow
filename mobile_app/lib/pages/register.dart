@@ -11,16 +11,19 @@ class RegisterScreen extends StatefulWidget {
   _RegisterScreenState createState() => _RegisterScreenState();
 }
 
+/// State class for RegisterScreen that manages the registration form.
 class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  /// Initializes the state of the registration screen.
   @override
   void initState() {
     super.initState();
   }
 
+  /// Disposes the controllers to free up resources.
   @override
   void dispose() {
     emailController.dispose();
@@ -29,6 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  /// Builds the registration screen UI.
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;

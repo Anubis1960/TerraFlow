@@ -2,6 +2,10 @@ from pymongoose.mongo_types import Types, Schema
 
 
 class Device(Schema):
+    """
+    Device model for managing device records and water usage data.
+    """
+
     schema_name = "devices"  # Name of the schema that mongo uses
 
     # Attributes

@@ -7,6 +7,13 @@ import regex as re
 
 
 def sanitize_sheet_title(title: str) -> str:
+    """
+    Sanitizes the title for use as an Excel sheet name by removing invalid characters
+    and ensuring it does not exceed the maximum length of 31 characters.
+
+    :param title: str: The title to sanitize.
+    :return: str: Sanitized title suitable for an Excel sheet name.
+    """
     invalid_chars = r'[\\/:*?"<>|]'  # Regular expression pattern for invalid characters
     sanitized = re.sub(invalid_chars, '', title)
     if len(title) > 31:  # Max length for sheet names is 31 characters
@@ -94,7 +101,7 @@ def export_to_excel(_data: dict) -> BytesIO:
     return buff
 
 
-def build_excel_sheet(wb: Workbook, data, prefix='') -> None:
+def build_excel_sheet(wb: Workbook, data: dict, prefix: str = '') -> None:
     """
     Builds an Excel sheet from the provided data, creating separate sheets for sensor records and water usage.
 
@@ -176,10 +183,16 @@ def build_excel_sheet(wb: Workbook, data, prefix='') -> None:
         create_line_chart(ws_year, f"Monthly Trend for {year}", "Water Used", "Month", "H", 2)
 
 
-def build_device_excel_sheet(ws, records_df: pd.DataFrame, water_usage_df: pd.DataFrame, device_name: str):
+def build_device_excel_sheet(ws, records_df: pd.DataFrame, water_usage_df: pd.DataFrame, device_name: str) -> None:
     """
     Writes sensor records and water usage to a single worksheet.
     Adds headers for separation.
+
+    :param ws: The worksheet to write data to.
+    :param records_df: DataFrame containing sensor records.
+    :param water_usage_df: DataFrame containing water usage data.
+    :param device_name: Name of the device to be included in the header.
+    :return: None
     """
     ws.append([f"Device: {device_name}"])
     ws.append(["Sensor Records"])
@@ -196,6 +209,9 @@ def export_to_excel_devices(_data: list) -> BytesIO:
     """
     Exports a list of devices into an Excel file where each device has its own sheet,
     containing sensor records and water usage data.
+
+    :param _data: List of device data, each containing sensor records and water usage.
+    :return: BytesIO buffer containing the Excel file.
     """
     wb = Workbook()
     # Remove default sheet created by Workbook()

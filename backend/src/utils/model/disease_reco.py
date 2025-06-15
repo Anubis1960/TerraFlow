@@ -47,7 +47,7 @@ def train_model(model, X_train, y_train, X_val, y_val, batch_size=128, epochs=10
     return history
 
 
-def plot_history(history):
+def plot_history(history) -> None:
     """
     Plot the training and validation loss and accuracy curves.
 
@@ -68,7 +68,7 @@ def plot_history(history):
     plt.show()
 
 
-def plot_confussion_matrix(model, X_test, y_test):
+def plot_confussion_matrix(model, X_test, y_test) -> None:
     """
     Evaluate the model on the test set and plot the confusion matrix.
 
@@ -90,7 +90,8 @@ def plot_confussion_matrix(model, X_test, y_test):
     print(cm)
 
 
-def build_custom_cnn(input_shape=(224, 224, 3), output_size=7, batch_size=128, epochs=100, max_images=1000):
+def build_custom_cnn(input_shape: tuple = (224, 224, 3), output_size: int = 7, batch_size: int = 128, epochs: int = 100,
+                     max_images: int = 1000) -> None:
     """
     Build a custom CNN model for image classification.
 
@@ -149,7 +150,8 @@ def build_custom_cnn(input_shape=(224, 224, 3), output_size=7, batch_size=128, e
     model.save(f"{batch_size}_custom_{max_images}_{input_shape[0]}_{output_size}.keras")
 
 
-def build_mobilenetv2(input_shape=(224, 224, 3), output_size=7, batch_size=128, epochs=100, max_images=1000):
+def build_mobilenetv2(input_shape: tuple = (224, 224, 3), output_size: int = 7, batch_size: int = 128, epochs: int = 100,
+                     max_images: int = 1000) -> None:
     """
     Build a MobileNetV2 model for image classification.
 
@@ -210,7 +212,8 @@ def build_mobilenetv2(input_shape=(224, 224, 3), output_size=7, batch_size=128, 
     model.save(f"{max_images}_mobilenetv2_{max_images}_{input_shape[0]}_{output_size}.keras")
 
 
-def build_resnet50v2(input_shape=(224, 224, 3), output_size=7, batch_size=128, epochs=100, max_images=1000):
+def build_resnet50v2(input_shape: tuple = (224, 224, 3), output_size: int = 7, batch_size: int = 128, epochs: int = 100,
+                     max_images: int = 1000) -> None:
     """
     Build a ResNet50V2 model for image classification.
 

@@ -21,6 +21,7 @@ class DiseaseCheckScreen extends StatefulWidget {
   _DiseaseCheckScreenState createState() => _DiseaseCheckScreenState();
 }
 
+/// State class for DiseaseCheckScreen that manages the image selection, processing, and result display.
 class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
   XFile? _selectedImage;
   String _diseaseResult = "No disease detected";
@@ -29,6 +30,7 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
 
   /// Picks an image from the gallery, processes it, and sends it to the server for disease prediction.
   /// Handles both web and mobile platforms, ensuring the image is resized appropriately.
+  /// @return A [Future] that completes when the image is picked and processed.
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     try {
@@ -120,6 +122,8 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
     }
   }
 
+  /// Builds the image preview widget that displays the selected image.
+  /// @return A [Widget] that shows the selected image or a placeholder if no image is selected.
   Widget _buildImagePreview() {
     if (_selectedImage == null) return SizedBox.shrink();
 
@@ -163,6 +167,7 @@ class _DiseaseCheckScreenState extends State<DiseaseCheckScreen> {
     );
   }
 
+  /// Builds the main UI of the DiseaseCheckScreen.
   @override
   Widget build(BuildContext context) {
     return Scaffold(

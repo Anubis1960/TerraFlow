@@ -19,6 +19,7 @@ INT_TO_CLASS = {
 def load_model(path: str):
     """
     Load the model from the file.
+
     :param path: str: Path to the model file.
     :return: Loaded model.
     """

@@ -8,6 +8,7 @@ import '../util/constants.dart';
 class SocketService {
   static IO.Socket? _socket;
 
+  /// Returns the Socket.IO connection based on the platform.
   static IO.Socket get socket {
     String url = '';
     if (_socket == null) {

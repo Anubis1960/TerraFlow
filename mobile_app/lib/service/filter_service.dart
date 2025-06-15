@@ -8,7 +8,7 @@ class FilterService {
   /// @param records List of SensorData records
   /// @param selectedFilterValue The value to filter by (e.g., date, month, year)
   /// @param filterType The type of filter to apply (e.g., 'day', 'month', 'year')
-  /// @return A list of SensorData records that match the filter criteria.
+  /// @return [List] A list of SensorData records that match the filter criteria.
   static List<SensorData> filterRecords(List<SensorData> records, String selectedFilterValue, String filterType) {
     if (filterType == 'day') {
       return _binarySearchDateSubsection(records, selectedFilterValue, 'timestamp');
@@ -25,7 +25,7 @@ class FilterService {
   /// @param timestamp The timestamp to search for
   /// @param key The key to search in the records
   /// @param findFirst If true, finds the first occurrence; if false, finds the last occurrence.
-  /// @return The index of the first or last occurrence of the record with the matching timestamp, or -1 if not found.
+  /// @return [int] The index of the first or last occurrence of the record with the matching timestamp, or -1 if not found.
   static int _findBoundaryIndex(List<SensorData> records, String timestamp, String key, bool findFirst) {
     int low = 0, high = records.length - 1, result = -1;
     while (low <= high) {
@@ -51,7 +51,7 @@ class FilterService {
   /// @param records List of SensorData records
   /// @param timestamp The timestamp to search for
   /// @param key The key to search in the records
-  /// @return A list of SensorData records that match the timestamp.
+  /// @return [List] A list of SensorData records that match the timestamp.
   static List<SensorData> _binarySearchDateSubsection(List<SensorData> records, String timestamp, String key) {
     int firstIndex = _findBoundaryIndex(records, timestamp, key, true);
     if (firstIndex == -1) return [];
@@ -62,7 +62,7 @@ class FilterService {
   /// Returns a set of unique filter values based on the filter type.
   /// @param records List of SensorData records
   /// @param filterType The type of filter to apply (e.g., 'day', 'month', 'year')
-  /// @return A set of unique filter values (e.g., dates, months, years).
+  /// @return [Set] A set of unique filter values (e.g., dates, months, years).
   static Set<String> getFilterValues(List<SensorData> records, String filterType) {
     Set<String> values = {};
     if (records.isEmpty) return values;
@@ -83,7 +83,7 @@ class FilterService {
   /// Calculates the average value of a specific key from the sensor data records.
   /// @param records List of SensorData records
   /// @param key The key to calculate the average for (e.g., 'temperature', 'humidity')
-  /// @return The average value of the specified key across all records, or 0 if no records are present.
+  /// @return [double] The average value of the specified key across all records, or 0 if no records are present.
   static double calculateAverage(List<SensorData> records, String key) {
     if (records.isEmpty) return 0;
     return records.map((record) => record.sensorData[key]?.toDouble() ?? 0).reduce((a, b) => a + b) / records.length;
@@ -92,7 +92,7 @@ class FilterService {
   /// Calculates the total water usage based on the selected filter value.
   /// @param records List of WaterUsage records
   /// @param selectedFilterValue The value to filter by (e.g., date, month, year)
-  /// @return The total water usage for the specified filter value, or 0 if no records match.
+  /// @return [double] The total water usage for the specified filter value, or 0 if no records match.
   static double calculateWaterUsage(List<WaterUsage> records, String selectedFilterValue) {
     if (records.isEmpty) return 0;
     if (records[0].date == '') return 0;
@@ -114,7 +114,7 @@ class FilterService {
   /// Performs a binary search to find the water usage for a specific timestamp.
   /// @param records List of WaterUsage records
   /// @param timestamp The timestamp to search for
-  /// @return The water usage for the specified timestamp, or 0 if not found.
+  /// @return [double] The water usage for the specified timestamp, or 0 if not found.
   static double _binarySearchWaterUsage(List<WaterUsage> records, String timestamp) {
     int low = 0;
     int high = records.length - 1;

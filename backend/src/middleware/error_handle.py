@@ -10,6 +10,7 @@ error_handle_blueprint = Blueprint('error', __name__)
 def handle_http_exception(e):
     """
     Handles HTTP exceptions and formats the response as JSON.
+
     :param e: HTTPException: The exception to handle.
     :return: Response: A Flask response object with JSON data and appropriate status code.
     """
@@ -29,6 +30,7 @@ def handle_http_exception(e):
 def handle_exception(e):
     """
     Handles general exceptions and formats the response as JSON.
+
     :param e: Exception: The exception to handle.
     :return: Response: A Flask response object with JSON data and a 500 status code.
     """

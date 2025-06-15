@@ -5,6 +5,11 @@ import 'package:mobile_app/service/socket_service.dart';
 
 /// A widget that builds a bottom navigation bar with buttons for irrigation control and data export.
 class BottomNavBar {
+
+  /// Builds the bottom navigation bar with buttons for triggering irrigation, scheduling irrigation, and exporting data.
+  /// @param context The BuildContext for the widget tree.
+  /// @param deviceId The ID of the device for which the irrigation and export actions will be performed.
+  /// @return A [BottomAppBar] widget containing the navigation buttons.
   static Widget buildBottomNavBar({
     required BuildContext context,
     required String deviceId,

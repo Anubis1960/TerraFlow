@@ -1,3 +1,5 @@
+
+/// Constants for application routes
 class Routes {
   static const String HOME = '/home';
   static const String LOGIN = '/login';
@@ -8,6 +10,7 @@ class Routes {
   static const String DISEASE_CHECK = '/home/disease-check';
 }
 
+/// Constants for server URLs and REST endpoints
 class Server {
   static const String WEB_SOCKET_URL = 'ws://localhost:5000';
   static const String MOBILE_SOCKET_URL = 'ws://10.0.2.2:5000';

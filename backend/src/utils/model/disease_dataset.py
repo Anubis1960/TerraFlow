@@ -111,7 +111,7 @@ GENERALIZED_CLASSES = {
 }
 
 
-def load_images_from_folder(folder_path, img_size=(224, 224), max_images=500):
+def load_images_from_folder(folder_path: str, img_size: tuple = (224, 224), max_images: int = 500) -> np.ndarray:
     """
     Loads images from a folder, preprocesses them:
     - Resizes to specified dimensions
@@ -171,7 +171,8 @@ def load_images_from_folder(folder_path, img_size=(224, 224), max_images=500):
     return np.array(processed)
 
 
-def restructure_class_datasets(class_arrays_dict, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
+def restructure_class_datasets(class_arrays_dict: dict, train_ratio: float = 0.7, val_ratio: float = 0.15,
+                               test_ratio: float = 0.15) -> tuple:
     """
     Takes a dictionary of {class_name: array_of_images}, combines train+valid,
     then splits into new train/val/test sets.
@@ -210,7 +211,7 @@ def restructure_class_datasets(class_arrays_dict, train_ratio=0.7, val_ratio=0.1
     return (X_train, y_train), (X_val, y_val), (X_test, y_test), class_names
 
 
-def reclass_and_save_images(base_dir='merge', output_dir='processed_images'):
+def reclass_and_save_images(base_dir: str = 'merge', output_dir: str = 'processed_images') -> None:
     """
     Processes images from base_dir and saves them directly to output_dir/class_X/
     without storing all images in memory.
@@ -255,7 +256,7 @@ def reclass_and_save_images(base_dir='merge', output_dir='processed_images'):
         print(f"Saved {count} images from '{folder}' to '{dest_class_dir}'")
 
 
-def map_folder_to_class(folder_name):
+def map_folder_to_class(folder_name) -> int | None:
     """
     Returns the generalized class label for a given folder name.
 
@@ -268,7 +269,7 @@ def map_folder_to_class(folder_name):
     return None
 
 
-def preprocess_dataset(base_dir: str = 'processed_images', img_size=(224, 224), max_images=1000):
+def preprocess_dataset(base_dir: str = 'processed_images', img_size=(224, 224), max_images=1000) -> tuple:
     """
     Preprocesses the dataset by loading images from the specified base directory,
     resizing them to the specified image size, and splitting them into training,

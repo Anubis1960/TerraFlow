@@ -33,6 +33,11 @@ def get_device_data(device_id):
 
 @device_blueprint.route('/<device_id>/watering_type', methods=['PUT'])
 def update_watering_type(device_id):
+    """
+    Endpoint to update the watering type of a device.
+
+    :param device_id: str: The ID of the device to update.
+    """
     data = request.get_json()
     if not data or 'watering_type' not in data:
         return jsonify({"error": "Invalid input"}), HTTPStatus.BAD_REQUEST
@@ -50,6 +55,12 @@ def update_watering_type(device_id):
 
 @device_blueprint.route('/<device_id>', methods=['PATCH'])
 def update_device(device_id):
+    """
+    Endpoint to update a device's name.
+    The user must be authenticated via a token in the Authorization header.
+
+    :param device_id: str: The ID of the device to update.
+    """
     token = request.headers.get('Authorization')
     token = token.split(" ")[1] if token else None
     payload = decode_token(token)

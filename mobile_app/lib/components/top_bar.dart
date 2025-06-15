@@ -8,6 +8,7 @@ class TopBar{
 
   /// Handles the logout process.
   /// @param context The BuildContext of the current widget.
+  /// @return A [Future] that completes when the logout process is finished.
   static void _handleLogout(BuildContext context) async {
     var authService = AuthService();
     bool res = await authService.logout();
@@ -21,6 +22,10 @@ class TopBar{
   }
 
 
+  /// Builds the top bar widget with a title and a logout button.
+  /// @param title The title to be displayed in the top bar.
+  /// @param context The BuildContext of the current widget.
+  /// @return A [PreferredSizeWidget] representing the top bar.
   static PreferredSizeWidget buildTopBar({
     required String title,
     required BuildContext context,

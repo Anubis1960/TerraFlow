@@ -23,6 +23,8 @@ def connet_event() -> None:
 def init_event(data: dict) -> None:
     """
     Initializes the client session by remapping Redis with devices.
+
+    :param data: dict: JSON payload containing 'token' and 'devices'.
     """
     print('Init:', data)
     socket_id = request.sid
@@ -46,6 +48,8 @@ def init_event(data: dict) -> None:
 def disconnect_event(data: dict) -> None:
     """
     Handles client disconnection.
+
+    :param data: dict: JSON payload containing disconnection data.
     """
     print('Client disconnected')
     handle_disconnect(data)
@@ -55,6 +59,8 @@ def disconnect_event(data: dict) -> None:
 def irrigate_event(data: dict) -> None:
     """
     Triggers manual irrigation for a device.
+
+    :param data: dict: JSON payload containing 'device_id'.
     """
     if 'device_id' not in data:
         print('device ID not found, found:', data)
@@ -68,6 +74,8 @@ def irrigate_event(data: dict) -> None:
 def export_event(data: dict) -> None:
     """
     Handles export requests for device data.
+
+    :param data: dict: JSON payload containing 'device_id'.
     """
     if 'device_id' not in data:
         print('device ID or type not found, found:', data)

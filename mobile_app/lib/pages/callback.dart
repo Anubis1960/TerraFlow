@@ -10,10 +10,14 @@ class CallbackScreen extends StatelessWidget {
 
   const CallbackScreen({Key? key, required this.queryParams}) : super(key: key);
 
+  /// Saves the token to the storage.
+  /// @param token The authentication token to be saved.
+  /// @return A [Future] that completes when the token is saved.
   Future<void> saveToken(String token) async {
     await BaseStorage.getStorageFactory().saveToken(token);
   }
 
+  /// Builds the widget tree for the CallbackScreen.
   @override
   Widget build(BuildContext context) {
     if (queryParams.containsKey("token")) {

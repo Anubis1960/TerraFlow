@@ -15,7 +15,7 @@ class AuthService{
   /// Login method to authenticate a user with email and password.
   /// @param email The user's email address.
   /// @param password The user's password.
-  /// @return A Future that resolves to a boolean indicating success or failure of the login operation.
+  /// @return A [Future] that resolves to a boolean indicating success or failure of the login operation.
   Future<bool> login(String email, String password) async {
     Map<String, String> loginJson = {
       'email': email,
@@ -51,7 +51,7 @@ class AuthService{
 
   /// Initiates the Google Sign-In process.
   /// @param context The BuildContext of the current widget.
-  ///
+  /// @return A [Future] that completes when the sign-in process is initiated.
   Future<void> loginWithGoogle(BuildContext context) async {
     var googleSignIn = GoogleSignInUtil.getGoogleSignInFactory();
     await googleSignIn.signIn(context);
@@ -61,7 +61,7 @@ class AuthService{
   /// Registers a new user with the provided email and password.
   /// @param email The user's email address.
   /// @param password The user's password.
-  /// @return A Future that resolves to a boolean indicating success or failure of the registration operation.
+  /// @return A [Future] that resolves to a boolean indicating success or failure of the registration operation.
   Future<bool> register(String email, String password) async {
     Map<String, String> registerJson = {
       'email': email,
@@ -101,7 +101,7 @@ class AuthService{
 
 
   /// Logs out the user from all devices.
-  /// @return A Future that resolves to a boolean indicating success or failure of the logout operation.
+  /// @return A [Future] that resolves to a boolean indicating success or failure of the logout operation.
   Future<bool> logout() async {
     try {
       final String token = await BaseStorage.getStorageFactory().getToken();

@@ -9,6 +9,13 @@ class DateFilterPicker extends StatelessWidget {
   final VoidCallback onDatePick;
   final Function(String?) onFilterValueChanged;
 
+  /// Constructor for DateFilterPicker
+  /// @param filterType The type of filter to apply (e.g., 'day', 'month', 'year').
+  /// @param selectedFilterValue The currently selected filter value (e.g., a date string).
+  /// @param filteredValues A set of values to filter by (e.g., available dates or months).
+  /// @param onFilterTypeChanged [Callback] function to handle changes in the filter type.
+  /// @param onDatePick [Callback] function to handle date picking.
+  /// @param onFilterValueChanged [Callback] function to handle changes in the selected filter value.
   const DateFilterPicker({
     super.key,
     required this.filterType,
@@ -19,6 +26,7 @@ class DateFilterPicker extends StatelessWidget {
     required this.onFilterValueChanged,
   });
 
+  /// Builds the DateFilterPicker widget.
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -96,6 +104,7 @@ class DateFilterPicker extends StatelessWidget {
     );
   }
 
+  /// Builds the date button for selecting a date.
   Widget _buildDateButton(BuildContext context) {
     return SizedBox(
       height: 48,
@@ -134,6 +143,7 @@ class DateFilterPicker extends StatelessWidget {
     );
   }
 
+  /// Builds the dropdown for selecting a value based on the filter type.
   Widget _buildValueDropdown(BuildContext context) {
     final String displayValue = filteredValues.contains(selectedFilterValue)
         ? selectedFilterValue

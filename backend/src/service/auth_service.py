@@ -21,7 +21,6 @@ def handle_form_login(email: str, password: str) -> dict:
     :param email: str: The email of the user.
     :param password: str: The password of the user.
     :return: dict: A dictionary containing the token and devices associated with the user, or an error message.
-
     """
     try:
         res = mongo_db[USER_COLLECTION].find({'email': email})

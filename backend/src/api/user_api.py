@@ -59,6 +59,7 @@ def delete_device(device_id):
     """
     Endpoint to delete a device from a user's account.
     The user must be authenticated via a token in the Authorization header.
+
     :param device_id: The ID of the device to be deleted.
     """
     user_id = validate_header(request.headers)

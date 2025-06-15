@@ -2,6 +2,9 @@ from pymongoose.mongo_types import Types, Schema
 
 
 class User(Schema):
+    """
+    User model for managing user accounts and associated devices.
+    """
     schema_name = "users"  # Name of the schema that mongo uses
 
     # Attributes

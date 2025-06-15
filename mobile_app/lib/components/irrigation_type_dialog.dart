@@ -4,6 +4,11 @@ import '../service/socket_service.dart';
 
 /// A dialog to select the type of irrigation and its settings.
 class IrrigationTypeDialog {
+
+  /// Shows a dialog for selecting the irrigation type and its settings.
+  /// @param context The BuildContext for the dialog.
+  /// @param deviceId The ID of the device for which the irrigation type is being set.
+  /// @return [void]
   static void showIrrigationTypeDialog({
     required BuildContext context,
     required String deviceId,
@@ -218,7 +223,10 @@ class IrrigationTypeDialog {
     );
   }
 
-  // Helper to make display names nicer
+
+  /// Returns a display text for the irrigation type.
+  /// @param type The type of irrigation.
+  /// @return A [String] representing the display text for the irrigation type.
   static String _getDisplayText(String type) {
     switch (type) {
       case 'MANUAL':

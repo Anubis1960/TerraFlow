@@ -26,6 +26,7 @@ class DeviceDashBoard extends StatefulWidget {
   State<DeviceDashBoard> createState() => _DeviceDashBoardState(deviceId);
 }
 
+/// The state class for DeviceDashBoard that manages the device data and UI updates.
 class _DeviceDashBoardState extends State<DeviceDashBoard> {
   final String deviceId;
   String deviceName = 'Device Dashboard';
@@ -47,6 +48,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
   double waterUsage = 0;
   bool _isLoading = true;
 
+  /// Initializes the state of the DeviceDashBoard.
   @override
   void initState() {
     super.initState();
@@ -152,10 +154,18 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     });
   }
 
+  /// Saves the exported file to the device storage.
+  /// @param context The build context of the application.
+  /// @param fileData The data of the file to be saved.
+  /// @param fileName The name of the file to be saved.
+  /// @return A Future that completes when the file is saved.
   Future<void> saveToStorage(BuildContext context, Uint8List fileData, String fileName) async {
     FileDownloader.getFileDownloaderFactory().downloadFile(context, fileData, fileName);
   }
 
+  /// Handles changes in the filter type and updates the filtered records and summary values.
+  /// @param newValue The new filter type selected by the user.
+  /// @return void
   void _onFilterTypeChange(String? newValue) {
     if (newValue == null) return;
     setState(() {
@@ -169,6 +179,8 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     });
   }
 
+  /// Opens a date picker to select a date and updates the filtered records and summary values.
+  /// @return void
   void _onDatePick() async {
     final pickedDate = await showDatePicker(
       context: context,
@@ -188,6 +200,9 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     }
   }
 
+  /// Handles changes in the filter value and updates the filtered records and summary values.
+  /// @param newValue The new filter value selected by the user.
+  /// @return void
   void _onFilterValueChange(String? newValue) {
     if (newValue == null) return;
     setState(() {
@@ -199,6 +214,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     });
   }
 
+  /// Disposes the socket listeners and scroll controller when the widget is removed from the widget tree.
   @override
   void dispose() {
     SocketService.socket.off('$deviceId/record');
@@ -208,6 +224,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     super.dispose();
   }
 
+  /// Builds the UI for the Device Dashboard page.
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -286,6 +303,7 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
     );
   }
 
+  /// Builds the line chart widget to display sensor data.
   Widget _buildLineChart(double screenWidth, double screenHeight) {
     return Card(
       elevation: 0,

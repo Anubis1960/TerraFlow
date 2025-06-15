@@ -3,6 +3,21 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 
 /// A utility class for building line charts using Syncfusion Flutter Charts.
 class Charts {
+
+  /// Builds a line chart with the provided parameters.
+  /// @param title The title of the chart.
+  /// @param data The data to be displayed in the chart, structured as a list of lists of [ChartData].
+  /// @param lineColors The colors for each line in the chart.
+  /// @param minY The minimum value for the Y-axis.
+  /// @param maxY The maximum value for the Y-axis.
+  /// @param xAxisLabels The labels for the X-axis.
+  /// @param headers The headers for the chart legend.
+  /// @param isScrollable Whether the chart should be scrollable horizontally.
+  /// @param backgroundColor The background color of the chart.
+  /// @param showGrid Whether to show grid lines on the chart.
+  /// @param maxX The maximum X value for the chart, used for auto-scrolling.
+  /// @param scrollController The controller for the scrollable chart, if applicable.
+  /// @return A [Widget] representing the line chart.
   static Widget buildLineChart({
     required String title,
     required List<List<ChartData>> data,
@@ -101,6 +116,15 @@ class Charts {
     );
   }
 
+  /// Builds the content of the line chart.
+  /// @param data The data to be displayed in the chart, structured as a list of lists of [ChartData].
+  /// @param lineColors The colors for each line in the chart.
+  /// @param headers The headers for the chart legend.
+  /// @param minY The minimum value for the Y-axis.
+  /// @param maxY The maximum value for the Y-axis.
+  /// @param xAxisLabels The labels for the X-axis.
+  /// @param showGrid Whether to show grid lines on the chart.
+  /// @return A [Widget] representing the line chart content.
   static Widget _buildLineChartContent(
       List<List<ChartData>> data,
       List<Color> lineColors,
@@ -178,6 +202,7 @@ class Charts {
   }
 }
 
+/// Represents a single data point in the chart.
 class ChartData {
   final String x;
   final double? y;

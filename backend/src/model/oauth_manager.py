@@ -5,9 +5,6 @@ from src.utils.secrets import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 class OAuthManager:
     """
     Manages OAuth 2.0 authentication with external providers, in this case, Google.
-
-    Attributes:
-        oauth (OAuth): The OAuth object to handle the OAuth authentication flow.
     """
 
     def __init__(self, app=None):
@@ -25,8 +22,7 @@ class OAuthManager:
         """
         Initializes OAuth with the app configuration and registers the Google OAuth provider.
 
-        Args:
-            app (Flask): A Flask app instance to configure OAuth.
+        :param app: Flask app instance to initialize OAuth with.
         """
         self.oauth.init_app(app)
         self.oauth.register(
@@ -47,10 +43,7 @@ class OAuthManager:
         """
         Retrieves a registered OAuth provider by name.
 
-        Args:
-            name (str): The name of the OAuth provider.
-
-        Returns:
-            OAuthClient: The OAuth client associated with the provider.
+        :param name: str: The name of the OAuth provider to retrieve.
+        :return: OAuth client instance for the specified provider.
         """
         return self.oauth.create_client(name)

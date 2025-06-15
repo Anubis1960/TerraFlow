@@ -17,11 +17,13 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
+/// State class for HomeScreen that manages the device list and actions.
 class _HomeScreenState extends State<HomeScreen> {
   late Future<String> token;
   late Future<List<Device>> devices;
   final Set<Device> _selectedDeviceIds = {};
 
+  /// Initializes the state of the HomeScreen.
   @override
   void initState() {
     super.initState();
@@ -90,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return await BaseStorage.getStorageFactory().getDevices();
   }
 
+  /// Disposes the socket listener when the widget is removed from the widget tree.
   @override
   void dispose() {
     SocketService.socket.off('error');
@@ -98,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Deletes a device from the server and updates the storage.
   /// @param device The device to delete.
+  /// @return [void]
   void _deleteDevice(Device device) async {
     final token = await BaseStorage.getStorageFactory().getToken();
 
@@ -141,6 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Deletes selected devices after confirmation.
   /// Prompts the user for confirmation before proceeding with deletion.
+  /// @return [void]
   void _deleteSelectedDevices() async {
     if (_selectedDeviceIds.isEmpty) return;
 
@@ -173,6 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Builds the UI for the HomeScreen.
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -346,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Opens a dialog to edit the name of a device.
   /// @param context The build context.
   /// @param device The device to edit.
-  /// @returns A future that resolves when the dialog is closed.
+  /// @return [void]
   void _editDeviceName(BuildContext context, Device device) async {
     final TextEditingController nameController = TextEditingController(text: device.name);
 
@@ -420,7 +426,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Shows a dialog to add a new device.
   /// @param context The build context.
-  /// @return A future that resolves when the dialog is closed.
+  /// @return [void]
   void _showAddDeviceDialog(BuildContext context) {
     final TextEditingController deviceIdController = TextEditingController();
 

@@ -12,15 +12,18 @@ class LoginScreen extends StatefulWidget {
   _LoginScreenState createState() => _LoginScreenState();
 }
 
+/// _LoginScreenState is the state class for LoginScreen, managing the login form and logic.
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  /// Initializes the state of the LoginScreen.
   @override
   void initState() {
     super.initState();
   }
 
+  /// Disposes the controllers to free up resources.
   @override
   void dispose() {
     emailController.dispose();
@@ -28,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Builds the UI for the LoginScreen.
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

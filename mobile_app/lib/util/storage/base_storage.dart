@@ -4,7 +4,9 @@ import 'base_storage_stub.dart'
   if (dart.library.io) 'shared_prefs_storage.dart'
   if (dart.library.html) 'session_storage.dart';
 
+/// Base class for storage implementations that manage user data and devices.
 abstract class BaseStorage {
+
   /// Clears all data stored in the storage.
   Future<void> clearAllData();
 
