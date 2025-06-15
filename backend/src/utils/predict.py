@@ -47,17 +47,17 @@ def predict_water(data: pd.DataFrame) -> list[int]:
     return prediction
 
 
-def prepare_image(image: cv2.Mat, img_size=(48, 48)) -> np.ndarray:
+def prepare_image(image: cv2.Mat, img_size=(224, 224)) -> np.ndarray:
     """
     Preprocess the image for prediction.
     This function should be customized based on the model's requirements.
 
     :param image: cv2.Mat: Input image in OpenCV format.
-    :param img_size: tuple: Desired size for the image (default is (48, 48)).
+    :param img_size: tuple: Desired size for the image (default is (224, 224)).
     :return: np.ndarray: Preprocessed image ready for prediction.
     """
 
-    # Ensure correct resizing to (48, 48)
+    # Ensure correct resizing to the specified size
     resized_image = cv2.resize(image, img_size, interpolation=cv2.INTER_AREA)
 
     # Normalize pixel values
