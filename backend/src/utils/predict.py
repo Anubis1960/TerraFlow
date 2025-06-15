@@ -11,7 +11,8 @@ INT_TO_CLASS = {
     2: 'Viral',
     3: 'Pest',
     4: 'Disorder',
-    5: 'Healthy'
+    5: 'Healthy',
+    6: 'Unknown'
 }
 
 
@@ -40,7 +41,7 @@ def predict_water(data: pd.DataFrame) -> list[int]:
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # Now build the correct path
-    path = os.path.join(PROJECT_ROOT, 'utils', 'model', 'random_forest.pkl')
+    path = os.path.join(PROJECT_ROOT, 'utils', 'model', 'rf_model_Amritpal.pkl')
     model = load_model(path)
     prediction = model.predict(data)
     return prediction
@@ -78,12 +79,12 @@ def predict_disease(img: cv2.Mat) -> dict[str, str | float]:
 
     print(f"Project root directory: {PROJECT_ROOT}")
 
-    path = os.path.join(PROJECT_ROOT, 'utils', 'model', '128_custom_500_48.keras')
+    path = os.path.join(PROJECT_ROOT, 'utils', 'model', '128_resnetv50_1000_224_7.keras')
     model = load_keras_model(path)
 
     print(f"Model loaded from {path}")
 
-    processed_img = prepare_image(img, img_size=(48, 48))
+    processed_img = prepare_image(img, img_size=(224, 224))
     prediction = model.predict(processed_img)
     max_index = np.argmax(prediction, axis=1)[0]
     res = {

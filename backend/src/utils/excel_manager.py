@@ -81,7 +81,11 @@ def export_to_excel(_data: dict) -> BytesIO:
     :return: BytesIO buffer containing the Excel file.
     """
     wb = Workbook()
-    build_excel_sheet(wb, _data)
+    try:
+        build_excel_sheet(wb, _data)
+    except ValueError as e:
+        print(f"Error building Excel sheet: {e}")
+        return BytesIO()
 
     # Save workbook to BytesIO buffer
     buff = BytesIO()
@@ -106,14 +110,16 @@ def build_excel_sheet(wb: Workbook, data, prefix='') -> None:
     }
 
     # Convert records to DataFrame
+
+    if "record" not in data:
+        raise ValueError("Data must contain 'record'.")
+
     records_df = pd.DataFrame(
         [{**record["sensor_data"], "Timestamp": record["timestamp"]} for record in data["record"]]
     )
 
     # Convert water usage to DataFrame
-    water_usage_df = pd.DataFrame(data["water_usage"])
-    water_usage_df["Year"] = water_usage_df["date"].str[:4]
-    water_usage_df["Month"] = water_usage_df["date"].str[5:].map(MONTH_MAP)
+
 
     # Create Excel workbook
     ws_records = wb.active
@@ -124,8 +130,24 @@ def build_excel_sheet(wb: Workbook, data, prefix='') -> None:
     for row in dataframe_to_rows(records_df, index=False, header=True):
         ws_records.append(row)
 
+    if "water_usage" not in data:
+        return
+
+    if data["water_usage"] is None:
+        print("No water usage data found.")
+        return
+
+    if len(data["water_usage"]) == 0:
+        print("Water usage list is empty. Skipping processing.")
+        return
+
+    water_usage_df = pd.DataFrame(data["water_usage"])
+    water_usage_df["Year"] = water_usage_df["date"].str[:4]
+    water_usage_df["Month"] = water_usage_df["date"].str[5:7].map(MONTH_MAP)
+
     # Write water usage data to Excel
     title = sanitize_sheet_title(f"{prefix} Water Usage")
+
     ws_water = wb.create_sheet(title)
     for row in dataframe_to_rows(water_usage_df.drop(columns=["Year"]), index=False, header=True):
         ws_water.append(row)
@@ -189,10 +211,17 @@ def export_to_excel_devices(_data: list) -> BytesIO:
         print(f"Processing {device_name}")
 
         # Convert sensor records to DataFrame
-        records_df = pd.DataFrame([{**r["sensor_data"], "Timestamp": r["timestamp"]} for r in device["record"]])
+        if not device["record"]:
+            print(f"No records found for device {device_name}")
+            continue
+        try:
+            records_df = pd.DataFrame([{**r["sensor_data"], "Timestamp": r["timestamp"]} for r in device["record"]])
 
-        # Convert water usage to DataFrame
-        water_usage_df = pd.DataFrame(device["water_usage"])
+            # Convert water usage to DataFrame
+            water_usage_df = pd.DataFrame(device["water_usage"])
+        except Exception as e:
+            print(f"Error processing device {device_name}: {e}")
+            continue
 
         # Create new sheet
         sheet_title = sanitize_sheet_title(device_name)

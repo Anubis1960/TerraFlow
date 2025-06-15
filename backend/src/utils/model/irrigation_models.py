@@ -1,66 +1,28 @@
-import pandas as pd
-from scipy.interpolate import interp1d
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from lightgbm import LGBMClassifier
 import pickle as pkl
-from sklearn.metrics import accuracy_score
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
+import pandas as pd
 import tensorflow as tf
+from lightgbm import LGBMClassifier
+from scipy.interpolate import interp1d
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from xgboost import XGBClassifier
+
+from src.utils.model.irrigation_loader import DataLoader
 
 
-class DataLoader:
-    """
-    DataLoader class for loading and preparing the dataset.
-    """
-
-    def __init__(self, path: str, columns: list[str]):
-        """
-        Initialize the DataLoader with the path to the dataset and the columns to be used.
-
-        :param path: str, path to the dataset file.
-        :param columns: list, list of column names to be used in the dataset.
-        """
-        self.path = path
-        self.columns = columns
-        self.scaler = StandardScaler()
-
-    def load_data(self) -> pd.DataFrame:
-        """
-        Load data from the specified path, perform necessary cleaning, and handle NULL values.
-
-        :return: pd.DataFrame, cleaned dataset with 'status' column converted to binary.
-        """
-        dataset = pd.read_csv(self.path)
-        dataset[self.columns[-1]] = dataset[self.columns[-1]].apply(lambda x: 1 if x == "ON" or x == 1 else 0)
-        dataset.dropna(inplace=True)
-        print(f"Loaded dataset with {len(dataset)} rows and {len(self.columns)} columns.")
-        return dataset
-
-    def prepare_data(self, split_ratio=0.2) -> tuple:
-        """
-        Divide features and outputs, create train and test subsets, and scale the values.
-
-        :param split_ratio: float, the proportion of the dataset to include in the test split.
-        :return: tuple, containing scaled training and testing features and labels.
-        """
-        dataset = self.load_data()
-        x = dataset[self.columns[:-1]]
-        y = dataset[self.columns[-1]]
-        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=split_ratio, random_state=42)
-        x_train_scaled = self.scaler.fit_transform(x_train)
-        x_test_scaled = self.scaler.transform(x_test)
-        return x_train_scaled, x_test_scaled, y_train, y_test
-
-
-class Model():
+class Model:
     """
     Generic model class for training and evaluating a classifier model.
     """
 
     def __init__(self, data_loader: DataLoader):
+        """
+        Initialize the model with the provided data loader.
+
+        :param data_loader: DataLoader, the DataLoader instance to use for loading data.
+        """
         self.data_loader = data_loader
         self.model = None
         self.accuracy = 0
@@ -100,6 +62,7 @@ class Model():
         Save the trained model.
 
         :param filename: str, the name of the file to save the model.
+        :return: None
         """
         file = open(filename, 'wb')
         pkl.dump(self.model, file)
@@ -109,6 +72,7 @@ class Model():
         Predict the class of the given data.
 
         :param data: array-like, input data for prediction.
+        :return: list, predicted classes.
         """
         if self.model is None:
             raise NotImplementedError("Model not implemented.")
@@ -121,6 +85,13 @@ class KNNModel(Model):
     """
 
     def __init__(self, data_loader: DataLoader, **kwargs):
+        """
+        Initialize the KNN model with the provided data loader and parameters.
+
+        :param data_loader: DataLoader, the DataLoader instance to use for loading data.
+        :param kwargs: additional keyword arguments for KNN model initialization.
+        :return: None
+        """
         super().__init__(data_loader)
         self.model = KNeighborsClassifier(**kwargs)
 
@@ -131,6 +102,13 @@ class RandomForestModel(Model):
     """
 
     def __init__(self, data_loader: DataLoader, **kwargs):
+        """
+        Initialize the Random Forest model with the provided data loader and parameters.
+
+        :param data_loader: DataLoader, the DataLoader instance to use for loading data.
+        :param kwargs: additional keyword arguments for Random Forest model initialization.
+        :return: None
+        """
         super().__init__(data_loader)
         self.model = RandomForestClassifier(**kwargs)
 
@@ -141,6 +119,13 @@ class XGBoostModel(Model):
     """
 
     def __init__(self, data_loader: DataLoader, **kwargs):
+        """
+        Initialize the XGBoost model with the provided data loader and parameters.
+
+        :param data_loader: DataLoader, the DataLoader instance to use for loading data.
+        :param kwargs: additional keyword arguments for XGBoost model initialization.
+        :return: None
+        """
         super().__init__(data_loader)
         self.model = XGBClassifier(**kwargs)
 
@@ -151,6 +136,13 @@ class LGBMModel(Model):
     """
 
     def __init__(self, data_loader: DataLoader, **kwargs):
+        """
+        Initialize the LightGBM model with the provided data loader and parameters.
+
+        :param data_loader: DataLoader, the DataLoader instance to use for loading data.
+        :param kwargs: additional keyword arguments for LightGBM model initialization.
+        :return: None
+        """
         super().__init__(data_loader)
         self.model = LGBMClassifier(**kwargs)
 
@@ -161,6 +153,13 @@ class NNModel(Model):
     """
 
     def __init__(self, data_loader: DataLoader, **kwargs):
+        """
+        Initialize the Neural Network model with the provided data loader and parameters.
+
+        :param data_loader: DataLoader, the DataLoader instance to use for loading data.
+        :param kwargs: additional keyword arguments for model initialization, such as epochs and batch_size.
+        :return: None
+        """
         super().__init__(data_loader)
         self.model = tf.keras.Sequential([
             tf.keras.layers.Dense(64, activation='relu', input_shape=(len(columns) - 1,)),
@@ -174,6 +173,7 @@ class NNModel(Model):
         Train the neural network model and evaluate its accuracy.
 
         :param kwargs: additional keyword arguments for training, such as epochs and batch_size.
+        :return: float, accuracy of the trained model.
         """
         x_train, x_temp, y_train, y_temp = self.data_loader.prepare_data(split_ratio=0.3)
         x_validation, x_test, y_validation, y_test = train_test_split(x_temp, y_temp, test_size=0.5, random_state=42)
@@ -232,6 +232,7 @@ class Factory:
         Load a model from a file.
 
         :param filename: str, the name of the file to load the model from.
+        :return: Loaded model instance.
         """
         return pkl.load(open(filename, 'rb'))
 
@@ -272,7 +273,8 @@ if __name__ == "__main__":
     path = 'Soil Moisture, Air Temperature and humidity, and Water Motor onoff Monitor data.AmritpalKaur.csv'
 
     df = pd.read_csv(path)
-    df['Soil Moisture'] = interp1d([df['Soil Moisture'].min(), df['Soil Moisture'].max()], [0, 100])(df['Soil Moisture'])
+    df['Soil Moisture'] = interp1d([df['Soil Moisture'].min(), df['Soil Moisture'].max()], [0, 100])(
+        df['Soil Moisture'])
     df.to_csv(path, index=False)
 
     columns = ['Soil Moisture', 'Temperature', 'Air Humidity', 'Pump Data']
