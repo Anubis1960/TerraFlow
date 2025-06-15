@@ -293,13 +293,11 @@ class _DeviceDashBoardState extends State<DeviceDashBoard> {
           ),
         ),
       ),
-      bottomNavigationBar: SizedBox(
-        height: screenHeight * 0.115,
-        child: BottomNavBar.buildBottomNavBar(
+      bottomNavigationBar: BottomNavBar.buildBottomNavBar(
           context: context,
           deviceId: deviceId,
-        ),
-      ),
+          height: screenHeight * 0.08,
+      )
     );
   }
 
