@@ -126,3 +126,7 @@ def send_monthly_report() -> None:
             srv.quit()  # Terminate the connection
         except Exception as e:
             print(f"Failed to send email to {user_email}: {e}")
+
+
+if __name__ == "__main__":
+    send_monthly_report()  # Call the function to send the report

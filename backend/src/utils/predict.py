@@ -24,8 +24,11 @@ def load_model(path: str):
     :return: Loaded model.
     """
     try:
-        with open(path, 'rb') as file:
-            model = pkl.load(file)
+        if path.endswith('.h5') or path.endswith('.keras'):
+            model = load_keras_model(path)
+        elif path.endswith('.pkl'):
+            with open(path, 'rb') as file:
+                model = pkl.load(file)
     except FileNotFoundError:
         raise FileNotFoundError(f"Model file not found at {path}. Please check the path.")
     return model
@@ -42,7 +45,7 @@ def predict_water(data: pd.DataFrame) -> list[int]:
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # Now build the correct path
-    path = os.path.join(PROJECT_ROOT, 'utils', 'model', 'rf_model_Amritpal.pkl')
+    path = os.path.join(PROJECT_ROOT, 'utils', 'model', 'lgbm_model_Amritpal.pkl')
     model = load_model(path)
     prediction = model.predict(data)
     return prediction

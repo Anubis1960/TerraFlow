@@ -30,7 +30,7 @@ The system includes:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/terraflow.git
+git clone https://github.com/Anubis1960/TerraFlow.git
 cd terraflow
 ```
 
