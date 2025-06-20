@@ -240,8 +240,20 @@ class Factory:
 # Example usage:
 if __name__ == "__main__":
     # Example usage of the DataLoader and Model classes
-    columns = ['Soil Moisture', 'Air temperature (C)', 'Air humidity (%)', 'Status']
     path = "TARP.csv"
+
+    df = pd.read_csv(path)
+    try:
+        df['Status'] = df['Status'].apply(lambda x: 1 if x == "ON" or x == 1 else 0)
+    except KeyError:
+        print("Column 'Status' not found in the DataFrame. Please check the CSV file.")
+
+    df.rename(columns={'Air temperature (C)': 'Temperature', 'Air humidity (%)': 'Air Humidity'}, inplace=True)
+    df.rename(columns={'Status': 'Pump Data'}, inplace=True)
+
+    df.to_csv(path, index=False)
+
+    columns = ['Soil Moisture', 'Temperature', 'Air Humidity', 'Pump Data']
 
     dl = DataLoader(path, columns)
 

@@ -17,7 +17,6 @@ class DataLoader:
         """
         self.path = path
         self.columns = columns
-        self.scaler = StandardScaler()
 
     def load_data(self) -> pd.DataFrame:
         """
@@ -42,6 +41,4 @@ class DataLoader:
         x = dataset[self.columns[:-1]]
         y = dataset[self.columns[-1]]
         x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=split_ratio, random_state=42)
-        x_train_scaled = self.scaler.fit_transform(x_train)
-        x_test_scaled = self.scaler.transform(x_test)
-        return x_train_scaled, x_test_scaled, y_train, y_test
+        return x_train, x_test, y_train, y_test

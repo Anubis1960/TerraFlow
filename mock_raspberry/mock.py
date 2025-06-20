@@ -28,6 +28,11 @@ topics = {
 
 
 def handle_irrigation_cmd(client):
+    """
+    Handles the irrigation command by simulating water usage and publishing it to the MQTT broker.
+    :param client: paho.mqtt.client.Client: The MQTT client instance.
+    :return: None
+    """
     timestamp = localtime()
     year, month = timestamp[:2]
     water_data = {
@@ -38,6 +43,11 @@ def handle_irrigation_cmd(client):
 
 
 def send_for_prediction(client):
+    """
+    Sends a request for prediction by simulating sensor data and publishing it to the MQTT broker.
+    :param client: paho.mqtt.client.Client: The MQTT client instance.
+    :return: None
+    """
     moisture = random.uniform(0, 100)  # Simulated moisture value
     temperature = random.uniform(15, 35)  # Simulated temperature value
     humidity = random.uniform(30, 90)  # Simulated humidity value
@@ -54,6 +64,12 @@ def send_for_prediction(client):
 
 
 def handle_prediction_cmd(client, json_data):
+    """
+    Handles the prediction command by checking the prediction value and either sending for prediction or recording water usage.
+    :param client: paho.mqtt.client.Client: The MQTT client instance.
+    :param json_data: dict: The JSON data containing the prediction result.
+    :return: None
+    """
     if json_data['prediction'] == 1:  # 1 means ON
         send_for_prediction(client)
     elif json_data['prediction'] == 0:  # 0 means OFF
@@ -69,6 +85,10 @@ def handle_prediction_cmd(client, json_data):
 def handle_irrigation_type_cmd(client, msg):
     """
     Handles the watering type command.
+
+    :param client: paho.mqtt.client.Client: The MQTT client instance.
+    :param msg: dict: The message containing the irrigation type.
+    :return: None
     """
     if 'irrigation_type' not in msg:
         return
@@ -88,32 +108,33 @@ def handle_irrigation_type_cmd(client, msg):
 async def send(client, period_s: int = 10):
     """
     Sends a message to the MQTT broker every `period_s` seconds.
+
+    :param client: paho.mqtt.client.Client: The MQTT client instance.
+    :param period_s: int: The interval in seconds between messages.
+    :return: None
     """
     while True:
         timestamp = localtime()
         year, month, day, hour, minute, second = timestamp[:6]
 
-        days=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-        for i in days:
-            time_str = "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(year, 6, i, hour, minute, second)
+        time_str = "{:04d}/{:02d}/{:02d} {:02d}:{:02d}:{:02d}".format(year, month, day, hour, minute, second)
 
-            moisture = random.uniform(45, 55)  # Simulated moisture value
-            temperature = random.uniform(20, 25)  # Simulated temperature value
-            humidity = random.uniform(50, 55)  # Simulated humidity value
+        moisture = random.uniform(15, 55)  # Simulated moisture value
+        temperature = random.uniform(20, 35)  # Simulated temperature value
+        humidity = random.uniform(40, 65)  # Simulated humidity value
 
-            # Sensor data
-            sensor_data = {
-                'sensor_data': {
-                    "temperature": temperature,
-                    "humidity": humidity,
-                    "moisture": moisture,
-                },
-                'timestamp': time_str
-            }
-            client.publish(topics['RECORD_SENSOR_DATA_PUB'], json.dumps(sensor_data))
+        # Sensor data
+        sensor_data = {
+            'sensor_data': {
+                "temperature": temperature,
+                "humidity": humidity,
+                "moisture": moisture,
+            },
+            'timestamp': time_str
+        }
+        client.publish(topics['RECORD_SENSOR_DATA_PUB'], json.dumps(sensor_data))
 
-            await asyncio.sleep(period_s)
-        break
+        await asyncio.sleep(period_s)
 
 
 def main():

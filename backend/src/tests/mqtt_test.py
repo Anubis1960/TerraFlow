@@ -96,10 +96,11 @@ class TestMqtt(unittest.TestCase):
     def test_record_sensor_data_success(self):
         # Test successful recording of sensor data
         payload = json.dumps({"sensor_data": {"temperature": 10, "humidity": 10, "moisture": 10},
-                              "timestamp": "2023-10-01 00:00:00",
-                              "device_id": "507f1f77bcf86cd799439011"
+                              "timestamp": "2023-10-01 00:00:00"
                               })
         topic = "507f1f77bcf86cd799439011/record/sensor_data"
+
+        device_id = extract_device_id(topic)
 
         # Mock MongoDB find and update
         self.mongo_db_mock[DEVICE_COLLECTION].find_one.return_value = {
@@ -115,11 +116,10 @@ class TestMqtt(unittest.TestCase):
         self.mongo_db_mock[DEVICE_COLLECTION].update_one.assert_called_once()
         # Assert Redis and Socket.IO interactions
         self.socketio_mock.emit.assert_called_with(
-            "record",
+            f"{device_id}/record",
             {
                 "sensor_data": {"temperature": 10, "humidity": 10, "moisture": 10},
                 "timestamp": "2023-10-01 00:00:00",
-                "device_id": "507f1f77bcf86cd799439011"
             },
             room='"12345"'
         )
